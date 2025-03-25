@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\InscripcionController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -16,3 +16,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/registro', function () {
+    return view('RegistrationPage');
+});
+
+Route::get('/registroArea', function () {
+    return view('RegistrarArea');
+});
+
+Route::post('/inscripcion', [InscripcionController::class, 'inscribir']);
