@@ -9,7 +9,7 @@ class AreaCompetencia extends Model
 {
     use HasFactory;
     protected $table = 'areas_competencia';
-    protected $fillable = ['estudiante_id', 'area', 'nivel'];
+    protected $fillable = ['estudiante_id', 'area', 'nivel','costo','cedula_identidad', 'fecha_nacimiento','tutor_responsable','informacion_colegio'];
 
     public function estudiante()
     {
