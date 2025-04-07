@@ -1,42 +1,134 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background-color: #ffffff;
+  color: #333;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eaeaea;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.logo h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.admin-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+}
+
+.toggle-button.active {
+  background-color: #ff6b6b;
+}
+
+.app-navigation {
+  background-color: #ff6b6b;
+  padding: 0 2rem;
+}
+
+.nav-tabs {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.nav-item {
+  margin-right: 4px;
+}
+
+.nav-link {
+  display: block;
+  padding: 1rem 1.5rem;
+  color: white;
+  text-decoration: none;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 1rem;
+}
+
+.nav-item.active .nav-link {
+  border-bottom: 3px solid #ffffff;
+  font-weight: 500;
+}
+
+.app-content {
+  flex: 1;
+  padding: 2rem 0;
+  background-color: #f8f9fa;
+}
+
+.app-footer {
+  background-color: #ffffff;
+  color: #666;
   text-align: center;
+  padding: 1rem 0;
+  font-size: 0.9rem;
+  border-top: 1px solid #eaeaea;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .logo {
+    margin-bottom: 1rem;
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  
+  .nav-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  
+  .nav-item {
+    margin-right: 0;
+    margin-bottom: 4px;
+    width: 100%;
+  }
+  
+  .nav-link {
+    text-align: center;
+    padding: 0.75rem;
+  }
 }
