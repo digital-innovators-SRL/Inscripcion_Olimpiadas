@@ -1,71 +1,79 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\Models\Inscription;
+use App\Models\CostConfiguration;
 use Illuminate\Http\Request;
-use App\Models\Estudiante;
-use App\Models\AreaCompetencia;
-use App\Models\Tutor;
-use Illuminate\Support\Facades\DB;
 
-class InscripcionController extends Controller
+class InscriptionController extends Controller
 {
-    public function inscribir(Request $request)
-{
-    // Validación del JSON recibido
-    $validated = $request->validate([
-        'name' => 'required|string|max:255', // Cambié 'student.name' por 'name'
-        'id' => 'required|string|max:50|unique:estudiantes,cedula',
-        'birthdate' => 'required|date',
-        'areas' => 'array',
-        'areas.*.competencia' => 'required|string|max:100', // Cambié 'areas.*.area' por 'areas.*.competencia'
-        'areas.*.nivel' => 'required|string|max:50',
-        'tutors' => 'array',
-        'tutors.*.nombre' => 'required|string|max:255', // Cambié 'tutors.*.name' por 'tutors.*.nombre'
-        'tutors.*.parentesco' => 'required|string|max:100',
-        'tutors.*.telefono' => 'required|string|max:20',
-    ]);
+    public function index()
+    {
+        $inscriptions = Inscription::with(['area', 'level'])->get();
+        return response()->json($inscriptions);
+    }
 
-    try {
-        DB::beginTransaction();
-
-        // Guardar el estudiante
-        $estudiante = Estudiante::create([
-            'nombre' => $validated['name'], // Usé 'name' en lugar de 'student.name'
-            'cedula' => $validated['id'], // Usé 'id' en lugar de 'student.id'
-            'fecha_nacimiento' => $validated['birthdate'],
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:inscriptions',
+            'phone' => 'nullable|string',
+            'additional_data' => 'nullable|array',
+            'area_id' => 'nullable|exists:areas,id',
+            'level_id' => 'nullable|exists:levels,id',
         ]);
 
-        // Guardar las áreas de competencia
-        if (isset($validated['areas'])) {
-            foreach ($validated['areas'] as $area) {
-                AreaCompetencia::create([
-                    'estudiante_id' => $estudiante->id,
-                    'area' => $area['competencia'], // Usé 'competencia' en lugar de 'area'
-                    'nivel' => $area['nivel'],
-                ]);
+        // Calcular costo basado en área y nivel
+        if (isset($data['area_id']) && isset($data['level_id'])) {
+            $costConfig = CostConfiguration::where('area_id', $data['area_id'])
+                ->where('level_id', $data['level_id'])
+                ->first();
+                
+            if ($costConfig) {
+                $data['cost'] = $costConfig->cost;
             }
         }
 
-        // Guardar los tutores
-        if (isset($validated['tutors'])) {
-            foreach ($validated['tutors'] as $tutor) {
-                Tutor::create([
-                    'estudiante_id' => $estudiante->id,
-                    'nombre' => $tutor['nombre'], // Usé 'nombre' en lugar de 'name'
-                    'parentesco' => $tutor['parentesco'],
-                    'telefono' => $tutor['telefono'],
-                ]);
-            }
-        }
-
-        DB::commit();
-        return response()->json(['message' => 'Inscripción realizada con éxito'], 201);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        // Devolver error si algo sale mal
-        return response()->json(['message' => 'Error en la inscripción', 'error' => $e->getMessage()], 500);
+        $inscription = Inscription::create($data);
+        return response()->json($inscription, 201);
     }
-}
 
+    public function show($id)
+    {
+        $inscription = Inscription::with(['area', 'level'])->findOrFail($id);
+        return response()->json($inscription);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $inscription = Inscription::findOrFail($id);
+        
+        $data = $request->validate([
+            'name' => 'sometimes|required|string',
+            'email' => 'sometimes|required|email|unique:inscriptions,email,'.$id,
+            'phone' => 'nullable|string',
+            'additional_data' => 'nullable|array',
+            'area_id' => 'nullable|exists:areas,id',
+            'level_id' => 'nullable|exists:levels,id',
+            'status' => 'sometimes|in:pending,approved,rejected',
+        ]);
+
+        // Recalcular costo si cambia área o nivel
+        if ((isset($data['area_id']) && $data['area_id'] != $inscription->area_id) || 
+            (isset($data['level_id']) && $data['level_id'] != $inscription->level_id)) {
+            
+            $costConfig = CostConfiguration::where('area_id', $data['area_id'] ?? $inscription->area_id)
+                ->where('level_id', $data['level_id'] ?? $inscription->level_id)
+                ->first();
+                
+            if ($costConfig) {
+                $data['cost'] = $costConfig->cost;
+            }
+        }
+
+        $inscription->update($data);
+        return response()->json($inscription);
+    }
 }

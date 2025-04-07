@@ -9,7 +9,7 @@ class RequiredFieldController extends Controller
 {
     public function index()
     {
-        $fields = RequiredField::all();
+        $fields = RequiredField::orderBy('order')->get();
         return response()->json($fields);
     }
 
@@ -18,7 +18,9 @@ class RequiredFieldController extends Controller
         $data = $request->validate([
             'field_name' => 'required|string',
             'field_type' => 'required|string',
-            'is_required' => 'boolean'
+            'is_required' => 'boolean',
+            'order' => 'nullable|integer',
+            'category' => 'nullable|string'
         ]);
 
         $field = RequiredField::create($data);
@@ -31,10 +33,19 @@ class RequiredFieldController extends Controller
         $data = $request->validate([
             'field_name' => 'sometimes|required|string',
             'field_type' => 'sometimes|required|string',
-            'is_required' => 'sometimes|boolean'
+            'is_required' => 'sometimes|boolean',
+            'order' => 'sometimes|integer',
+            'category' => 'sometimes|string'
         ]);
 
         $field->update($data);
         return response()->json($field);
+    }
+
+    public function destroy($id)
+    {
+        $field = RequiredField::findOrFail($id);
+        $field->delete();
+        return response()->json(null, 204);
     }
 }
