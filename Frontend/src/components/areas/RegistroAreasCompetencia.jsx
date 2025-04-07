@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import "../../assets/styles/RegistroAreasCompetencia.css";
+
 
 const initialAreaState = {
   nombre: '',
@@ -8,7 +10,6 @@ const initialAreaState = {
     intermedio: false,
     avanzado: false,
   },
-  // Sección de Datos Mínimos de Inscripción
   datosMinimos: {
     cedula: false,
     fechaNac: false,
@@ -17,24 +18,43 @@ const initialAreaState = {
   },
 };
 
-function RegistroAreasCompetencia() {
-  // Estado para la lista de áreas registradas
-  const [areas, setAreas] = useState([]);
-  // Estado para el formulario (nuevo registro o edición)
+const RegistroAreasCompetencia = () => {
+  const [areas, setAreas] = useState([
+    {
+      nombre: 'Danza Moderna',
+      costo: '30',
+      niveles: { basico: true, intermedio: true, avanzado: false },
+      datosMinimos: { cedula: true, fechaNac: true, tutor: false, emailColegio: true },
+    },
+    {
+      nombre: 'Folklore',
+      costo: '25',
+      niveles: { basico: true, intermedio: false, avanzado: true },
+      datosMinimos: { cedula: true, fechaNac: false, tutor: true, emailColegio: false },
+    },
+  ]);
+
   const [areaForm, setAreaForm] = useState(initialAreaState);
-  // Mensajes de error o confirmación
   const [mensaje, setMensaje] = useState('');
-  // Control para saber si se está editando
   const [editando, setEditando] = useState(false);
   const [indiceEdicion, setIndiceEdicion] = useState(null);
 
-  // Manejo del cambio en los inputs de texto para nombre y costo
+  // Cargar desde backend (si ya tienes uno)
+  useEffect(() => {
+    fetch('http://localhost:8000/api/areas')
+      .then(res => res.json())
+      .then(data => {
+        console.log('Desde el backend:', data);
+        // setAreas(data); // Descomenta esto cuando el backend esté funcionando
+      })
+      .catch(err => console.log('Error cargando backend:', err));
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setAreaForm({ ...areaForm, [name]: value });
   };
 
-  // Manejo de cambio en los checkboxes de niveles/categorías
   const handleNivelChange = (e) => {
     const { name, checked } = e.target;
     setAreaForm({
@@ -43,7 +63,6 @@ function RegistroAreasCompetencia() {
     });
   };
 
-  // Manejo de cambio en los checkboxes de Datos Mínimos
   const handleDatosMinimosChange = (e) => {
     const { name, checked } = e.target;
     setAreaForm({
@@ -52,31 +71,27 @@ function RegistroAreasCompetencia() {
     });
   };
 
-  // Validar formulario: se requiere nombre, costo > 0 y evitar duplicados para registros nuevos
   const validarFormulario = () => {
     if (!areaForm.nombre.trim() || !areaForm.costo.trim()) {
-      setMensaje('El nombre y el costo son obligatorios.');
+      setMensaje('Nombre y costo son obligatorios.');
       return false;
     }
     if (Number(areaForm.costo) <= 0) {
-      setMensaje('El costo debe ser un número positivo.');
+      setMensaje('El costo debe ser mayor a 0.');
       return false;
     }
-    // Evitar duplicados solo en nuevo registro
-    if (
-      !editando &&
-      areas.some(
-        (area) =>
-          area.nombre.trim().toLowerCase() === areaForm.nombre.trim().toLowerCase()
-      )
-    ) {
-      setMensaje('Ya existe un área registrada con ese nombre.');
+    const yaExiste = areas.some(
+      (area, i) =>
+        area.nombre.trim().toLowerCase() === areaForm.nombre.trim().toLowerCase() &&
+        (!editando || i !== indiceEdicion)
+    );
+    if (yaExiste) {
+      setMensaje('Ya existe un área con ese nombre.');
       return false;
     }
     return true;
   };
 
-  // Manejo del envío del formulario
   const handleSubmit = (e) => {
     e.preventDefault();
     setMensaje('');
@@ -84,43 +99,54 @@ function RegistroAreasCompetencia() {
     if (!validarFormulario()) return;
 
     if (editando) {
-      // Actualizar el área existente
       const nuevasAreas = [...areas];
-      nuevasAreas[indiceEdicion] = { ...areaForm };
+      nuevasAreas[indiceEdicion] = areaForm;
       setAreas(nuevasAreas);
-      setMensaje('Área actualizada con éxito.');
       setEditando(false);
       setIndiceEdicion(null);
+      setMensaje('Área actualizada correctamente.');
     } else {
-      // Agregar nueva área
-      setAreas([...areas, { ...areaForm }]);
-      setMensaje('Área registrada con éxito.');
+      setAreas([...areas, areaForm]);
+      setMensaje('Área registrada correctamente.');
+
+      // Simulación POST al backend
+      fetch('http://localhost:8000/api/areas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(areaForm),
+      })
+        .then(res => res.json())
+        .then(data => console.log('Registrado en backend:', data))
+        .catch(err => console.log('Error al guardar en backend:', err));
     }
-    // Reiniciar formulario
+
     setAreaForm(initialAreaState);
   };
 
-  // Eliminar un área
+  const handleEditar = (indice) => {
+    setAreaForm(areas[indice]);
+    setEditando(true);
+    setIndiceEdicion(indice);
+  };
+
   const handleEliminar = (indice) => {
     const nuevasAreas = areas.filter((_, i) => i !== indice);
     setAreas(nuevasAreas);
     setMensaje('Área eliminada.');
-  };
 
-  // Preparar el formulario para editar
-  const handleEditar = (indice) => {
-    setAreaForm({ ...areas[indice] });
-    setEditando(true);
-    setIndiceEdicion(indice);
-    setMensaje('');
+    // Simulación DELETE al backend
+    fetch(`http://localhost:8000/api/areas/${indice}`, {
+      method: 'DELETE',
+    })
+      .then(() => console.log('Eliminado en backend'))
+      .catch(err => console.log('Error al eliminar:', err));
   };
 
   return (
     <div style={{ padding: '20px' }}>
       <h2>Registro de Áreas de Competencia</h2>
-      {mensaje && <p style={{ color: 'blue' }}>{mensaje}</p>}
+      {mensaje && <p style={{ color: 'green' }}>{mensaje}</p>}
       <form onSubmit={handleSubmit}>
-        {/* Datos del área */}
         <div>
           <label>Nombre del Área:</label>
           <input
@@ -140,82 +166,45 @@ function RegistroAreasCompetencia() {
           />
         </div>
         <div>
-          <p>Niveles / Categorías:</p>
-          <label>
-            <input
-              type="checkbox"
-              name="basico"
-              checked={areaForm.niveles.basico}
-              onChange={handleNivelChange}
-            />
-            Básico
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="intermedio"
-              checked={areaForm.niveles.intermedio}
-              onChange={handleNivelChange}
-            />
-            Intermedio
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="avanzado"
-              checked={areaForm.niveles.avanzado}
-              onChange={handleNivelChange}
-            />
-            Avanzado
-          </label>
+          <p>Niveles:</p>
+          {['basico', 'intermedio', 'avanzado'].map((nivel) => (
+            <label key={nivel}>
+              <input
+                type="checkbox"
+                name={nivel}
+                checked={areaForm.niveles[nivel]}
+                onChange={handleNivelChange}
+              />
+              {nivel.charAt(0).toUpperCase() + nivel.slice(1)}
+            </label>
+          ))}
         </div>
-        {/* Sección de Datos Mínimos de Inscripción */}
         <div>
           <p>Datos Mínimos de Inscripción:</p>
-          <label>
-            <input
-              type="checkbox"
-              name="cedula"
-              checked={areaForm.datosMinimos.cedula}
-              onChange={handleDatosMinimosChange}
-            />
-            Cédula de Identidad
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="fechaNac"
-              checked={areaForm.datosMinimos.fechaNac}
-              onChange={handleDatosMinimosChange}
-            />
-            Fecha de Nacimiento
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="tutor"
-              checked={areaForm.datosMinimos.tutor}
-              onChange={handleDatosMinimosChange}
-            />
-            Tutor Responsable
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="emailColegio"
-              checked={areaForm.datosMinimos.emailColegio}
-              onChange={handleDatosMinimosChange}
-            />
-            Email del Colegio
-          </label>
+          {['cedula', 'fechaNac', 'tutor', 'emailColegio'].map((dato) => (
+            <label key={dato}>
+              <input
+                type="checkbox"
+                name={dato}
+                checked={areaForm.datosMinimos[dato]}
+                onChange={handleDatosMinimosChange}
+              />
+              {dato === 'cedula'
+                ? 'Cédula'
+                : dato === 'fechaNac'
+                ? 'Fecha Nac.'
+                : dato === 'tutor'
+                ? 'Tutor'
+                : 'Email Colegio'}
+            </label>
+          ))}
         </div>
-        <button type="submit">{editando ? 'Actualizar Área' : 'Registrar Área'}</button>
+        <button type="submit">{editando ? 'Actualizar' : 'Registrar'}</button>
       </form>
 
-      {/* Listado de áreas registradas */}
       <h3>Áreas Registradas</h3>
       {areas.length === 0 ? (
-        <p>No hay áreas registradas.</p>
+        <p>No hay áreas registradas aún.</p>
       ) : (
         <table border="1" cellPadding="5">
           <thead>
@@ -233,22 +222,24 @@ function RegistroAreasCompetencia() {
                 <td>{area.nombre}</td>
                 <td>{area.costo}</td>
                 <td>
-                  {Object.keys(area.niveles)
-                    .filter((nivel) => area.niveles[nivel])
-                    .join(', ') || 'Ninguno'}
+                  {Object.entries(area.niveles)
+                    .filter(([_, val]) => val)
+                    .map(([nivel]) => nivel)
+                    .join(', ')}
                 </td>
                 <td>
-                  {Object.keys(area.datosMinimos)
-                    .filter((dato) => area.datosMinimos[dato])
-                    .map((dato) => {
-                      // Formatear nombres para visualización
-                      if(dato === 'cedula') return 'Cédula';
-                      if(dato === 'fechaNac') return 'Fecha Nac.';
-                      if(dato === 'tutor') return 'Tutor';
-                      if(dato === 'emailColegio') return 'Email Colegio';
-                      return dato;
-                    })
-                    .join(', ') || 'Ninguno'}
+                  {Object.entries(area.datosMinimos)
+                    .filter(([_, val]) => val)
+                    .map(([dato]) =>
+                      dato === 'cedula'
+                        ? 'Cédula'
+                        : dato === 'fechaNac'
+                        ? 'Fecha Nac.'
+                        : dato === 'tutor'
+                        ? 'Tutor'
+                        : 'Email Colegio'
+                    )
+                    .join(', ')}
                 </td>
                 <td>
                   <button onClick={() => handleEditar(i)}>Editar</button>
@@ -261,6 +252,6 @@ function RegistroAreasCompetencia() {
       )}
     </div>
   );
-}
+};
 
 export default RegistroAreasCompetencia;

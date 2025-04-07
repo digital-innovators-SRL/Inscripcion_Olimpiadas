@@ -1,0 +1,75 @@
+.contenedor-registro {
+    background-color: #f5f0e7;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
+    margin: auto;
+  }
+  
+  .titulo-seccion {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  .formulario-area {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .input-area,
+  .input-costo {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: white;
+    width: 200px;
+  }
+  
+  .boton-agregar {
+    background-color: #a28d7c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+  }
+  
+  .boton-agregar:hover {
+    background-color: #8c7663;
+  }
+  
+  .area-lista {
+    margin-top: 1rem;
+  }
+  
+  .area-item {
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+  }
+  
+  .area-nombre {
+    font-weight: bold;
+    color: #444;
+  }
+  
+  .niveles {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .nivel {
+    background-color: #e0dcd7;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+  }
+  
