@@ -35,7 +35,7 @@ function ReporteAreas() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">Reporte de Áreas de Competencia</h2>
-
+      
       {/* Mostrar estado de carga */}
       {cargando ? (
         <p className="text-gray-500">Cargando datos...</p>

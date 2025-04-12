@@ -1,0 +1,343 @@
+/* AdminStyles.css */
+
+/* General Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+  }
+  
+  /* Admin Container */
+  .admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Admin Header */
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .admin-header h1 {
+    font-size: 24px;
+    color: #2a3f54;
+  }
+  
+  .admin-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .admin-actions button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .edit-button {
+    background-color: #fff;
+    border: 1px solid #007bff;
+    color: #007bff;
+  }
+  
+  .edit-button:hover {
+    background-color: #f0f7ff;
+  }
+  
+  .edit-button.active {
+    background-color: #dc3545;
+    border: 1px solid #dc3545;
+    color: white;
+  }
+  
+  .edit-button.active:hover {
+    background-color: #c82333;
+  }
+  
+  .save-button {
+    background-color: #28a745;
+    border: 1px solid #28a745;
+    color: white;
+  }
+  
+  .save-button:hover {
+    background-color: #218838;
+  }
+  
+  /* Success Message */
+  .success-message {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid #c3e6cb;
+  }
+  
+  /* Admin Content */
+  .admin-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  
+  /* Config Section */
+  .config-section {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+  
+  .config-section h2 {
+    color: #2a3f54;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  /* Filter Container */
+  .filter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .filter-container label {
+    font-weight: 500;
+  }
+  
+  .filter-container select {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+  }
+  
+  /* Costs Table */
+  .costs-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+  
+  .costs-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .costs-table th,
+  .costs-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .costs-table th {
+    background-color: #f8f9fa;
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  .costs-table tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .inactive-row {
+    background-color: #f8f9fa;
+    color: #868e96;
+  }
+  
+  /* Status Indicator */
+  .status-indicator {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .status-indicator.active {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .status-indicator.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  /* Status Badge */
+  .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .status-badge.active {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .status-badge.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  /* Toggle Button */
+  .toggle-button {
+    padding: 5px 10px;
+    border-radius: 3px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .toggle-button.active {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .toggle-button.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  .toggle-button:hover {
+    opacity: 0.8;
+  }
+  
+  /* Cost Input and Display */
+  .cost-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: right;
+  }
+  
+  .cost-display {
+    display: block;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+  }
+  
+  /* Add New Container */
+  .add-new-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  .add-area,
+  .add-level {
+    flex: 1;
+  }
+  
+  .add-area h3,
+  .add-level h3,
+  .add-discount h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #495057;
+  }
+  
+  .input-group {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .input-group input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .input-group button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .input-group button:hover {
+    background-color: #0069d9;
+  }
+  
+  /* Discounts Section */
+  .discounts-section {
+    margin-top: 20px;
+  }
+  
+  .discounts-container {
+    margin-bottom: 20px;
+  }
+  
+  .discounts-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .discounts-table th,
+  .discounts-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .discounts-table th {
+    background-color: #f8f9fa;
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  /* Add Discount */
+  .discount-inputs {
+    display: flex;
+    gap: 10px;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .admin-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .add-new-container {
+      flex-direction: column;
+    }
+    
+    .input-group {
+      flex-direction: column;
+    }
+    
+    .discount-inputs {
+      flex-direction: column;
+    }
+  }

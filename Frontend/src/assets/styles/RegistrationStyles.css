@@ -1,0 +1,423 @@
+/* RegistrationStyles.css */
+/* General Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+  }
+  .registration-container {
+    max-width: 1000px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  /* Header and Progress Bar */
+  .registration-header {
+    background-color: #2a3f54;
+    color: white;
+    padding: 25px 30px;
+  }
+  .registration-header h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .progress-container {
+    margin-top: 15px;
+  }
+  .progress-bar {
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 15px;
+  }
+  .progress-fill {
+    height: 100%;
+    background-color: #26b99a;
+    transition: width 0.3s ease;
+  }
+  .step-indicators {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+  }
+  .step-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    z-index: 2;
+    transition: all 0.3s ease;
+  }
+  .step-indicator.active {
+    background-color: #26b99a;
+  }
+  .step-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  .step-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    width: 25%;
+  }
+  /* Form Styles */
+  .registration-form {
+    padding: 30px;
+  }
+  .form-step {
+    animation: fadeIn 0.5s;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .form-step h2 {
+    color: #2a3f54;
+    margin-bottom: 25px;
+    font-weight: 500;
+    font-size: 24px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  .form-row {
+    display: flex;
+    margin-bottom: 20px;
+    gap: 20px;
+  }
+  .form-group {
+    flex: 1;
+    position: relative;
+  }
+  .form-group.full-width {
+    width: 100%;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #26b99a;
+    box-shadow: 0 0 0 2px rgba(38, 185, 154, 0.2);
+  }
+  .form-group input.error,
+  .form-group select.error {
+    border-color: #e74c3c;
+  }
+  .error-message {
+    color: #e74c3c;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+  }
+  /* Course Details */
+  .course-details {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  .course-details h3 {
+    color: #2a3f54;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .course-info-box {
+    background-color: white;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  .course-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f1f1;
+  }
+  .course-info-row:last-child {
+    border-bottom: none;
+  }
+  .info-label {
+    font-weight: 500;
+    color: #666;
+  }
+  .info-value {
+    color: #333;
+  }
+  .info-price {
+    font-weight: bold;
+    color: #26b99a;
+    font-size: 18px;
+  }
+  .no-course-selected {
+    text-align: center;
+    color: #888;
+    padding: 20px 0;
+  }
+  /* Form Navigation Buttons */
+  .form-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  .back-btn,
+  .next-btn,
+  .submit-btn,
+  .primary-btn {
+    padding: 12px 25px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+  }
+  .back-btn {
+    background-color: #eee;
+    color: #555;
+  }
+  .back-btn:hover {
+    background-color: #ddd;
+  }
+  .next-btn {
+    background-color: #3498db;
+    color: white;
+  }
+  .next-btn:hover {
+    background-color: #2980b9;
+  }
+  .submit-btn {
+    background-color: #26b99a;
+    color: white;
+  }
+  .submit-btn:hover {
+    background-color: #219d84;
+  }
+  .submit-btn:disabled {
+    background-color: #95e0d3;
+    cursor: not-allowed;
+  }
+  .primary-btn {
+    background-color: #26b99a;
+    color: white;
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    margin: 20px auto 0;
+    text-align: center;
+  }
+  .primary-btn:hover {
+    background-color: #219d84;
+  }
+  /* Terms and Conditions */
+  .terms-container {
+    margin-top: 20px;
+  }
+  .checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+    padding-left: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+  }
+  .checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+  }
+  .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 20px;
+    width: 20px;
+    background-color: #eee;
+    border-radius: 3px;
+  }
+  .checkbox-container:hover input ~ .checkmark {
+    background-color: #ddd;
+  }
+  .checkbox-container input:checked ~ .checkmark {
+    background-color: #26b99a;
+  }
+  .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+  }
+  .checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+  }
+  .checkbox-container .checkmark:after {
+    left: 7px;
+    top: 3px;
+    width: 6px;
+    height: 11px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .error-checkbox ~ .checkmark {
+    border: 1px solid #e74c3c;
+  }
+  .checkbox-container a {
+    color: #3498db;
+    text-decoration: none;
+  }
+  .checkbox-container a:hover {
+    text-decoration: underline;
+  }
+  /* Form Summary */
+  .form-summary {
+    margin-top: 30px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 20px;
+  }
+  .form-summary h3 {
+    color: #2a3f54;
+    margin-bottom: 15px;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .summary-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .summary-section {
+    flex: 1;
+    min-width: 300px;
+    background-color: white;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  .summary-section h4 {
+    color: #3498db;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 16px;
+  }
+  .summary-section p {
+    margin-bottom: 8px;
+  }
+  .total-cost {
+    font-weight: bold;
+    color: #26b99a;
+    font-size: 18px;
+  }
+  /* Success Page */
+  .success-container {
+    padding: 40px;
+    text-align: center;
+  }
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    background-color: #26b99a;
+    color: white;
+    font-size: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+  .success-container h1 {
+    color: #2a3f54;
+    margin-bottom: 15px;
+    font-size: 28px;
+  }
+  .success-container p {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
+  }
+  .next-steps {
+    margin-top: 30px;
+    text-align: left;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 6px;
+  }
+  .next-steps h3 {
+    color: #2a3f54;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  .next-steps ol {
+    margin-left: 20px;
+  }
+  .next-steps li {
+    margin-bottom: 8px;
+    color: #555;
+  }
+  /* Responsive Styles */
+  @media (max-width: 768px) {
+    .registration-container {
+      margin: 10px;
+      border-radius: 0;
+    }
+    .registration-header {
+      padding: 20px;
+    }
+    .registration-form {
+      padding: 20px;
+    }
+    .form-row {
+      flex-direction: column;
+      gap: 15px;
+    }
+    .summary-container {
+      flex-direction: column;
+    }
+    .summary-section {
+      min-width: auto;
+    }
+    .step-label {
+      font-size: 10px;
+    }
+  }
