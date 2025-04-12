@@ -1,0 +1,103 @@
+/* Estilos generales */
+.reporte-container {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  
+  ul {
+    margin-left: 1.5rem;
+    padding-left: 0;
+  }
+  
+  ul li {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+  }
+  
+  .text-gray-500 {
+    color: #6b7280;
+  }
+  
+  .text-lg {
+    font-size: 1.125rem;
+  }
+  
+  .text-center {
+    text-align: center;
+  }
+  
+  /* Tabla */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+  }
+  
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 8px 16px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  
+  th {
+    background-color: #f3f4f6;
+    font-weight: bold;
+  }
+  
+  td {
+    background-color: #fff;
+  }
+  
+  table tbody tr:hover {
+    background-color: #f9fafb;
+  }
+  
+  table .no-data {
+    text-align: center;
+    font-style: italic;
+  }
+  
+  /* Botones */
+  .boton-reporte {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 1rem;
+    transition: background-color 0.3s ease;
+  }
+  
+  .boton-reporte:hover {
+    background-color: #45a049;
+  }
+  
+  .boton-reporte:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  /* Cargando */
+  .cargando {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #6b7280;
+  }
+  
