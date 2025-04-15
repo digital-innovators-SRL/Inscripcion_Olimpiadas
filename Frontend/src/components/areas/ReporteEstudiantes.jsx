@@ -4,42 +4,17 @@ function ReporteEstudiantes() {
   const [datosEstudiantes, setDatosEstudiantes] = useState([]);
   const [cargando, setCargando] = useState(true);
 
-  // Función para simular la obtención de datos
+  // Función para obtener datos del backend
   const obtenerDatos = async () => {
     setCargando(true);
     try {
-      // Aquí deberías realizar la solicitud al backend para obtener los datos reales
-      // Por ejemplo:
-      // const response = await fetch('URL_DEL_BACKEND/estudiantes');
-      // const data = await response.json();
+      // Reemplaza la URL del backend con la correcta
+      const response = await fetch('http://TU_BACKEND_URL/estudiantes'); // Cambia 'TU_BACKEND_URL' con la URL de tu backend
+      const data = await response.json();
 
-      // Simulando los datos (reemplaza con tus datos reales)
-      const data = [
-        {
-          nombre: 'Juan Pérez',
-          area: 'Matemáticas',
-          fechaInscripcion: '2025-04-01',
-          estadoInscripcion: 'Confirmada',
-        },
-        {
-          nombre: 'María López',
-          area: 'Física',
-          fechaInscripcion: '2025-04-02',
-          estadoInscripcion: 'Pendiente',
-        },
-        {
-          nombre: 'Luis Rodríguez',
-          area: 'Química',
-          fechaInscripcion: '2025-04-03',
-          estadoInscripcion: 'Confirmada',
-        },
-      ];
-
-      // Simula el retraso de una respuesta de backend
-      setTimeout(() => {
-        setDatosEstudiantes(data);
-        setCargando(false);
-      }, 1000);
+      // Si la respuesta es exitosa, actualiza los datos de estudiantes
+      setDatosEstudiantes(data);
+      setCargando(false);
     } catch (error) {
       console.error('Error al obtener los estudiantes:', error);
       setCargando(false);

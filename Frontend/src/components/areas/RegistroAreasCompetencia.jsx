@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import "../../assets/styles/RegistroAreasCompetencia.css";
 
-
 const initialAreaState = {
   nombre: '',
   costo: '',
@@ -19,35 +18,21 @@ const initialAreaState = {
 };
 
 const RegistroAreasCompetencia = () => {
-  const [areas, setAreas] = useState([
-    {
-      nombre: 'Danza Moderna',
-      costo: '30',
-      niveles: { basico: true, intermedio: true, avanzado: false },
-      datosMinimos: { cedula: true, fechaNac: true, tutor: false, emailColegio: true },
-    },
-    {
-      nombre: 'Folklore',
-      costo: '25',
-      niveles: { basico: true, intermedio: false, avanzado: true },
-      datosMinimos: { cedula: true, fechaNac: false, tutor: true, emailColegio: false },
-    },
-  ]);
-
+  const [areas, setAreas] = useState([]);
   const [areaForm, setAreaForm] = useState(initialAreaState);
   const [mensaje, setMensaje] = useState('');
   const [editando, setEditando] = useState(false);
   const [indiceEdicion, setIndiceEdicion] = useState(null);
 
-  // Cargar desde backend (si ya tienes uno)
+  // Cargar desde backend
   useEffect(() => {
     fetch('http://localhost:8000/api/areas')
       .then(res => res.json())
       .then(data => {
         console.log('Desde el backend:', data);
-        // setAreas(data); // Descomenta esto cuando el backend esté funcionando
+        setAreas(data);
       })
-      .catch(err => console.log('Error cargando backend:', err));
+      .catch(err => console.log('Error cargando desde el backend:', err));
   }, []);
 
   const handleInputChange = (e) => {
@@ -105,18 +90,28 @@ const RegistroAreasCompetencia = () => {
       setEditando(false);
       setIndiceEdicion(null);
       setMensaje('Área actualizada correctamente.');
-    } else {
-      setAreas([...areas, areaForm]);
-      setMensaje('Área registrada correctamente.');
 
-      // Simulación POST al backend
+      // Llamada PUT al backend para actualizar el área
+      fetch(`http://localhost:8000/api/areas/${areas[indiceEdicion].id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(areaForm),
+      })
+        .then(res => res.json())
+        .then(data => console.log('Área actualizada en backend:', data))
+        .catch(err => console.log('Error al actualizar en backend:', err));
+    } else {
+      // Llamada POST al backend para registrar un nuevo área
       fetch('http://localhost:8000/api/areas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(areaForm),
       })
         .then(res => res.json())
-        .then(data => console.log('Registrado en backend:', data))
+        .then(data => {
+          setAreas([...areas, data]); // Asumiendo que el backend devuelve el área registrada
+          setMensaje('Área registrada correctamente.');
+        })
         .catch(err => console.log('Error al guardar en backend:', err));
     }
 
@@ -130,16 +125,18 @@ const RegistroAreasCompetencia = () => {
   };
 
   const handleEliminar = (indice) => {
-    const nuevasAreas = areas.filter((_, i) => i !== indice);
-    setAreas(nuevasAreas);
-    setMensaje('Área eliminada.');
+    const areaId = areas[indice].id;
 
-    // Simulación DELETE al backend
-    fetch(`http://localhost:8000/api/areas/${indice}`, {
+    // Llamada DELETE al backend para eliminar el área
+    fetch(`http://localhost:8000/api/areas/${areaId}`, {
       method: 'DELETE',
     })
-      .then(() => console.log('Eliminado en backend'))
-      .catch(err => console.log('Error al eliminar:', err));
+      .then(() => {
+        const nuevasAreas = areas.filter((_, i) => i !== indice);
+        setAreas(nuevasAreas);
+        setMensaje('Área eliminada correctamente.');
+      })
+      .catch(err => console.log('Error al eliminar en backend:', err));
   };
 
   return (

@@ -4,7 +4,7 @@ import 'react-calendar/dist/Calendar.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function FormularioInscripcion() {
-  const LIMITE_AREAS = 3; // ← Aquí puedes modificar el límite en el futuro
+  const LIMITE_AREAS = 3;
 
   const [fechaNacimiento, setFechaNacimiento] = useState(null);
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
@@ -17,13 +17,14 @@ function FormularioInscripcion() {
 
   useEffect(() => {
     async function fetchAreas() {
-      const dataSimulada = [
-        { nombre: 'Matemáticas' },
-        { nombre: 'Robótica' },
-        { nombre: 'Danza' },
-        { nombre: 'Programación' }
-      ];
-      setAreasDisponibles(dataSimulada);
+      try {
+        const response = await fetch('http://localhost:3000/api/areas'); // <-- ajusta la URL según tu backend
+        const data = await response.json();
+        setAreasDisponibles(data);
+      } catch (error) {
+        console.error('Error al obtener áreas:', error);
+        alert('❌ Error al cargar las áreas de competencia.');
+      }
     }
 
     fetchAreas();
@@ -77,7 +78,18 @@ function FormularioInscripcion() {
     };
 
     try {
-      console.log('Datos enviados al backend (simulado):', payload);
+      const response = await fetch('http://localhost:3000/api/inscripciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+
+      const resultado = await response.json();
+      console.log('Respuesta del backend:', resultado);
       alert('✅ Inscripción enviada con éxito');
     } catch (error) {
       console.error('Error al enviar inscripción:', error);
@@ -95,13 +107,21 @@ function FormularioInscripcion() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm">Nombre del estudiante</label>
-              <input type="text" className="w-full border rounded px-3 py-2" value={nombreEstudiante}
-                onChange={(e) => setNombreEstudiante(e.target.value)} />
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={nombreEstudiante}
+                onChange={(e) => setNombreEstudiante(e.target.value)}
+              />
             </div>
             <div>
               <label className="block text-sm">Cédula de Identidad</label>
-              <input type="text" className="w-full border rounded px-3 py-2" value={ciEstudiante}
-                onChange={(e) => setCiEstudiante(e.target.value)} />
+              <input
+                type="text"
+                className="w-full border rounded px-3 py-2"
+                value={ciEstudiante}
+                onChange={(e) => setCiEstudiante(e.target.value)}
+              />
             </div>
           </div>
 
@@ -144,14 +164,13 @@ function FormularioInscripcion() {
                   >
                     <option value="">Seleccionar área</option>
                     {areasDisponibles.map((a) => (
-                      <option key={a.nombre} value={a.nombre}>{a.nombre}</option>
+                      <option key={a.nombre} value={a.nombre}>
+                        {a.nombre}
+                      </option>
                     ))}
                   </select>
                   {areasSeleccionadas.length > 1 && (
-                    <button
-                      onClick={() => quitarArea(index)}
-                      className="text-red-600 text-sm"
-                    >
+                    <button onClick={() => quitarArea(index)} className="text-red-600 text-sm">
                       Quitar
                     </button>
                   )}
@@ -161,9 +180,7 @@ function FormularioInscripcion() {
             <button onClick={añadirArea} className="text-blue-600 text-sm mt-2">
               + Añadir Área
             </button>
-            {mensajeErrorArea && (
-              <p className="text-red-600 text-sm mt-1">{mensajeErrorArea}</p>
-            )}
+            {mensajeErrorArea && <p className="text-red-600 text-sm mt-1">{mensajeErrorArea}</p>}
           </div>
 
           {/* Tutores */}
@@ -206,21 +223,18 @@ function FormularioInscripcion() {
                   )}
                 </div>
               ))}
+              <button onClick={añadirTutor} className="text-blue-600 text-sm mt-2">
+                + Añadir Tutor
+              </button>
             </div>
-            <button onClick={añadirTutor} className="text-blue-600 text-sm mt-2">
-              + Añadir Tutor
-            </button>
           </div>
 
-          {/* Enviar */}
-          <div className="text-right">
-            <button
-              onClick={handleSubmit}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            >
-              Enviar Inscripción
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+          >
+            Enviar Inscripción
+          </button>
         </div>
       </main>
     </div>
