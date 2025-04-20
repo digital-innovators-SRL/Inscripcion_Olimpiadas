@@ -2,6 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Tutor\TutorDashboardController;
+use App\Http\Controllers\Organizador\OrganizadorDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,10 +18,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+
+
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::middleware(['jwt.exceptions', 'auth:api'])->group(function () {
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
-
-Route::get('/users', [App\Http\Controllers\UserController::class, 'index']);
-
+Route::middleware(['auth:api', 'role:Administrador'])->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
+Route::middleware(['auth:api', 'role:Tutor'])->get('/tutor/dashboard', [TutorDashboardController::class, 'index']);
+Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
