@@ -10,18 +10,20 @@ import {
 } from 'lucide-react'
 
 const ConfigurationPage = () => {
-  const [areas, setAreas] = useState([
-    {
-      id: '1',
-      name: 'Matemáticas',
-      cost: 350,
-      levels: ['Básico', 'Intermedio', 'Avanzado'],
-      isActive: true,
-      maxStudents: 50,
-      description: 'Competencia de matemáticas para todos los niveles',
-    },
-  ])
+  const [areas, setAreas] = useState([])
 
+  useEffect(() => {
+    fetch('http://localhost:8000/api/areas') // Cambia esto si tu endpoint es diferente
+      .then((response) => response.json())
+      .then((data) => {
+        setAreas(data)
+      })
+      .catch((error) => {
+        console.error('Error al obtener áreas:', error)
+      })
+  }, [])
+
+  
   const [newArea, setNewArea] = useState({
     name: '',
     cost: '',
@@ -54,19 +56,32 @@ const ConfigurationPage = () => {
 
   const addArea = () => {
     if (!validateArea()) return
-    const newAreaData = {
-      id: Date.now().toString(),
-      name: newArea.name,
-      cost: Number(newArea.cost),
-      levels: [],
-      isActive: true,
-      maxStudents: Number(newArea.maxStudents) || undefined,
-      description: newArea.description || undefined,
-    }
-    setAreas([...areas, newAreaData])
-    setNewArea({ name: '', cost: '', level: '', maxStudents: '', description: '' })
-    showSuccessMessage()
+  
+    fetch('http://localhost:8000/api/areas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: newArea.name,
+        cost: newArea.cost,
+        level: newArea.level, // si guardas solo uno
+        max_students: newArea.maxStudents,
+        description: newArea.description,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // Actualiza el estado con la nueva área que devolvió el backend
+        setAreas([...areas, data])
+        setNewArea({ name: '', cost: '', level: '', maxStudents: '', description: '' })
+        showSuccessMessage()
+      })
+      .catch((error) => {
+        console.error('Error al insertar área en el backend:', error)
+      })
   }
+  
 
   const editArea = (areaId) => {
     const areaToEdit = areas.find((area) => area.id === areaId)

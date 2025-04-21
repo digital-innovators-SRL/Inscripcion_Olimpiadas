@@ -26,12 +26,18 @@ const RegistrationPage = () => {
   const [availableAreas, setAvailableAreas] = useState([])
 
   useEffect(() => {
-    setAvailableAreas([
-      { id: '1', name: 'Matemáticas', level: 'Básico', cost: 350 },
-      { id: '2', name: 'Matemáticas', level: 'Intermedio', cost: 350 },
-      { id: '3', name: 'Física', level: 'Básico', cost: 350 },
-      { id: '4', name: 'Química', level: 'Avanzado', cost: 350 },
-    ])
+    const fetchAreas = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/areas') // Ajusta el URL según tu backend
+        if (!response.ok) throw new Error('Error al obtener áreas')
+        const data = await response.json()
+        setAvailableAreas(data)
+      } catch (error) {
+        console.error('Error al obtener áreas disponibles:', error)
+      }
+    }
+  
+    fetchAreas()
   }, [])
 
   useEffect(() => {
@@ -63,12 +69,35 @@ const RegistrationPage = () => {
     return newErrors.length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validateForm()) return
-    setShowSuccess(true)
-    setTimeout(() => navigate('/payment-slip'), 1500)
+  
+    try {
+      const response = await fetch('http://localhost:8000/api/estudiantes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Agrega el token CSRF o autorización si Laravel lo requiere
+        },
+        body: JSON.stringify(student),
+      })
+  
+      if (!response.ok) {
+        const data = await response.json()
+        console.error('Error en la inserción:', data)
+        alert('Error al guardar la inscripción')
+        return
+      }
+  
+      setShowSuccess(true)
+      setTimeout(() => navigate('/payment-slip'), 1500)
+    } catch (error) {
+      console.error('Error de red:', error)
+      alert('No se pudo conectar con el servidor')
+    }
   }
+  
 
   const handleAddArea = () => {
     if (student.areas.length >= 2) {
