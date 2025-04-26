@@ -1,10 +1,12 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
-import { FileTextIcon, DownloadIcon } from 'lucide-react'
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "../../components/Sidebar";
+import { FileTextIcon, DownloadIcon } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 const PaymentSlipPage = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="flex min-h-screen bg-[#F2EEE3]">
@@ -13,7 +15,7 @@ const PaymentSlipPage = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Boleta de Pago</h1>
           <div className="flex items-center">
-            <span className="mr-4">Admin User</span>
+            <span className="mr-4">{user?.role || "Usuario"}</span>
             <div className="w-10 h-10 bg-[#A9B2AC] rounded-full"></div>
           </div>
         </div>
@@ -43,7 +45,9 @@ const PaymentSlipPage = () => {
                 <p className="font-medium text-lg">Bs. 350.00</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Código de orden de pago:</p>
+                <p className="text-sm text-gray-500">
+                  Código de orden de pago:
+                </p>
                 <p className="font-medium text-lg">ORD-2023-0587</p>
               </div>
               <div className="col-span-2">
@@ -55,14 +59,14 @@ const PaymentSlipPage = () => {
 
           <div className="flex justify-between">
             <button
-              onClick={() => navigate('/registration')}
+              onClick={() => navigate("/registration")}
               className="border border-[#D9D9D9] text-[#4F4F4F] py-2 px-6 rounded-md hover:bg-[#F2EEE3] transition-colors"
             >
               Volver
             </button>
             <div className="space-x-4">
               <button
-                onClick={() => navigate('/upload-proof')}
+                onClick={() => navigate("/upload-proof")}
                 className="bg-[#A9B2AC] text-white py-2 px-6 rounded-md hover:bg-opacity-90 transition-colors"
               >
                 Subir Comprobante
@@ -76,7 +80,7 @@ const PaymentSlipPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default PaymentSlipPage
+export default PaymentSlipPage;

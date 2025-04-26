@@ -1,5 +1,5 @@
-import DashboardPage from '../pages/DashboardPage'
-import ReportsPage from '../pages/ReportsPage'
+import DashboardPage from '../pages/Organizador/DashboardPage'
+import ReportsPage from '../pages/Organizador/ReportsPage'
 import ProfilePage from '../pages/ProfilePage'
 
 export default [

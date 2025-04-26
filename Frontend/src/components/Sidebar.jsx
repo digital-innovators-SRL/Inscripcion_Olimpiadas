@@ -1,5 +1,5 @@
-import React from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   HomeIcon,
   ClipboardIcon,
@@ -9,78 +9,83 @@ import {
   SettingsIcon,
   UsersIcon,
   LogOutIcon,
-} from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
+} from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 const Sidebar = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const baseItems = [
     {
-      path: '/dashboard',
+      path: "/dashboard",
       icon: <HomeIcon size={20} />,
-      label: 'Inicio',
-    }
-  ]
+      label: "Inicio",
+    },
+  ];
 
   const adminItems = [
     {
-      path: '/configuration',
+      path: "/configuration",
       icon: <SettingsIcon size={20} />,
-      label: 'Configuración',
+      label: "Configuración",
     },
     {
-      path: '/users',
+      path: "/users",
       icon: <UsersIcon size={20} />,
-      label: 'Usuarios',
+      label: "Usuarios",
     },
-  ]
+  ];
 
   const tutorItems = [
     {
-      path: '/registration',
+      path: "/registration",
       icon: <ClipboardIcon size={20} />,
-      label: 'Inscripción',
+      label: "Inscripción",
     },
     {
-      path: '/payment-slip',
-      icon: <CreditCardIcon size={20} />,
-      label: 'Pagos',
+      path: "/registration2",
+      icon: <ClipboardIcon size={20} />,
+      label: "Inscripción2",
     },
-  ]
+    {
+      path: "/payment-slip",
+      icon: <CreditCardIcon size={20} />,
+      label: "Pagos",
+    },
+  ];
 
   const organizadorItems = [
     {
-      path: '/reports',
+      path: "/reports",
       icon: <BarChartIcon size={20} />,
-      label: 'Reportes',
-    }
-  ]
+      label: "Reportes",
+    },
+  ];
 
   const profileItem = {
-    path: '/profile',
+    path: "/profile",
     icon: <UserIcon size={20} />,
-    label: 'Perfil',
+    label: "Perfil",
+  };
+
+  let roleItems = [];
+
+  if (user?.role === "Administrador") {
+    roleItems = adminItems;
+  } else if (user?.role === "Tutor") {
+    roleItems = tutorItems;
+  } else if (user?.role === "Organizador") {
+    roleItems = organizadorItems;
   }
 
-  let roleItems = []
-
-  if (user?.role === 'Administrador') {
-    roleItems = adminItems
-  } else if (user?.role === 'Tutor') {
-    roleItems = tutorItems
-  } else if (user?.role === 'Organizador') {
-    roleItems = organizadorItems
-  }
-
-  const menuItems = [...baseItems, ...roleItems, profileItem]
+  const menuItems = [...baseItems, ...roleItems, profileItem];
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+    logout();
+    navigate("/login");
+  };
 
   return (
     <div className="w-64 h-full bg-white shadow-lg fixed left-0 top-0 p-4 flex flex-col justify-between">
@@ -98,8 +103,8 @@ const Sidebar = () => {
                   to={item.path}
                   className={`flex items-center p-3 rounded-md transition-colors ${
                     location.pathname === item.path
-                      ? 'bg-[#C8B7A6] text-white'
-                      : 'hover:bg-[#F2EEE3]'
+                      ? "bg-[#C8B7A6] text-white"
+                      : "hover:bg-[#F2EEE3]"
                   }`}
                 >
                   <span className="mr-3">{item.icon}</span>
@@ -120,7 +125,7 @@ const Sidebar = () => {
         Salir
       </button>
     </div>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;
