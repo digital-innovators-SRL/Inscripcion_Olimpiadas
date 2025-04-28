@@ -69,35 +69,49 @@ const RegistrationPage = () => {
     return newErrors.length === 0
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!validateForm()) return
+  const handleSubmit = (e) => {
+    e.preventDefault();
   
-    try {
-      const response = await fetch('http://localhost:8000/api/estudiantes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Agrega el token CSRF o autorización si Laravel lo requiere
-        },
-        body: JSON.stringify(student),
-      })
+    // Primero, validamos el formulario
+    if (!validateForm()) return;
   
-      if (!response.ok) {
-        const data = await response.json()
-        console.error('Error en la inserción:', data)
-        alert('Error al guardar la inscripción')
-        return
-      }
+    // Preparamos la inscripción
+    const inscripcion = {
+      nombre: student.name,
+      ci: student.documentId,
+      areas: student.areas.map(area => ({ nombre: area.name, nivel: area.level, costo: area.cost })),
+      montoTotal: totalCost,
+      fechaLimitePago: calcularFechaLimite(5), // 5 días después
+      codigoOrdenPago: generarCodigoOrdenPago(student.documentId),
+    };
   
-      setShowSuccess(true)
-      setTimeout(() => navigate('/payment-slip'), 1500)
-    } catch (error) {
-      console.error('Error de red:', error)
-      alert('No se pudo conectar con el servidor')
-    }
-  }
+    // Simulamos el envío al backend (descomentando esta parte para enviar los datos)
+    // fetch('/api/inscripciones', { method: 'POST', body: JSON.stringify(inscripcion) })
+    //   .then(response => response.json())
+    //   .then(data => {
+    //     console.log('Inscripción enviada:', data);
+    //   })
+    //   .catch(error => {
+    //     console.error('Error al enviar la inscripción:', error);
+    //   });
   
+    // Luego, navegamos a la página de la boleta de pago y pasamos los datos
+    navigate('/payment-slip', { state: { estudiantes: [inscripcion] } });
+  };
+  
+  
+    // Función para generar una fecha límite de pago
+  const calcularFechaLimite = (diasExtra) => {
+    const fechaActual = new Date();
+    fechaActual.setDate(fechaActual.getDate() + diasExtra);
+    return fechaActual.toISOString().split('T')[0]; // formato YYYY-MM-DD
+  };
+
+  // Función para generar código de orden de pago único
+  const generarCodigoOrdenPago = (documentId) => {
+    const timestamp = Date.now().toString().slice(-6); // últimos 6 dígitos del timestamp
+    return `OP-${documentId}-${timestamp}`;
+  };
 
   const handleAddArea = () => {
     if (student.areas.length >= 2) {

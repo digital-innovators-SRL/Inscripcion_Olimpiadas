@@ -1,10 +1,43 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import { FileTextIcon, DownloadIcon } from 'lucide-react'
 
 const PaymentSlipPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Obtener los datos del estudiante desde el state que se pasó en el navigate
+  const { estudiantes } = location.state || {}
+
+  // Si no hay estudiantes en el state o el array está vacío, mostramos un mensaje de error
+  if (!estudiantes || estudiantes.length === 0) {
+    return (
+      <div className="flex min-h-screen bg-[#F2EEE3]">
+        <Sidebar />
+        <div className="ml-64 flex-grow p-8">
+          <h1 className="text-2xl font-bold">Error</h1>
+          <p>No se encontraron datos de la inscripción.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Aquí estamos tomando solo el primer estudiante
+  const estudiante = estudiantes[0] 
+
+  // Verificación adicional para asegurarnos de que los datos existan
+  if (!estudiante || !estudiante.nombre || !estudiante.ci) {
+    return (
+      <div className="flex min-h-screen bg-[#F2EEE3]">
+        <Sidebar />
+        <div className="ml-64 flex-grow p-8">
+          <h1 className="text-2xl font-bold">Error</h1>
+          <p>Faltan datos importantes del estudiante para generar la boleta de pago.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen bg-[#F2EEE3]">
@@ -28,27 +61,35 @@ const PaymentSlipPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500">Nombre del estudiante:</p>
-                <p className="font-medium">Juan Pérez</p>
+                <p className="font-medium">{estudiante.nombre}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Cédula de Identidad:</p>
-                <p className="font-medium">12345678</p>
+                <p className="font-medium">{estudiante.ci}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-sm text-gray-500">Áreas inscritas:</p>
-                <p className="font-medium">Matemáticas - Nivel Avanzado</p>
+                {estudiante.areas && estudiante.areas.length > 0 ? (
+                  estudiante.areas.map((area, index) => (
+                    <p key={index} className="font-medium">
+                      {area.nombre} - {area.nivel}
+                    </p>
+                  ))
+                ) : (
+                  <p className="font-medium text-red-500">No se encontraron áreas inscritas.</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-gray-500">Monto total a pagar:</p>
-                <p className="font-medium text-lg">Bs. 350.00</p>
+                <p className="font-medium text-lg">Bs. {estudiante.montoTotal}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Código de orden de pago:</p>
-                <p className="font-medium text-lg">ORD-2023-0587</p>
+                <p className="font-medium text-lg">{estudiante.codigoOrdenPago}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-sm text-gray-500">Fecha límite de pago:</p>
-                <p className="font-medium">30/11/2023</p>
+                <p className="font-medium">{estudiante.fechaLimitePago}</p>
               </div>
             </div>
           </div>
