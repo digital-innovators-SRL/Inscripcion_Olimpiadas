@@ -26,19 +26,32 @@ const RegistrationPage = () => {
   const [availableAreas, setAvailableAreas] = useState([])
 
   useEffect(() => {
+    // Datos simulados
+    const mockAreas = [
+      { id: '1', name: 'Matemáticas', level: 'Básico', cost: 150 },
+      { id: '2', name: 'Física', level: 'Intermedio', cost: 180 },
+      { id: '3', name: 'Programación', level: 'Avanzado', cost: 200 },
+    ];
+    
+    setAvailableAreas(mockAreas);
+  
+    // Si luego quieres conectar al backend, solo descomenta esta parte:
+    /*
     const fetchAreas = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/areas') // Ajusta el URL según tu backend
-        if (!response.ok) throw new Error('Error al obtener áreas')
-        const data = await response.json()
-        setAvailableAreas(data)
+        const response = await fetch('http://localhost:8000/api/areas'); // Ajusta el URL según tu backend
+        if (!response.ok) throw new Error('Error al obtener áreas');
+        const data = await response.json();
+        setAvailableAreas(data);
       } catch (error) {
-        console.error('Error al obtener áreas disponibles:', error)
+        console.error('Error al obtener áreas disponibles:', error);
       }
-    }
+    };
   
-    fetchAreas()
-  }, [])
+    fetchAreas();
+    */
+  }, []);
+  
 
   useEffect(() => {
     const newTotal = student.areas.reduce((sum, area) => sum + area.cost, 0)
