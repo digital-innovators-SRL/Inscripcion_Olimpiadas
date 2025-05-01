@@ -67,6 +67,22 @@ const PaymentSlipPage = () => {
                 <p className="text-sm text-gray-500">Cédula de Identidad:</p>
                 <p className="font-medium">{estudiante.ci}</p>
               </div>
+              <div>
+                <p className="text-sm text-gray-500">Colegio:</p>
+                <p className="font-medium">
+                  {estudiante.colegio ? estudiante.colegio : (
+                    <span className="text-red-500">No se registró el colegio.</span>
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Grado:</p>
+                <p className="font-medium">
+                  {estudiante.grado ? estudiante.grado : (
+                    <span className="text-red-500">No se registró el grado.</span>
+                  )}
+                </p>
+              </div>
               <div className="col-span-2">
                 <p className="text-sm text-gray-500">Áreas inscritas:</p>
                 {estudiante.areas && estudiante.areas.length > 0 ? (
