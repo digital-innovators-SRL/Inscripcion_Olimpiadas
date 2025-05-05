@@ -6,6 +6,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Organizador\OrganizadorDashboardController;
+use App\Http\Controllers\AreaController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -31,3 +33,5 @@ Route::middleware(['jwt.exceptions', 'auth:api'])->group(function () {
 Route::middleware(['auth:api', 'role:Administrador'])->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
 Route::middleware(['auth:api', 'role:Tutor'])->get('/tutor/dashboard', [TutorDashboardController::class, 'index']);
 Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
+
+Route::apiResource('areas', AreaController::class);

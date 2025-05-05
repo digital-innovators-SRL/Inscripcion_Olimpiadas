@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Area extends Model
 {
-    protected $fillable = ['nombre'];
-
+    protected $fillable = ['nombre', 'descripcion', 'costo', 'max_estudiantes', 'grados'];
+    protected $casts = [
+        'grados' => 'array',
+    ];
     // Relaciones
 
     public function areaCategorias()
@@ -15,7 +17,7 @@ class Area extends Model
         return $this->hasMany(AreaCategoria::class);
     }
 
-    public function categorias()
+    public function categorias()x|x||
     {
         return $this->belongsToMany(Categoria::class, 'area_categoria')
                     ->withPivot('grado')

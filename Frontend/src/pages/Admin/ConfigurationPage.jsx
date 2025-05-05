@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
+import axios from 'axios';
+axios.defaults.baseURL = 'http://localhost:8001/api';
+axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
 import {
   PlusIcon,
   SaveIcon,
@@ -12,17 +15,7 @@ import { useAuth } from "../../contexts/AuthContext";
 
 const ConfigurationPage = () => {
   const { user } = useAuth();
-  const [areas, setAreas] = useState([
-    {
-      id: "1",
-      name: "Matemáticas",
-      cost: 350,
-      levels: ["Básico", "Intermedio", "Avanzado"],
-      isActive: true,
-      maxStudents: 50,
-      description: "Competencia de matemáticas para todos los niveles",
-    },
-  ]);
+  const [areas, setAreas] = useState([])
 
   const [newArea, setNewArea] = useState({
     name: "",
@@ -35,7 +28,32 @@ const ConfigurationPage = () => {
   const [errors, setErrors] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [editingArea, setEditingArea] = useState(null);
+  const [levelInputs, setLevelInputs] = useState({});
+  const [gradeInputs, setGradeInputs] = useState({});
 
+  useEffect(() => {
+    const fetchAreas = async () => {
+      try {
+        const response = await axios.get('/areas');
+        const areasDesdeAPI = response.data.data || response.data; // depende del formato
+        const areasTransformadas = areasDesdeAPI.map((a) => ({
+          id: a.id,
+          name: a.nombre,
+          description: a.descripcion,
+          cost: a.costo,
+          maxStudents: a.max_estudiantes,
+          grades: [], // los grados serán añadidos luego
+          isActive: true, // puedes ajustar si manejas estados en BD
+        }));
+        setAreas(areasTransformadas);
+      } catch (error) {
+        console.error("Error al cargar áreas:", error);
+      }
+    };
+  
+    fetchAreas();
+  }, []);
+  
   const validateArea = () => {
     const newErrors = [];
     if (!newArea.name.trim()) {
@@ -65,29 +83,84 @@ const ConfigurationPage = () => {
     return newErrors.length === 0;
   };
 
-  const addArea = () => {
+  const addArea = async () => {
     if (!validateArea()) return;
-    const newAreaData = {
-      id: Date.now().toString(),
-      name: newArea.name,
-      cost: Number(newArea.cost),
-      levels: [],
-      isActive: true,
-      maxStudents: Number(newArea.maxStudents) || undefined,
-      description: newArea.description || undefined,
-    };
-    setAreas([...areas, newAreaData]);
-    setNewArea({
-      name: "",
-      cost: "",
-      level: "",
-      maxStudents: "",
-      description: "",
-    });
+  
+    try {
+      const response = await axios.post('/areas', {
+        nombre: newArea.name,
+        descripcion: newArea.description,
+        costo: Number(newArea.cost),
+        max_estudiantes: newArea.maxStudents || null,
+      });
+  
+      const nuevaAreaGuardada = response.data.data || response.data;
+  
+      const areaFormateada = {
+        id: nuevaAreaGuardada.id,
+        name: nuevaAreaGuardada.nombre,
+        cost: nuevaAreaGuardada.costo,
+        maxStudents: nuevaAreaGuardada.max_estudiantes,
+        description: nuevaAreaGuardada.descripcion,
+        grades: [],
+        isActive: true,
+      };
+  
+      setAreas((prev) => [...prev, areaFormateada]);
+      setNewArea({
+        name: "",
+        cost: "",
+        level: "",
+        maxStudents: "",
+        description: "",
+      });
+      showSuccessMessage();
+    } catch (error) {
+      console.error("Error al agregar área:", error);
+      if (error.response?.data?.errors) {
+        const erroresAPI = Object.entries(error.response.data.errors).map(
+          ([campo, mensajes]) => ({
+            field: campo,
+            message: mensajes[0],
+          })
+        );
+        setErrors(erroresAPI);
+      }
+    }
+  };
+  
+  const addGradeToArea = (areaId) => {
+    const grade = gradeInputs[areaId]?.trim();
+    if (!grade) return;
+  
+    setAreas((prev) =>
+      prev.map((area) =>
+        area.id === areaId
+          ? {
+              ...area,
+              grades: [...new Set([...(area.grades || []), grade])],
+            }
+          : area
+      )
+    );
+    
+    setGradeInputs({ ...gradeInputs, [areaId]: "" });
     showSuccessMessage();
   };
-
-  const addLevelToArea = (areaId, level) => {
+  const removeGradeFromArea = (areaId, gradeToRemove) => {
+    setAreas((prev) =>
+      prev.map((area) =>
+        area.id === areaId
+          ? {
+              ...area,
+              grades: (area.grades || []).filter((g) => g !== gradeToRemove),
+            }
+          : area
+      )
+    );
+  };
+  
+  const addLevelToArea = (areaId    ) => {
     if (!level.trim()) {
       setErrors([{ field: "level", message: "El nivel no puede estar vacío" }]);
       return;
@@ -303,40 +376,58 @@ const ConfigurationPage = () => {
                     </button>
                   </div>
                 </div>
-                <div className="mb-2">
-                  <h4 className="text-sm font-medium mb-2">Niveles:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {area.levels.map((level, index) => (
-                      <span
-                        key={index}
-                        className="bg-gray-100 px-2 py-1 rounded-md text-sm flex items-center"
-                      >
-                        {level}
-                        <button
-                          onClick={() => removeLevelFromArea(area.id, level)}
-                          className="ml-2 text-gray-500 hover:text-red-500"
-                        >
-                          <XIcon size={14} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                <div className="mb-2 mt-4">
+  <h4 className="text-sm font-medium mb-2">Grados:</h4>
+  <div className="flex flex-wrap gap-2 mb-2">
+    {(area.grades || []).map((grade, index) => (
+      <span
+        key={index}
+        className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm flex items-center"
+      >
+        {grade}
+        <button
+          onClick={() => removeGradeFromArea(area.id, grade)}
+          className="ml-1 text-blue-500 hover:text-blue-700"
+        >
+          <XIcon size={14} />
+        </button>
+      </span>
+    ))}
+  </div>
+  <div className="flex gap-2">
+    <input
+      type="text"
+      placeholder="Nuevo grado"
+      className="border border-[#D9D9D9] rounded-md px-2 py-1 text-sm w-40"
+      value={gradeInputs[area.id] || ""}
+      onChange={(e) =>
+        setGradeInputs({ ...gradeInputs, [area.id]: e.target.value })
+      }
+    />
+    <button
+      onClick={() => addGradeToArea(area.id)}
+      className="bg-blue-200 text-blue-800 px-2 py-1 rounded-md text-sm hover:bg-blue-300"
+    >
+      Agregar
+    </button>
+  </div>
+</div>
+
                 <div className="flex gap-2 mt-2">
                   <input
                     type="text"
-                    value={newArea.level}
+                    value={levelInputs[area.id] || ""}
                     onChange={(e) =>
-                      setNewArea({
-                        ...newArea,
-                        level: e.target.value,
+                      setLevelInputs({
+                        ...levelInputs,
+                        [area.id]: e.target.value,
                       })
                     }
                     className="flex-1 px-3 py-1 border border-[#D9D9D9] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
                     placeholder="Agregar nivel"
                   />
                   <button
-                    onClick={() => addLevelToArea(area.id, newArea.level)}
+                    onClick={() => addLevelToArea(area.id)}
                     className="bg-[#A9B2AC] text-white py-1 px-3 rounded-md hover:bg-opacity-90 transition-colors text-sm"
                   >
                     Agregar
