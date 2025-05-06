@@ -17,10 +17,12 @@ class Area extends Model
         return $this->hasMany(AreaCategoria::class);
     }
 
-    public function categorias()x|x||
+    public function categorias()
     {
         return $this->belongsToMany(Categoria::class, 'area_categoria')
                     ->withPivot('grado')
                     ->withTimestamps();
     }
 }
+
+
