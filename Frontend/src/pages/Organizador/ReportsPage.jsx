@@ -1,75 +1,88 @@
-import React, { useState } from 'react';
-import Sidebar from '../components/Sidebar';
-import { DownloadIcon, FilterIcon, SearchIcon } from 'lucide-react';
+import React, { useState } from "react";
+import Sidebar from "../../components/Sidebar";
+import { DownloadIcon, FilterIcon, SearchIcon } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+
 const ReportsPage = () => {
-  const [dateFilter, setDateFilter] = useState('');
-  const [areaFilter, setAreaFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const { user } = useAuth();
+  const [dateFilter, setDateFilter] = useState("");
+  const [areaFilter, setAreaFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   // Mock data for the table
-  const registrations = [{
-    id: 1,
-    student: 'Juan Pérez',
-    area: 'Matemáticas',
-    level: 'Avanzado',
-    date: '15/11/2023',
-    status: 'Confirmado'
-  }, {
-    id: 2,
-    student: 'María García',
-    area: 'Física',
-    level: 'Intermedio',
-    date: '14/11/2023',
-    status: 'Pendiente'
-  }, {
-    id: 3,
-    student: 'Carlos López',
-    area: 'Química',
-    level: 'Básico',
-    date: '13/11/2023',
-    status: 'Confirmado'
-  }, {
-    id: 4,
-    student: 'Ana Martínez',
-    area: 'Biología',
-    level: 'Avanzado',
-    date: '12/11/2023',
-    status: 'Confirmado'
-  }, {
-    id: 5,
-    student: 'Pedro Ramírez',
-    area: 'Matemáticas',
-    level: 'Intermedio',
-    date: '11/11/2023',
-    status: 'Pendiente'
-  }, {
-    id: 6,
-    student: 'Laura Sánchez',
-    area: 'Física',
-    level: 'Básico',
-    date: '10/11/2023',
-    status: 'Confirmado'
-  }, {
-    id: 7,
-    student: 'Miguel Torres',
-    area: 'Química',
-    level: 'Avanzado',
-    date: '09/11/2023',
-    status: 'Pendiente'
-  }, {
-    id: 8,
-    student: 'Sofía Flores',
-    area: 'Biología',
-    level: 'Intermedio',
-    date: '08/11/2023',
-    status: 'Confirmado'
-  }];
-  return <div className="flex min-h-screen bg-[#F2EEE3]">
+  const registrations = [
+    {
+      id: 1,
+      student: "Juan Pérez",
+      area: "Matemáticas",
+      level: "Avanzado",
+      date: "15/11/2023",
+      status: "Confirmado",
+    },
+    {
+      id: 2,
+      student: "María García",
+      area: "Física",
+      level: "Intermedio",
+      date: "14/11/2023",
+      status: "Pendiente",
+    },
+    {
+      id: 3,
+      student: "Carlos López",
+      area: "Química",
+      level: "Básico",
+      date: "13/11/2023",
+      status: "Confirmado",
+    },
+    {
+      id: 4,
+      student: "Ana Martínez",
+      area: "Biología",
+      level: "Avanzado",
+      date: "12/11/2023",
+      status: "Confirmado",
+    },
+    {
+      id: 5,
+      student: "Pedro Ramírez",
+      area: "Matemáticas",
+      level: "Intermedio",
+      date: "11/11/2023",
+      status: "Pendiente",
+    },
+    {
+      id: 6,
+      student: "Laura Sánchez",
+      area: "Física",
+      level: "Básico",
+      date: "10/11/2023",
+      status: "Confirmado",
+    },
+    {
+      id: 7,
+      student: "Miguel Torres",
+      area: "Química",
+      level: "Avanzado",
+      date: "09/11/2023",
+      status: "Pendiente",
+    },
+    {
+      id: 8,
+      student: "Sofía Flores",
+      area: "Biología",
+      level: "Intermedio",
+      date: "08/11/2023",
+      status: "Confirmado",
+    },
+  ];
+  return (
+    <div className="flex min-h-screen bg-[#F2EEE3]">
       <Sidebar />
       <div className="ml-64 flex-grow p-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Reportes</h1>
           <div className="flex items-center">
-            <span className="mr-4">Admin User</span>
+            <span className="mr-4">{user?.role || "Usuario"}</span>
             <div className="w-10 h-10 bg-[#A9B2AC] rounded-full"></div>
           </div>
         </div>
@@ -83,13 +96,24 @@ const ReportsPage = () => {
               <label htmlFor="date" className="block text-sm font-medium mb-1">
                 Fecha
               </label>
-              <input type="date" id="date" className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]" value={dateFilter} onChange={e => setDateFilter(e.target.value)} />
+              <input
+                type="date"
+                id="date"
+                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+              />
             </div>
             <div>
               <label htmlFor="area" className="block text-sm font-medium mb-1">
                 Área
               </label>
-              <select id="area" className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]" value={areaFilter} onChange={e => setAreaFilter(e.target.value)}>
+              <select
+                id="area"
+                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
+                value={areaFilter}
+                onChange={(e) => setAreaFilter(e.target.value)}
+              >
                 <option value="">Todas</option>
                 <option value="matematicas">Matemáticas</option>
                 <option value="fisica">Física</option>
@@ -98,10 +122,18 @@ const ReportsPage = () => {
               </select>
             </div>
             <div>
-              <label htmlFor="status" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="status"
+                className="block text-sm font-medium mb-1"
+              >
                 Estado de Pago
               </label>
-              <select id="status" className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <select
+                id="status"
+                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
                 <option value="">Todos</option>
                 <option value="confirmado">Confirmado</option>
                 <option value="pendiente">Pendiente</option>
@@ -136,18 +168,26 @@ const ReportsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {registrations.map(reg => <tr key={reg.id} className="border-b border-[#D9D9D9]">
+                {registrations.map((reg) => (
+                  <tr key={reg.id} className="border-b border-[#D9D9D9]">
                     <td className="py-3 px-4">{reg.id}</td>
                     <td className="py-3 px-4">{reg.student}</td>
                     <td className="py-3 px-4">{reg.area}</td>
                     <td className="py-3 px-4">{reg.level}</td>
                     <td className="py-3 px-4">{reg.date}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs ${reg.status === 'Confirmado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          reg.status === "Confirmado"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
                         {reg.status}
                       </span>
                     </td>
-                  </tr>)}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -169,6 +209,7 @@ const ReportsPage = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 export default ReportsPage;

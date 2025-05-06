@@ -1,88 +1,74 @@
 import React, { useEffect, useState, createContext, useContext } from 'react'
+import axios from 'axios'
 
 const AuthContext = createContext(null)
 
-// Mock users database
-const MOCK_USERS = {
-  admin: [
-    {
-      id: '1',
-      name: 'Admin User',
-      email: 'admin@example.com',
-      password: 'admin123',
-      role: 'admin',
-    },
-  ],
-  tutor: [
-    {
-      id: '2',
-      name: 'Juan Pérez',
-      email: 'tutor@example.com',
-      password: 'tutor123',
-      role: 'tutor',
-    },
-  ],
-  student: [
-    {
-      id: '3',
-      name: 'María García',
-      email: 'student@example.com',
-      password: 'student123',
-      role: 'student',
-    },
-  ],
-}
-
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider')
   return context
 }
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
+  const [token, setToken] = useState(localStorage.getItem('token') || '')
   const [isLoading, setIsLoading] = useState(true)
   const [loginError, setLoginError] = useState(null)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+    if (token) {
+      axios.get('http://localhost:8001/api/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => setUser(res.data))
+        .catch(() => logout())
+        .finally(() => setIsLoading(false))
+    } else {
+      setIsLoading(false)
     }
-    setIsLoading(false)
-  }, [])
+  }, [token])
 
-  const login = async (email, password, role) => {
-    setLoginError(null)
-    const users = MOCK_USERS[role]
-    const foundUser = users.find((u) => u.email === email && u.password === password)
-    if (!foundUser) {
-      setLoginError('Credenciales inválidas para el rol seleccionado')
-      throw new Error('Invalid credentials')
+  const login = async (email, password) => {
+    try {
+      const res = await axios.post('http://localhost:8001/api/login', {
+        email,
+        password
+      })
+
+      const { access_token, user } = res.data
+      localStorage.setItem('token', access_token)
+      setToken(access_token)
+      setUser(user)
+      setLoginError(null)
+    } catch (err) {
+      setLoginError('Credenciales inválidas')
+      throw err
     }
-
-    const { password: _, ...userWithoutPassword } = foundUser
-    localStorage.setItem('user', JSON.stringify(userWithoutPassword))
-    setUser(userWithoutPassword)
   }
 
-  const logout = () => {
-    localStorage.removeItem('user')
-    setUser(null)
-  }
+  const logout = async () => {
+    try {
+      await axios.post('http://localhost:8001/api/logout', null, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (err) {
+      console.warn('Error al cerrar sesión en el backend:', err)
+    } finally {
+      localStorage.removeItem('token')
+      setToken('')
+      setUser(null)
+    }
+  }  
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        isLoading,
-        loginError,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      token,
+      login,
+      logout,
+      isLoading,
+      loginError
+    }}>
       {children}
     </AuthContext.Provider>
   )

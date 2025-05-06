@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Area extends Model
 {
-    protected $fillable = ['nombre'];
-
+    protected $fillable = ['nombre', 'descripcion', 'costo', 'max_estudiantes', 'grados'];
+    protected $casts = [
+        'grados' => 'array',
+    ];
     // Relaciones
 
     public function areaCategorias()
@@ -22,3 +24,5 @@ class Area extends Model
                     ->withTimestamps();
     }
 }
+
+

@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\CompetenciaController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Organizador\OrganizadorDashboardController;
+use App\Http\Controllers\AreaController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -34,3 +36,7 @@ Route::middleware(['auth:api', 'role:Tutor'])->get('/tutor/dashboard', [TutorDas
 Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
 
 Route::get('administrador/getCompetencias', [CompetenciaController::class, 'show']);
+
+Route::get('administrador/getCompetencias', [CompetenciaController::class, 'show']);
+
+Route::apiResource('areas', AreaController::class);

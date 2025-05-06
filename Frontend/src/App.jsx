@@ -1,57 +1,61 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import RegistrationPage from './pages/RegistrationPage';
-import PaymentSlipPage from './pages/PaymentSlipPage';
-import UploadProofPage from './pages/UploadProofPage';
-import ReportsPage from './pages/ReportsPage';
-import ConfigurationPage from './pages/ConfigurationPage';
-import UserManagementPage from './pages/UserManagementPage';
-import UnauthorizedPage from './pages/UnauthorizedPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import RegisterPage from './pages/RegisterPage';
-import ProfilePage from './pages/ProfilePage';
+import React from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from '../src/contexts/AuthContext'
+
+import LoginPage from '../src/pages/auth/LoginPage';
+import RegisterPage from '../src/pages/auth/RegisterPage'
+import UnauthorizedPage from '../src/pages/auth/UnauthorizedPage'
+import ProtectedRoute from './components/ProtectedRoute'
+
+import adminRoutes from '../src/routes/adminRoutes'
+import tutorRoutes from '../src/routes/tutorRoutes'
+import organizadorRoutes from '../src/routes/organizadorRoutes'
 
 const App = () => {
-  return (<AuthProvider>
-      <Router>
-        <div className="font-['Roboto', 'Open Sans', sans-serif] text-[#4F4F4F] bg-[#F2EEE3] min-h-screen">
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            <Route path="/dashboard" element={<ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>} />
-            <Route path="/registration" element={<ProtectedRoute allowedRoles={['admin', 'tutor']}>
-                  <RegistrationPage />
-                </ProtectedRoute>} />
-            <Route path="/payment-slip" element={<ProtectedRoute>
-                  <PaymentSlipPage />
-                </ProtectedRoute>} />
-            <Route path="/upload-proof" element={<ProtectedRoute>
-                  <UploadProofPage />
-                </ProtectedRoute>} />
-            <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin']}>
-                  <ReportsPage />
-                </ProtectedRoute>} />
-            <Route path="/configuration" element={<ProtectedRoute allowedRoles={['admin']}>
-                  <ConfigurationPage />
-                </ProtectedRoute>} />
-            <Route path="/users" element={<ProtectedRoute allowedRoles={['admin']}>
-                  <UserManagementPage />
-                </ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>} />
-            <Route path="/" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>)
+  const { user, isLoading } = useAuth()
 
+  const getRoutesByRole = () => {
+    switch (user?.role) {
+      case 'Administrador':
+        return adminRoutes
+      case 'Tutor':
+        return tutorRoutes
+      case 'Organizador':
+        return organizadorRoutes
+      default:
+        return []
+    }
+  }
+
+  const roleRoutes = getRoutesByRole()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F2EEE3]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#A9B2AC]"></div>
+      </div>
+    )
+  }
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        {user && roleRoutes.map(({ path, element, allowedRoles }, i) => (
+          <Route
+            key={i}
+            path={path}
+            element={<ProtectedRoute allowedRoles={allowedRoles}>{element}</ProtectedRoute>}
+          />
+        ))}
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
+  )
 }
 
-export default App;
+export default App

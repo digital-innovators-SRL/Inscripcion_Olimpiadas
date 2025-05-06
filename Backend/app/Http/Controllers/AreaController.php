@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Area;
 
 class AreaController extends Controller
 {
@@ -13,7 +14,8 @@ class AreaController extends Controller
      */
     public function index()
     {
-        //
+        $areas = Area::all();
+        return response()->json($areas);
     }
 
     /**
@@ -34,7 +36,19 @@ class AreaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'costo' => 'required|numeric|min:0',
+            'max_estudiantes' => 'required|integer|min:1',
+            'grados' => 'nullable|array',
+            'grados.*' => 'string|max:50',
+        ]);
+    
+        $area = Area::create($validated);
+    
+        return response()->json($area, 201);
+    
     }
 
     /**
@@ -68,8 +82,21 @@ class AreaController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'costo' => 'required|numeric|min:0',
+            'max_estudiantes' => 'required|integer|min:1',
+            'grados' => 'nullable|array',
+            'grados.*' => 'string|max:50',
+        ]);
+
+        $area = Area::findOrFail($id);
+        $area->update($validated);
+
+        return response()->json($area);
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -79,6 +106,9 @@ class AreaController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $area = Area::findOrFail($id);
+        $area->delete();
+
+        return response()->json(['mensaje' => 'Área eliminada con éxito.']);
     }
 }
