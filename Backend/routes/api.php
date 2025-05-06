@@ -34,4 +34,6 @@ Route::middleware(['auth:api', 'role:Administrador'])->get('/admin/dashboard', [
 Route::middleware(['auth:api', 'role:Tutor'])->get('/tutor/dashboard', [TutorDashboardController::class, 'index']);
 Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
 
-Route::apiResource('areas', AreaController::class);
+Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->group(function () {
+    Route::apiResource('areas', AreaController::class);
+});

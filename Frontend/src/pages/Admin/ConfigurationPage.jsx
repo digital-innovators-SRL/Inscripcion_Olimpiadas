@@ -82,31 +82,60 @@ const ConfigurationPage = () => {
     setErrors(newErrors);
     return newErrors.length === 0;
   };
-
+  
   const addArea = async () => {
     if (!validateArea()) return;
   
     try {
-      const response = await axios.post('/areas', {
-        nombre: newArea.name,
-        descripcion: newArea.description,
-        costo: Number(newArea.cost),
-        max_estudiantes: newArea.maxStudents || null,
-      });
+      if (editingArea) {
+        // Actualizar área existente
+        const response = await axios.put(`/areas/${editingArea.id}`, {
+          nombre: newArea.name,
+          descripcion: newArea.description,
+          costo: Number(newArea.cost),
+          max_estudiantes: newArea.maxStudents || null,
+        });
   
-      const nuevaAreaGuardada = response.data.data || response.data;
+        const updatedArea = response.data.data || response.data;
   
-      const areaFormateada = {
-        id: nuevaAreaGuardada.id,
-        name: nuevaAreaGuardada.nombre,
-        cost: nuevaAreaGuardada.costo,
-        maxStudents: nuevaAreaGuardada.max_estudiantes,
-        description: nuevaAreaGuardada.descripcion,
-        grades: [],
-        isActive: true,
-      };
+        setAreas((prevAreas) =>
+          prevAreas.map((area) =>
+            area.id === editingArea.id
+              ? {
+                  ...area,
+                  name: updatedArea.nombre,
+                  cost: updatedArea.costo,
+                  maxStudents: updatedArea.max_estudiantes,
+                  description: updatedArea.descripcion,
+                }
+              : area
+          )
+        );
+        setEditingArea(null);
+      } else {
+        // Crear nueva área
+        const response = await axios.post('/areas', {
+          nombre: newArea.name,
+          descripcion: newArea.description,
+          costo: Number(newArea.cost),
+          max_estudiantes: newArea.maxStudents || null,
+        });
   
-      setAreas((prev) => [...prev, areaFormateada]);
+        const nuevaAreaGuardada = response.data.data || response.data;
+  
+        const areaFormateada = {
+          id: nuevaAreaGuardada.id,
+          name: nuevaAreaGuardada.nombre,
+          cost: nuevaAreaGuardada.costo,
+          maxStudents: nuevaAreaGuardada.max_estudiantes,
+          description: nuevaAreaGuardada.descripcion,
+          grades: [],
+          isActive: true,
+        };
+  
+        setAreas((prev) => [...prev, areaFormateada]);
+      }
+  
       setNewArea({
         name: "",
         cost: "",
@@ -116,7 +145,7 @@ const ConfigurationPage = () => {
       });
       showSuccessMessage();
     } catch (error) {
-      console.error("Error al agregar área:", error);
+      console.error("Error al guardar el área:", error);
       if (error.response?.data?.errors) {
         const erroresAPI = Object.entries(error.response.data.errors).map(
           ([campo, mensajes]) => ({
@@ -129,6 +158,17 @@ const ConfigurationPage = () => {
     }
   };
   
+
+  const editArea = (area) => {
+    setEditingArea(area);
+    setNewArea({
+      name: area.name,
+      cost: area.cost,
+      level: area.level || "",
+      maxStudents: area.maxStudents || "",
+      description: area.description || "",
+    });
+  };
   const addGradeToArea = (areaId) => {
     const grade = gradeInputs[areaId]?.trim();
     if (!grade) return;
@@ -189,10 +229,16 @@ const ConfigurationPage = () => {
     );
   };
 
-  const removeArea = (areaId) => {
-    setAreas(areas.filter((area) => area.id !== areaId));
-    showSuccessMessage();
+  const removeArea = async (areaId) => {
+    try {
+      await axios.delete(`/areas/${areaId}`);
+      setAreas((prevAreas) => prevAreas.filter((area) => area.id !== areaId));
+      showSuccessMessage();
+    } catch (error) {
+      console.error("Error al eliminar el área:", error);
+    }
   };
+  
 
   const toggleAreaStatus = (areaId) => {
     setAreas(
@@ -369,6 +415,12 @@ const ConfigurationPage = () => {
                       {area.isActive ? "Desactivar" : "Activar"}
                     </button>
                     <button
+                      onClick={() => editArea(area)}
+                      className="text-blue-500 hover:text-blue-600"
+                    >
+                      Editar
+                    </button>
+                    <button
                       onClick={() => removeArea(area.id)}
                       className="text-red-500 hover:text-red-600"
                     >
@@ -412,27 +464,6 @@ const ConfigurationPage = () => {
     </button>
   </div>
 </div>
-
-                <div className="flex gap-2 mt-2">
-                  <input
-                    type="text"
-                    value={levelInputs[area.id] || ""}
-                    onChange={(e) =>
-                      setLevelInputs({
-                        ...levelInputs,
-                        [area.id]: e.target.value,
-                      })
-                    }
-                    className="flex-1 px-3 py-1 border border-[#D9D9D9] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                    placeholder="Agregar nivel"
-                  />
-                  <button
-                    onClick={() => addLevelToArea(area.id)}
-                    className="bg-[#A9B2AC] text-white py-1 px-3 rounded-md hover:bg-opacity-90 transition-colors text-sm"
-                  >
-                    Agregar
-                  </button>
-                </div>
               </div>
             ))}
           </div>
