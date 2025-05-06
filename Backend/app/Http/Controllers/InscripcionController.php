@@ -11,7 +11,7 @@ class InscripcionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function new()
     {
         //
     }
@@ -24,6 +24,7 @@ class InscripcionController extends Controller
     public function create()
     {
         //
+        return null;
     }
 
     /**
