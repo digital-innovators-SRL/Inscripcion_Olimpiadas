@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Area;
+use App\Models\Categoria;
+
 
 class AreaController extends Controller
 {
@@ -41,8 +43,6 @@ class AreaController extends Controller
             'descripcion' => 'nullable|string',
             'costo' => 'required|numeric|min:0',
             'max_estudiantes' => 'required|integer|min:1',
-            'grados' => 'nullable|array',
-            'grados.*' => 'string|max:50',
         ]);
     
         $area = Area::create($validated);
@@ -87,8 +87,6 @@ class AreaController extends Controller
             'descripcion' => 'nullable|string',
             'costo' => 'required|numeric|min:0',
             'max_estudiantes' => 'required|integer|min:1',
-            'grados' => 'nullable|array',
-            'grados.*' => 'string|max:50',
         ]);
 
         $area = Area::findOrFail($id);

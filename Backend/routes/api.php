@@ -36,4 +36,6 @@ Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard
 
 Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->group(function () {
     Route::apiResource('areas', AreaController::class);
-});
+    Route::apiResource('area-categorias', AreaCategoriaController::class);
+}
+);

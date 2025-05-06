@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class AreaCategoria extends Model
+class AreaCategoria extends Pivot
 {
     protected $table = 'area_categoria';
 

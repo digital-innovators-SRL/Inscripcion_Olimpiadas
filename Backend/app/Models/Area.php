@@ -6,10 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Area extends Model
 {
-    protected $fillable = ['nombre', 'descripcion', 'costo', 'max_estudiantes', 'grados'];
-    protected $casts = [
-        'grados' => 'array',
-    ];
+    protected $fillable = ['nombre', 'descripcion', 'costo', 'max_estudiantes'];
     // Relaciones
 
     public function areaCategorias()

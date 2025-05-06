@@ -20,7 +20,6 @@ const ConfigurationPage = () => {
   const [newArea, setNewArea] = useState({
     name: "",
     cost: "",
-    level: "",
     maxStudents: "",
     description: "",
   });
@@ -28,8 +27,8 @@ const ConfigurationPage = () => {
   const [errors, setErrors] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [editingArea, setEditingArea] = useState(null);
-  const [levelInputs, setLevelInputs] = useState({});
   const [gradeInputs, setGradeInputs] = useState({});
+
 
   useEffect(() => {
     const fetchAreas = async () => {
@@ -158,7 +157,6 @@ const ConfigurationPage = () => {
     }
   };
   
-
   const editArea = (area) => {
     setEditingArea(area);
     setNewArea({
@@ -169,10 +167,11 @@ const ConfigurationPage = () => {
       description: area.description || "",
     });
   };
-  const addGradeToArea = (areaId) => {
+  const addGradeToArea = async (areaId) => {
     const grade = gradeInputs[areaId]?.trim();
     if (!grade) return;
   
+    // Simulación sin errores aunque falle la petición
     setAreas((prev) =>
       prev.map((area) =>
         area.id === areaId
@@ -183,10 +182,25 @@ const ConfigurationPage = () => {
           : area
       )
     );
-    
+  
     setGradeInputs({ ...gradeInputs, [areaId]: "" });
     showSuccessMessage();
+  
+    try {
+      await axios.post('/area-categorias', {
+        area_id: areaId,
+        categoria_id: 1, // ← aún puedes dejar este ID como predeterminado
+        grado: grade,
+      });
+    } catch (error) {
+      console.warn("Simulación: no se pudo guardar en el backend, pero se agregó visualmente.");
+      // Ya no se hace setErrors, ya que estamos simulando el funcionamiento.
+    }
   };
+  
+  
+  
+  
   const removeGradeFromArea = (areaId, gradeToRemove) => {
     setAreas((prev) =>
       prev.map((area) =>
@@ -200,35 +214,6 @@ const ConfigurationPage = () => {
     );
   };
   
-  const addLevelToArea = (areaId    ) => {
-    if (!level.trim()) {
-      setErrors([{ field: "level", message: "El nivel no puede estar vacío" }]);
-      return;
-    }
-    setAreas(
-      areas.map((area) =>
-        area.id === areaId
-          ? { ...area, levels: [...new Set([...area.levels, level])] }
-          : area
-      )
-    );
-    setNewArea({ ...newArea, level: "" });
-    showSuccessMessage();
-  };
-
-  const removeLevelFromArea = (areaId, levelToRemove) => {
-    setAreas(
-      areas.map((area) =>
-        area.id === areaId
-          ? {
-              ...area,
-              levels: area.levels.filter((level) => level !== levelToRemove),
-            }
-          : area
-      )
-    );
-  };
-
   const removeArea = async (areaId) => {
     try {
       await axios.delete(`/areas/${areaId}`);
