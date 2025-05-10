@@ -19,6 +19,7 @@ class CreateCompetenciasTable extends Migration
             $table->date('fecha_competencia');
             $table->date('fecha_fin_inscripcion');
             $table->integer('max_competidores');
+             $table->decimal('monto', 10, 2);
             $table->timestamps();
 
             $table->foreign('tutor_id')->references('id')->on('users')->onDelete('cascade');
