@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
+import * as XLSX from "xlsx";
 import {
   UploadIcon,
   PlusIcon,
@@ -27,228 +28,266 @@ const RegistrationPage = () => {
     areas: [],
     tutors: [],
   });
+  const gradosEstandar = [
+    '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria',
+    '1ro Secundaria', '2do Secundaria', '3ro Secundaria',
+    '4to Secundaria', '5to Secundaria', '6to Secundaria'
+  ];
   const [errors, setErrors] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
   const [availableAreas, setAvailableAreas] = useState([]);
   const [availableGrades, setAvailableGrades] = useState([]);
+  const [categoriasDisponibles, setCategoriasDisponibles] = useState([]);
+  const [availableCompetencias, setCompetenciasDisponibles] = useState([]);
   const [areas, setAreas] = useState([]);
+  const [excelData, setExcelData] = useState([]);
 
-  useEffect(() => {
-    // Datos simulados según tu estructura
-    const mockAreas = [
-      { id: '1', name: 'Astronomía - Astrofísica', levels: [
-        { grade: '3ro Primaria', cost: 150 },
-        { grade: '4to Primaria', cost: 150 },
-        { grade: '5to Primaria', cost: 150 },
-        { grade: '6to Primaria', cost: 150 },
-        { grade: '1ro Secundaria', cost: 180 },
-        { grade: '2do Secundaria', cost: 180 },
-        { grade: '3ro Secundaria', cost: 180 },
-        { grade: '4to Secundaria', cost: 180 },
-        { grade: '5to Secundaria', cost: 180 },
-        { grade: '6to Secundaria', cost: 180 }
-      ]},
-      { id: '2', name: 'Biología', levels: [
-        { grade: '2do Secundaria', cost: 160 },
-        { grade: '3ro Secundaria', cost: 160 },
-        { grade: '4to Secundaria', cost: 160 },
-        { grade: '5to Secundaria', cost: 160 },
-        { grade: '6to Secundaria', cost: 160 }
-      ]},
-      { id: '3', name: 'Física', levels: [
-        { grade: '4to Secundaria', cost: 170 },
-        { grade: '5to Secundaria', cost: 170 },
-        { grade: '6to Secundaria', cost: 170 }
-      ]},
-      { id: '4', name: 'Informática', levels: [
-        { grade: 'Guacamayo 5to a 6to Primaria', cost: 200 },
-        { grade: 'Guanaco 1ro a 3ro Secundaria', cost: 200 },
-        { grade: 'Londra 1ro a 3ro Secundaria', cost: 200 },
-        { grade: 'Jucumari 4to a 6to Secundaria', cost: 200 },
-        { grade: 'Bufeo 1ro a 3ro Secundaria', cost: 200 },
-        { grade: 'Puma 4to a 6to Secundaria', cost: 200 }
-      ]},
-      { id: '5', name: 'Matemáticas', levels: [
-        { grade: 'Primer Nivel 1ro Secundaria', cost: 180 },
-        { grade: 'Segundo Nivel 2do Secundaria', cost: 180 },
-        { grade: 'Tercer Nivel 3ro Secundaria', cost: 180 },
-        { grade: 'Cuarto Nivel 4to Secundaria', cost: 180 },
-        { grade: 'Quinto Nivel 5to Secundaria', cost: 180 },
-        { grade: 'Sexto Nivel 6to Secundaria', cost: 180 }
-      ]},
-      { id: '6', name: 'Química', levels: [
-        { grade: '2do Secundaria', cost: 190 },
-        { grade: '3ro Secundaria', cost: 190 },
-        { grade: '4to Secundaria', cost: 190 },
-        { grade: '5to Secundaria', cost: 190 },
-        { grade: '6to Secundaria', cost: 190 }
-      ]},
-      { id: '7', name: 'Robótica', levels: [
-        { grade: 'Builders P 5to a 6to Primaria', cost: 210 },
-        { grade: 'Builders S 1ro a 6to Secundaria', cost: 210 },
-        { grade: 'Lego P 5to a 6to Primaria', cost: 210 },
-        { grade: 'Lego S 1ro a 6to Secundaria', cost: 210 }
-      ]},
-    ];        
-    setAvailableAreas(mockAreas);
-    setAvailableGrades([]); // Inicialmente no hay grados disponibles.
-  }, []);
+ 
+  // ---------------------- Obtener datos iniciales ----------------------
+    useEffect(() => {
+      obtenerDatosIniciales();
+    }, []);
 
-  useEffect(() => {
-    const newTotal = student.areas.reduce((sum, area) => sum + area.cost, 0);
-    setTotalCost(newTotal);
-  }, [student.areas]);
+    const obtenerDatosIniciales = async () => {
+      try {
+        const [areasRes, categoriasRes, competenciasRes] = await Promise.all([
+          axios.get('/api/areas'),
+          axios.get('/api/categorias'),
+          axios.get('/api/competencias'),
+        ]);
 
-  const validateForm = () => {
-    const newErrors = [];
-    if (!student.name.trim()) {
-      newErrors.push({ field: "name", message: "El nombre es requerido" });
-    }
-    if (!student.documentId.trim()) {
-      newErrors.push({
-        field: "documentId",
-        message: "La cédula de identidad es requerida",
-      });
-    }
-    if (!student.birthDate) {
-      newErrors.push({
-        field: "birthDate",
-        message: "La fecha de nacimiento es requerida",
-      });
-    }
-    if (student.areas.length === 0) {
-      newErrors.push({
-        field: "areas",
-        message: "Debe seleccionar al menos un área",
-      });
-    }
-    if (student.areas.length > 2) {
-      newErrors.push({
-        field: "areas",
-        message: "No puede inscribirse en más de 2 áreas",
-      });
-    }
-    if (student.tutors.length === 0) {
-      newErrors.push({
-        field: "tutors",
-        message: "Debe registrar al menos un tutor",
-      });
-    }
-    setErrors(newErrors);
-    return newErrors.length === 0;
-  };
+        setAvailableAreas(areasRes.data);
+        setCategoriasDisponibles(categoriasRes.data);
+        setCompetenciasDisponibles(competenciasRes.data);
+      } catch (error) {
+        console.error('Error al obtener datos del backend:', error);
+      }
+    };
+  // ---------------------- Validación del formulario ----------------------
+const validateForm = () => {
+  const newErrors = [];
+  if (!student.name.trim()) {
+    newErrors.push({ field: "name", message: "El nombre es requerido" });
+  }
+  if (!student.documentId.trim()) {
+    newErrors.push({
+      field: "documentId",
+      message: "La cédula de identidad es requerida",
+    });
+  }
+  if (!student.birthDate) {
+    newErrors.push({
+      field: "birthDate",
+      message: "La fecha de nacimiento es requerida",
+    });
+  }
+  if (student.areas.length === 0) {
+    newErrors.push({
+      field: "areas",
+      message: "Debe seleccionar al menos un área",
+    });
+  }
+  if (student.areas.length > 2) {
+    newErrors.push({
+      field: "areas",
+      message: "No puede inscribirse en más de 2 áreas",
+    });
+  }
+  if (student.tutors.length === 0) {
+    newErrors.push({
+      field: "tutors",
+      message: "Debe registrar al menos un tutor",
+    });
+  }
+  setErrors(newErrors);
+  return newErrors.length === 0;
+};
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+// ---------------------- Envío de inscripción ----------------------
+const registrarInscripcion = async () => {
+  try {
+    const response = await fetch("http://localhost:8001/api/inscripciones", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Authorization: `Bearer ${token}` si usas autenticación
+      },
+      body: JSON.stringify(student),
+    });
+
+    if (!response.ok) throw new Error("Error al registrar la inscripción");
+
+    const data = await response.json();
+    console.log("Inscripción guardada:", data);
     setShowSuccess(true);
     setTimeout(() => navigate("/payment-slip"), 1500);
-  };
+  } catch (error) {
+    console.error(error);
+    setErrors([
+      {
+        field: "general",
+        message: "Hubo un problema al guardar la inscripción.",
+      },
+    ]);
+  }
+};
 
-  const handleAddArea = () => {
-    if (student.areas.length >= 2) {
-      setErrors([
-        ...errors,
-        { field: "areas", message: "No puede inscribirse en más de 2 áreas" },
-      ]);
-      return;
-    }
-    setStudent({
-      ...student,
-      areas: [
-        ...student.areas,
-        { id: Date.now().toString(), name: "", level: "", cost: 0 },
-      ],
-    });
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return;
+  await registrarInscripcion();
+};
 
-  const handleAreaChange = (index, areaId) => {
-    // Buscar el área seleccionada
-    const areaSeleccionada = availableAreas.find(a => a.id === areaId);
-    
-    if (areaSeleccionada) {
-      // Actualizamos el área y los niveles disponibles
-      const newAreas = [...student.areas];
-      newAreas[index] = { 
-        ...newAreas[index], 
-        id: areaId, 
-        name: areaSeleccionada.name, 
-        level: '',  // Resetear nivel cuando se cambia el área
-        cost: 0     // Resetear costo
-      };
-  
-      // Actualizamos el estado de las áreas
-      setStudent({ ...student, areas: newAreas });
-  
-      // Actualizamos los grados disponibles para la nueva área
-      setAvailableGrades(areaSeleccionada.levels);
-    }
-  };
-  
-  
-  const handleGradeChange = (index, grade) => {
+// ---------------------- Manejo de áreas ----------------------
+const handleAddArea = () => {
+  if (student.areas.length >= 2) {
+    setErrors([
+      ...errors,
+      { field: "areas", message: "No puede  inscribirse en más de 2 áreas" },
+    ]);
+    return;
+  }
+  setStudent({
+    ...student,
+    areas: [
+      ...student.areas,
+      { id: Date.now().toString(), name: "", level: "", cost: 0 },
+    ],
+  });
+};
+
+const handleAreaChange = (index, areaId) => {
+  const areaSeleccionada = availableAreas.find((a) => a.id === areaId);
+  if (areaSeleccionada) {
     const newAreas = [...student.areas];
-    const selectedArea = newAreas[index];
-    
-    const areaData = availableAreas.find(a => a.id === selectedArea.id);
-    const gradeData = areaData?.levels.find(l => l.grade === grade);
-  
     newAreas[index] = {
-      ...selectedArea,
-      level: grade,
-      cost: gradeData ? gradeData.cost : 0
+      ...newAreas[index],
+      id: areaId,
+      name: areaSeleccionada.name,
+      level: "",
+      cost: 0,
     };
-  
     setStudent({ ...student, areas: newAreas });
-  };
-  
+    setAvailableGrades(areaSeleccionada.levels);
+  }
+};
 
-  const handleRemoveArea = (index) => {
-    const newAreas = student.areas.filter((_, i) => i !== index);
-    setStudent({ ...student, areas: newAreas });
-  
-    // Restablecer grados disponibles si ya no hay áreas seleccionadas
-    if (newAreas.length === 0) {
-      setAvailableGrades([]); // Esto restablece los grados cuando no hay áreas seleccionadas.
+const handleGradeChange = (index, grade) => {
+  const newAreas = [...student.areas];
+  const selectedArea = newAreas[index];
+  const areaData = availableAreas.find((a) => a.id === selectedArea.id);
+  const gradeData = areaData?.levels.find((l) => l.grade === grade);
+
+  newAreas[index] = {
+    ...selectedArea,
+    level: grade,
+    cost: gradeData ? gradeData.cost : 0,
+  };
+  setStudent({ ...student, areas: newAreas });
+};
+
+const handleRemoveArea = (index) => {
+  const newAreas = student.areas.filter((_, i) => i !== index);
+  setStudent({ ...student, areas: newAreas });
+
+  if (newAreas.length === 0) {
+    setAvailableGrades([]);
+  } else {
+    const lastAreaId = newAreas[newAreas.length - 1].id;
+    const lastArea = availableAreas.find((area) => area.id === lastAreaId);
+    if (lastArea) setAvailableGrades(lastArea.levels);
+  }
+};
+
+// ---------------------- Manejo de tutores ----------------------
+const handleAddTutor = () => {
+  setStudent({
+    ...student,
+    tutors: [
+      ...student.tutors,
+      {
+        id: Date.now().toString(),
+        name: "",
+        relationship: "",
+        phone: "",
+        email: "",
+      },
+    ],
+  });
+};
+
+const handleTutorChange = (index, field, value) => {
+  const newTutors = [...student.tutors];
+  newTutors[index] = { ...newTutors[index], [field]: value };
+  setStudent({ ...student, tutors: newTutors });
+};
+
+const handleRemoveTutor = (index) => {
+  setStudent({
+    ...student,
+    tutors: student.tutors.filter((_, i) => i !== index),
+  });
+};
+
+// ---------------------- Manejo de archivos Excel ----------------------
+const sanitizeText = (text) => {
+  return String(text || "")
+    .replace(/[^\w\sáéíóúÁÉÍÓÚñÑ.-]/gi, "")
+    .trim();
+};
+
+const readExcel = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const MAX_SIZE_MB = 5;
+  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    alert("El archivo excede los 5MB permitidos.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const data = new Uint8Array(event.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const parsedData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    const headers = parsedData[0];
+    const rows = parsedData.slice(1).map((row) => {
+      const entry = {};
+      headers.forEach((header, i) => {
+        entry[sanitizeText(header)] = sanitizeText(row[i]);
+      });
+      return entry;
+    });
+
+    setExcelData(rows);
+    console.log("Datos cargados desde Excel:", rows);
+  };
+
+  reader.readAsArrayBuffer(file);
+};
+
+const handleDrop = (event) => {
+  event.preventDefault();
+  const files = event.dataTransfer.files;
+  if (files.length > 0) {
+    const file = files[0];
+    if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+      readExcel({ target: { files: [file] } });
     } else {
-      // Si quedan áreas, se mantiene la lista de grados correspondiente a la última área
-      const lastAreaId = newAreas[newAreas.length - 1].id;
-      const lastArea = availableAreas.find((area) => area.id === lastAreaId);
-      if (lastArea) {
-        setAvailableGrades(lastArea.levels); // Muestra los grados de la última área seleccionada
-      }
+      alert("Por favor sube un archivo Excel (.xls o .xlsx)");
     }
-  };
+  }
+};
 
-  const handleAddTutor = () => {
-    setStudent({
-      ...student,
-      tutors: [
-        ...student.tutors,
-        {
-          id: Date.now().toString(),
-          name: "",
-          relationship: "",
-          phone: "",
-          email: "",
-        },
-      ],
-    });
-  };
+const handleDragOver = (event) => {
+  event.preventDefault();
+};
 
-  const handleTutorChange = (index, field, value) => {
-    const newTutors = [...student.tutors];
-    newTutors[index] = { ...newTutors[index], [field]: value };
-    setStudent({ ...student, tutors: newTutors });
-  };
-
-  const handleRemoveTutor = (index) => {
-    setStudent({
-      ...student,
-      tutors: student.tutors.filter((_, i) => i !== index),
-    });
-  };
 
   return (
       <div className="flex min-h-screen bg-[#F2EEE3]">
@@ -281,6 +320,26 @@ const RegistrationPage = () => {
             <h2 className="text-xl font-semibold mb-6">Formulario de Inscripción</h2>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Competencia *</label>
+                  <select
+                    value={student.competencia}
+                    onChange={(e) => setStudent({ ...student, competencia: e.target.value })}
+                    className={`w-full px-3 py-2 border ${
+                      errors.some((e) => e.field === "competencia")
+                        ? "border-red-300"
+                        : "border-[#D9D9D9]"
+                    } rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]`}
+                    required
+                  >
+                    <option value="">Seleccionar competencia</option>
+                    {availableCompetencias.map((comp) => (
+                      <option key={comp.id} value={comp.id}>
+                        {comp.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     Nombre del estudiante *
@@ -395,7 +454,27 @@ const RegistrationPage = () => {
                     className="w-full border border-gray-300 rounded px-3 py-2"
                   />
                 </div>
+                
+
                 <div>
+                  <label className="block text-sm font-medium mb-1">Nivel de competencia *</label>
+                  <select
+                    value={student.nivel}
+                    onChange={(e) => setStudent({ ...student, nivel: e.target.value })}
+                    className={`w-full px-3 py-2 border ${
+                      errors.some((e) => e.field === "nivel")
+                        ? "border-red-300"
+                        : "border-[#D9D9D9]"
+                    } rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]`}
+                    required
+                  >
+                    <option value="">Seleccionar nivel</option>
+                    <option value="Básico">Básico</option>
+                    <option value="Intermedio">Intermedio</option>
+                    <option value="Avanzado">Avanzado</option>
+                  </select>
+                </div>
+                    <div>
                   <label className="block text-sm font-medium mb-1">Grado *</label>
                   <select
                   value={student.grade}
@@ -407,8 +486,8 @@ const RegistrationPage = () => {
                 >
                   <option value="">Seleccionar grado</option>
                   {availableGrades.map((grade, index) => (
-                    <option key={index} value={grade.grade}>
-                      {grade.grade}
+                    <option key={index} value={gradosEstandar}>
+                      {gradosEstandar}
                     </option>
                   ))}
                 </select>
@@ -534,16 +613,60 @@ const RegistrationPage = () => {
               </div>
               <div className="border-t border-[#D9D9D9] pt-6 mb-6">
                 <h3 className="text-lg font-medium mb-4">Subir lista en archivo Excel</h3>
-                <div className="border-2 border-dashed border-[#D9D9D9] rounded-md p-8 text-center">
-                  <UploadIcon size={32} className="mx-auto mb-2 text-[#A9B2AC]" />
-                  <p className="mb-2">Arrastra y suelta un archivo Excel o</p>
-                  <button type="button" className="text-[#A9B2AC] font-medium hover:underline">
-                    Selecciona un archivo
-                  </button>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Formato: XLS, XLSX (Max. 5MB)
-                  </p>
-                </div>
+                  <div
+                    className="border-2 border-dashed border-[#D9D9D9] rounded-md p-8 text-center cursor-pointer hover:bg-gray-50"
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    style={{
+                      border: '2px dashed gray',
+                      padding: '20px',
+                      textAlign: 'center',
+                      marginTop: '20px',
+                      borderRadius: '10px',
+                    }}
+                  >
+                    <UploadIcon size={32} className="mx-auto mb-2 text-[#A9B2AC]" />
+                    <p className="text-sm text-gray-500 mb-2">
+                      Arrastra y suelta el archivo aquí, o selecciona uno desde tu computadora
+                    </p>
+                    <input
+                      type="file"
+                      accept=".xls,.xlsx"
+                      onChange={readExcel}
+                      className="block mx-auto mt-2 text-sm text-gray-600"
+                    />
+                  </div>
+
+                  {/* Previsualización de datos cargados */}
+                  {excelData.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="text-md font-semibold mb-2">Previsualización de datos:</h4>
+                      <div className="overflow-auto max-h-64 border border-gray-200 rounded-md">
+                        <table className="min-w-full text-left text-sm table-auto">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              {Object.keys(excelData[0]).map((header, i) => (
+                                <th key={i} className="px-4 py-2 font-medium text-gray-700 border-b">
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {excelData.map((row, rowIndex) => (
+                              <tr key={rowIndex} className="hover:bg-gray-50">
+                                {Object.values(row).map((cell, cellIndex) => (
+                                  <td key={cellIndex} className="px-4 py-2 border-b">
+                                    {cell}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
               </div>
               <div className="flex justify-end gap-4">
                 <button

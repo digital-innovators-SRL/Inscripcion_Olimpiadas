@@ -1,8 +1,9 @@
+// ============================
+// IMPORTACIONES
+// ============================
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import axios from 'axios';
-axios.defaults.baseURL = 'http://localhost:8001/api';
-axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
 import {
   PlusIcon,
   SaveIcon,
@@ -13,60 +14,84 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
-const ConfigurationPage = () => {
-  const { user } = useAuth();
-  const [areas, setAreas] = useState([])
+// ============================
+// CONFIGURACIÓN GLOBAL DE AXIOS
+// ============================
+axios.defaults.baseURL = 'http://localhost:8001/api';
+axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
 
+// ============================
+// COMPONENTE PRINCIPAL
+// ============================
+const ConfigurationPage = () => {
+  // ============================
+  // CONTEXTO Y ESTADOS PRINCIPALES
+  // ============================
+  const { user } = useAuth();
+  const [areas, setAreas] = useState([]);
   const [newArea, setNewArea] = useState({
     name: "",
     cost: "",
     maxStudents: "",
     description: "",
   });
-
   const [errors, setErrors] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [editingArea, setEditingArea] = useState(null);
   const [gradeInputs, setGradeInputs] = useState({});
-
-
+  const GRADOS_DISPONIBLES = [
+    "3ro de Primaria", "4to de Primaria", "5to de Primaria", "6to de Primaria",
+    "1ro de Secundaria", "2do de Secundaria", "3ro de Secundaria",
+    "4to de Secundaria", "5to de Secundaria", "6to de Secundaria"
+  ];
+  
+  // ============================
+  // CARGA INICIAL DE ÁREAS
+  // ============================
   useEffect(() => {
     const fetchAreas = async () => {
       try {
         const response = await axios.get('/areas');
-        const areasDesdeAPI = response.data.data || response.data; // depende del formato
+        const areasDesdeAPI = response.data.data || response.data;
         const areasTransformadas = areasDesdeAPI.map((a) => ({
           id: a.id,
           name: a.nombre,
           description: a.descripcion,
           cost: a.costo,
           maxStudents: a.max_estudiantes,
-          grades: [], // los grados serán añadidos luego
-          isActive: true, // puedes ajustar si manejas estados en BD
+          grades: [],
+          isActive: true,
         }));
         setAreas(areasTransformadas);
       } catch (error) {
         console.error("Error al cargar áreas:", error);
       }
     };
-  
+
     fetchAreas();
   }, []);
-  
+
+  // ============================
+  // VALIDACIÓN DE CAMPOS DE ÁREA
+  // ============================
   const validateArea = () => {
     const newErrors = [];
+
     if (!newArea.name.trim()) {
       newErrors.push({ field: "name", message: "El nombre es requerido" });
     }
+
     if (!newArea.cost || Number(newArea.cost) <= 0) {
       newErrors.push({ field: "cost", message: "El costo debe ser mayor a 0" });
     }
+
     if (newArea.maxStudents && Number(newArea.maxStudents) <= 0) {
       newErrors.push({
         field: "maxStudents",
         message: "El número máximo de estudiantes debe ser mayor a 0",
       });
     }
+
     if (
       areas.some(
         (area) =>
@@ -78,13 +103,17 @@ const ConfigurationPage = () => {
         message: "Ya existe un área con este nombre",
       });
     }
+
     setErrors(newErrors);
     return newErrors.length === 0;
   };
-  
+
+  // ============================
+  // CREAR O ACTUALIZAR ÁREA
+  // ============================
   const addArea = async () => {
     if (!validateArea()) return;
-  
+
     try {
       if (editingArea) {
         // Actualizar área existente
@@ -94,9 +123,9 @@ const ConfigurationPage = () => {
           costo: Number(newArea.cost),
           max_estudiantes: newArea.maxStudents || null,
         });
-  
+
         const updatedArea = response.data.data || response.data;
-  
+
         setAreas((prevAreas) =>
           prevAreas.map((area) =>
             area.id === editingArea.id
@@ -110,6 +139,7 @@ const ConfigurationPage = () => {
               : area
           )
         );
+
         setEditingArea(null);
       } else {
         // Crear nueva área
@@ -119,9 +149,9 @@ const ConfigurationPage = () => {
           costo: Number(newArea.cost),
           max_estudiantes: newArea.maxStudents || null,
         });
-  
+
         const nuevaAreaGuardada = response.data.data || response.data;
-  
+
         const areaFormateada = {
           id: nuevaAreaGuardada.id,
           name: nuevaAreaGuardada.nombre,
@@ -131,10 +161,10 @@ const ConfigurationPage = () => {
           grades: [],
           isActive: true,
         };
-  
+
         setAreas((prev) => [...prev, areaFormateada]);
       }
-  
+
       setNewArea({
         name: "",
         cost: "",
@@ -142,9 +172,11 @@ const ConfigurationPage = () => {
         maxStudents: "",
         description: "",
       });
+
       showSuccessMessage();
     } catch (error) {
       console.error("Error al guardar el área:", error);
+
       if (error.response?.data?.errors) {
         const erroresAPI = Object.entries(error.response.data.errors).map(
           ([campo, mensajes]) => ({
@@ -156,7 +188,10 @@ const ConfigurationPage = () => {
       }
     }
   };
-  
+
+  // ============================
+  // EDITAR ÁREA
+  // ============================
   const editArea = (area) => {
     setEditingArea(area);
     setNewArea({
@@ -167,11 +202,15 @@ const ConfigurationPage = () => {
       description: area.description || "",
     });
   };
+
+  // ============================
+  // AGREGAR GRADO A UN ÁREA
+  // ============================
   const addGradeToArea = async (areaId) => {
     const grade = gradeInputs[areaId]?.trim();
     if (!grade) return;
-  
-    // Simulación sin errores aunque falle la petición
+
+    // Simulación (actualización local)
     setAreas((prev) =>
       prev.map((area) =>
         area.id === areaId
@@ -182,25 +221,24 @@ const ConfigurationPage = () => {
           : area
       )
     );
-  
+
     setGradeInputs({ ...gradeInputs, [areaId]: "" });
     showSuccessMessage();
-  
+
     try {
       await axios.post('/area-categorias', {
         area_id: areaId,
-        categoria_id: 1, // ← aún puedes dejar este ID como predeterminado
+        categoria_id: 1,
         grado: grade,
       });
     } catch (error) {
       console.warn("Simulación: no se pudo guardar en el backend, pero se agregó visualmente.");
-      // Ya no se hace setErrors, ya que estamos simulando el funcionamiento.
     }
   };
-  
-  
-  
-  
+
+  // ============================
+  // ELIMINAR GRADO DE UN ÁREA
+  // ============================
   const removeGradeFromArea = (areaId, gradeToRemove) => {
     setAreas((prev) =>
       prev.map((area) =>
@@ -213,7 +251,10 @@ const ConfigurationPage = () => {
       )
     );
   };
-  
+
+  // ============================
+  // ELIMINAR ÁREA
+  // ============================
   const removeArea = async (areaId) => {
     try {
       await axios.delete(`/areas/${areaId}`);
@@ -223,8 +264,10 @@ const ConfigurationPage = () => {
       console.error("Error al eliminar el área:", error);
     }
   };
-  
 
+  // ============================
+  // ACTIVAR / DESACTIVAR ÁREA
+  // ============================
   const toggleAreaStatus = (areaId) => {
     setAreas(
       areas.map((area) =>
@@ -233,6 +276,9 @@ const ConfigurationPage = () => {
     );
   };
 
+  // ============================
+  // MOSTRAR MENSAJE DE ÉXITO
+  // ============================
   const showSuccessMessage = () => {
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
