@@ -13,6 +13,7 @@ class Competencia extends Model
         'fecha_competencia',
         'fecha_fin_inscripcion',
         'max_competidores',
+        'monto',
     ];
 
     // Relaciones
