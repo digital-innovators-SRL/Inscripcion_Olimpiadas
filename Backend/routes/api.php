@@ -2,11 +2,15 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Organizador\OrganizadorDashboardController;
 use App\Http\Controllers\AreaController;
+
+
+use App\Http\Controllers\InscripcionController;
 
 
 /*
@@ -44,3 +48,5 @@ Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function 
     Route::apiResource('categorias', CategoriaController::class);
     Route::apiResource('competencias', CompetenciaController::class);
 });
+
+
