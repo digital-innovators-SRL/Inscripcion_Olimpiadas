@@ -11,7 +11,7 @@ const Boleta = () => {
   const { token } = useAuth();
   const pago = state?.pago;
 
-  if (!pago) return <div className="p-10">No hay datos disponibles</div>;
+  if (!pago) return <div className="p-10">No hay datos</div>;
 
   const estudiante = pago.estudiante;
   const competencia = pago.competencia;
@@ -82,7 +82,9 @@ const Boleta = () => {
                 <p className="font-medium text-lg">Bs. {competencia.monto}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Código de orden de pago:</p>
+                <p className="text-sm text-gray-500">
+                  Código de orden de pago:
+                </p>
                 <p className="font-medium text-lg">{codigo}</p>
               </div>
               <div className="col-span-2">
