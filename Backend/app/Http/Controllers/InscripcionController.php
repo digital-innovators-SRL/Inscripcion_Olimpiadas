@@ -1,12 +1,16 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Imports\InscripcionImport;
 use App\Models\Area;
 use App\Models\Categoria;
 use App\Models\Estudiante;
 use App\Models\Inscripcion;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 
 class InscripcionController extends Controller
 {
@@ -121,5 +125,79 @@ class InscripcionController extends Controller
         $inscripcion->delete();
 
         return response()->json(['message' => 'Inscripción eliminada.']);
+    }
+
+    /*public function excelStore(Request $request){
+        try{
+        $file = $request->file("import_file");
+        Excel::import(new InscripcionImport, $file);
+        return response()->json(['message' => 'importacion correcta']);
+        }catch(\Exception){
+            return response()->json(['message' => 'importacion incorrecta']);
+        }
+    }*/
+
+    public function mostrarFormulario()
+    {
+        return view('inscripciones.importar'); // Asegúrate de crear esta vista
+    }
+
+    public function importarExcel(Request $request)
+    {
+        $request->validate([
+            'archivo' => 'required|file|mimes:xlsx,xls,csv'
+        ]);
+
+        try {
+            Excel::import(new InscripcionImport, $request->file('archivo'));
+
+            return back()->with('success', 'Importación completada exitosamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error durante la importación: ' . $e->getMessage());
+        }
+    }
+        public function index1()
+    {
+        $inscripciones = DB::table('inscripciones')
+    ->join('estudiantes', 'inscripciones.estudiante_id', '=', 'estudiantes.id')
+    ->join('competencias', 'inscripciones.competencia_id', '=', 'competencias.id')
+    ->join('area_categoria', 'competencias.area_categoria_id', '=', 'area_categoria.id')
+    ->join('areas', 'area_categoria.area_id', '=', 'areas.id')
+    ->join('categorias', 'area_categoria.categoria_id', '=', 'categorias.id')
+    ->join('users as tutores', 'inscripciones.tutor_id', '=', 'tutores.id')
+    ->select(
+        'inscripciones.estudiante_id',
+        'inscripciones.competencia_id',
+        DB::raw('MIN(inscripciones.id) as id'),
+        'estudiantes.nombres',
+        'estudiantes.apellidos',
+        'estudiantes.ci',
+        'estudiantes.email',
+        'estudiantes.curso',
+        'competencias.nombre as competencia',
+        'areas.nombre as area',
+        'categorias.nombre as categoria',
+        'tutores.name as tutor',
+        'inscripciones.contacto_celular',
+        'inscripciones.contacto_email'
+    )
+    ->groupBy(
+        'inscripciones.estudiante_id',
+        'inscripciones.competencia_id',
+        'estudiantes.nombres',
+        'estudiantes.apellidos',
+        'estudiantes.ci',
+        'estudiantes.email',
+        'estudiantes.curso',
+        'competencias.nombre',
+        'areas.nombre',
+        'categorias.nombre',
+        'tutores.name',
+        'inscripciones.contacto_celular',
+        'inscripciones.contacto_email'
+    )
+    ->get();
+
+        return view('inscripciones.index', compact('inscripciones'));
     }
 }
