@@ -42,6 +42,8 @@ const RegistrationPage = () => {
   const [availableCompetencias, setCompetenciasDisponibles] = useState([]);
   const [areas, setAreas] = useState([]);
   const [excelData, setExcelData] = useState([]);
+  const [excelFile, setExcelFile] = useState(null);
+
 
  
   // ---------------------- Obtener datos iniciales ----------------------
@@ -246,7 +248,8 @@ const readExcel = (e) => {
     alert("El archivo excede los 5MB permitidos.");
     return;
   }
-
+  
+  setExcelFile(file); 
   const reader = new FileReader();
   reader.onload = (event) => {
     const data = new Uint8Array(event.target.result);
@@ -269,6 +272,32 @@ const readExcel = (e) => {
   };
 
   reader.readAsArrayBuffer(file);
+};
+const subirArchivoExcel = async () => {
+  if (!excelFile) {
+    alert("No hay archivo para subir");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("archivo", excelFile);
+
+  try {
+    const response = await fetch("http://localhost:8001/api/subida-excel", {
+      method: "POST",
+      body: formData,
+      // headers: { Authorization: `Bearer ${token}` }, // si usas JWT
+    });
+
+    if (!response.ok) throw new Error("Error al subir el archivo Excel");
+
+    const data = await response.json();
+    console.log("Archivo subido exitosamente:", data);
+    alert("Archivo Excel subido correctamente");
+  } catch (error) {
+    console.error("Error al subir el archivo Excel:", error);
+    alert("Error al subir el archivo Excel");
+  }
 };
 
 const handleDrop = (event) => {
@@ -682,6 +711,10 @@ const handleDragOver = (event) => {
                 >
                   Generar Boleta de Pago
                 </button>
+                <button type="button" onClick={subirArchivoExcel} className="btn btn-primary">
+  Subir archivo Excel al backend
+</button>
+
               </div>
             </form>
           </div>
