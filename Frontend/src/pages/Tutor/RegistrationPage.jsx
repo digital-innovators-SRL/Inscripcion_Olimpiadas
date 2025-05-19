@@ -661,7 +661,11 @@ const handleDragOver = (event) => {
                     <input
                       type="file"
                       accept=".xls,.xlsx"
-                      onChange={readExcel}
+                      onChange={(e) => {
+                        const archivo = e.target.files[0];
+                        setExcelFile(archivo); // guardar para subir
+                        readExcel(e);          // opcional si sigues previsualizando
+                      }}
                       className="block mx-auto mt-2 text-sm text-gray-600"
                     />
                   </div>
@@ -714,6 +718,13 @@ const handleDragOver = (event) => {
                 <button type="button" onClick={subirArchivoExcel} className="btn btn-primary">
   Subir archivo Excel al backend
 </button>
+<a
+  href="/plantilla_inscripcion.xlsx"
+  download
+  className="text-blue-600 underline hover:text-blue-800"
+>
+  Descargar plantilla de inscripción
+</a>
 
               </div>
             </form>
