@@ -67,7 +67,9 @@ const DashboardPage = () => {
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-[#D9D9D9] mb-8">
           <h2 className="text-xl font-semibold mb-4">
+
             Inscripciones Recientes
+            
           </h2>
           <table className="w-full">
             <thead>
