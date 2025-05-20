@@ -7,11 +7,13 @@ use App\Imports\InscripcionImport;
 use App\Models\Area;
 use App\Models\Categoria;
 use App\Models\Estudiante;
+use App\Models\Tutor;
 use App\Models\Inscripcion;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
+use App\Models\AreaCompetencia;
 
 class InscripcionController extends Controller
 {
@@ -52,7 +54,7 @@ class InscripcionController extends Controller
 
         // Asumimos una inscripción por estudiante por tutor (pero puede tener múltiples grados)
         foreach ($request->grados as $grado) {
-            $areaCategoria = \DB::table('area_categoria')
+            $areaCategoria = DB::table('area_categoria')
                 ->where('area_id', $grado['area_id'])
                 ->where('categoria_id', $grado['categoria_id'])
                 ->first();
@@ -64,7 +66,7 @@ class InscripcionController extends Controller
             $costoTotal += $areaCategoria->costo;
 
             // Buscar competencia correspondiente
-            $competencia = \DB::table('competencias')
+            $competencia = DB::table('competencias')
                 ->where('area_categoria_id', $areaCategoria->id)
                 ->first();
 
@@ -201,7 +203,7 @@ class InscripcionController extends Controller
 
         return view('inscripciones.index', compact('inscripciones'));
     }
-}
+
 
     public function inscribir(Request $request)
 {
