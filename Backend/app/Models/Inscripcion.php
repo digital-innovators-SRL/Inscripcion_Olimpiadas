@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inscripcion extends Model
 {
+    protected $table = 'inscripciones';
     public $timestamps = false; // Si solo usas created_at manual
     protected $table = 'inscripciones';
     protected $fillable = [
