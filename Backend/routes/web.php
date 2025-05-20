@@ -17,10 +17,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/importar-inscripciones', [InscripcionController::class, 'mostrarFormulario']);
-Route::post('/importar-inscripciones', [InscripcionController::class, 'importarExcel']);
+//Route::get('/importar-inscripciones', [InscripcionController::class, 'mostrarFormulario']);
+//Route::post('/importar-inscripciones', [InscripcionController::class, 'importarExcel']);
 
-Route::get('/inscripciones', [InscripcionController::class, 'index1']);
+
 
 
 Route::get('/registro', function () {
