@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\InscripcionController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\InscripcionController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -14,14 +13,14 @@ use App\Http\Controllers\InscripcionController;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('/login', function () {
+    return view('index');
 });
 
-Route::get('/importar-inscripciones', [InscripcionController::class, 'mostrarFormulario']);
-Route::post('/importar-inscripciones', [InscripcionController::class, 'importarExcel']);
+//Route::get('/importar-inscripciones', [InscripcionController::class, 'mostrarFormulario']);
+//Route::post('/importar-inscripciones', [InscripcionController::class, 'importarExcel']);
 
-Route::get('/inscripciones', [InscripcionController::class, 'index1']);
+
 
 
 Route::get('/registro', function () {

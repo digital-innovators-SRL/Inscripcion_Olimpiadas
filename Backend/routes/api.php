@@ -6,8 +6,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
+use App\Http\Controllers\Tutor\TutorInscripcionController;
 use App\Http\Controllers\Organizador\OrganizadorDashboardController;
 use App\Http\Controllers\AreaController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\CompetenciaController;
 
 
 use App\Http\Controllers\InscripcionController;
@@ -35,7 +38,13 @@ Route::middleware(['jwt.exceptions', 'auth:api'])->group(function () {
 });
 
 Route::middleware(['auth:api', 'role:Administrador'])->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
-Route::middleware(['auth:api', 'role:Tutor'])->get('/tutor/dashboard', [TutorDashboardController::class, 'index']);
+
+Route::middleware(['auth:api', 'role:Tutor'])->prefix('tutor')->group(function () {
+    Route::get('/dashboard', [TutorDashboardController::class, 'index']);
+    Route::get('/inscripciones', [TutorInscripcionController::class, 'index']);
+    Route::get('/boleta/{id}/pdf', [TutorInscripcionController::class, 'generarBoletaPagoPDF']);
+});
+
 Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
 
 Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->group(function () {
