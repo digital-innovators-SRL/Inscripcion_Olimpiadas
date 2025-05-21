@@ -109,7 +109,7 @@ const validateForm = () => {
 // ---------------------- Envío de inscripción ----------------------
 const registrarInscripcion = async () => {
   try {
-    const response = await fetch("http://dis.tis.cs.umss.edu.bo/api/inscripciones", {
+    const response = await fetch("http://localhost:8000/inscripciones", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
