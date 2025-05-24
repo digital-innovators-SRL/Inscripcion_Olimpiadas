@@ -13,7 +13,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Models\AreaCompetencia;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Competencia;
 
 class InscripcionController extends Controller
 {
@@ -204,6 +207,57 @@ class InscripcionController extends Controller
         return view('inscripciones.index', compact('inscripciones'));
     }
 
+    public function obtenerOrdenPago(Request $request)
+        {
+            $request->validate([
+                'estudiante' => 'required|array',
+                'estudiante.nombres' => 'required|string',
+                'estudiante.apellidos' => 'required|string',
+                'estudiante.ci' => 'required|string',
+                'estudiante.fecha_nacimiento' => 'required|date',
+                'estudiante.email' => 'required|email',
+                'contacto_email' => 'required|email',
+                'contacto_celular' => 'nullable|string',
+                'nombre_tutor' => 'required|string',
+                'competencia_id' => 'required|exists:competencias,id',
+            ]);
+
+            // Buscar o crear estudiante
+            $est = $request->estudiante;
+            $estudiante = Estudiante::where('nombres', $est['nombres'])
+                ->where('apellidos', $est['apellidos'])
+                ->where('ci', $est['ci'])
+                ->first();
+
+            if (!$estudiante) {
+                $estudiante = Estudiante::create($est);
+            }
+
+            // Crear inscripción (sin comprobante y deshabilitado)
+            $inscripcion = Inscripcion::create([
+                'estudiante_id' => $estudiante->id,
+                'competencia_id' => $request->competencia_id,
+                'tutor_id' => Auth::id(),
+                'contacto_email' => $request->contacto_email,
+                'contacto_celular' => $request->contacto_celular,
+                'nombre_tutor' => $request->nombre_tutor,
+                'comprobante_pago' => '',
+                'habilitado' => false,
+                'created_at' => now(),
+            ]);
+
+            // ✅ Cargar competencia correctamente con relaciones
+            $competencia = Competencia::with('areaCategoria.area', 'areaCategoria.categoria')->find($request->competencia_id);
+
+            // Generar PDF
+            $pdf = Pdf::loadView('pdf.orden_pago', [
+                'inscripcion' => $inscripcion,
+                'estudiante' => $estudiante,
+                'competencia' => $competencia,
+            ]);
+
+            return $pdf->download("orden_pago_{$inscripcion->id}.pdf");
+    }
 
     public function inscribir(Request $request)
 {

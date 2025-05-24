@@ -2,83 +2,66 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Competencia;
 use Illuminate\Http\Request;
 
 class CompetenciaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    // === Para TUTOR ===
     public function index()
     {
-        //
+        // Devuelve todas las competencias disponibles para inscripción
+        $competencias = Competencia::with(['areaCategoria.area', 'areaCategoria.categoria'])->get();
+        return response()->json($competencias);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
+    // === Para ORGANIZADOR ===
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'tutor_id' => 'required|exists:users,id',
+            'area_categoria_id' => 'required|exists:area_categoria,id',
+            'nombre' => 'required|string|max:150',
+            'fecha_competencia' => 'required|date',
+            'fecha_fin_inscripcion' => 'required|date|before_or_equal:fecha_competencia',
+            'max_competidores' => 'required|integer|min:1',
+            'monto' => 'required|numeric|min:0',
+        ]);
+
+        $competencia = Competencia::create($validated);
+        return response()->json($competencia, 201);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
-        //
+        $competencia = Competencia::with(['areaCategoria.area', 'areaCategoria.categoria'])->findOrFail($id);
+        return response()->json($competencia);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        //
-    }
+        $competencia = Competencia::findOrFail($id);
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+        $validated = $request->validate([
+            'tutor_id' => 'required|exists:users,id',
+            'area_categoria_id' => 'required|exists:area_categoria,id',
+            'nombre' => 'required|string|max:150',
+            'fecha_competencia' => 'required|date',
+            'fecha_fin_inscripcion' => 'required|date|before_or_equal:fecha_competencia',
+            'max_competidores' => 'required|integer|min:1',
+            'monto' => 'required|numeric|min:0',
+        ]);
+
+        $competencia->update($validated);
+        return response()->json($competencia);
+    }
+    
     public function destroy($id)
     {
-        //
+        $competencia = Competencia::findOrFail($id);
+        $competencia->delete();
+
+        return response()->json(['message' => 'Competencia eliminada con éxito']);
     }
 }

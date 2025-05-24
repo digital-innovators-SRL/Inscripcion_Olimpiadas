@@ -40,7 +40,7 @@ const Sidebar = () => {
 
   const tutorItems = [
     {
-      path: "/registration",
+      path: "/registro",
       icon: <ClipboardIcon size={20} />,
       label: "Inscripción",
     },
