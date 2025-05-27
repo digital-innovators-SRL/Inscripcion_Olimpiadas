@@ -15,8 +15,12 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AreaCompetencia;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Competencia;
+use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf as DomPdf;
+use Spatie\PdfToImage\Pdf;
+
+
 
 class InscripcionController extends Controller
 {
@@ -318,5 +322,24 @@ class InscripcionController extends Controller
     }
 }
 
+    public function confirmarComprobante(Request $request)
+    {
+        $request->validate([
+            'numero' => 'required|string',
+            'inscripcion_id' => 'required|integer|exists:inscripciones,id',
+            'tutor' => 'nullable|string',
+            'monto' => 'nullable|string',
+        ]);
+
+        $inscripcion = Inscripcion::find($request->inscripcion_id);
+        $inscripcion->comprobante_pago = $request->numero;
+        $inscripcion->habilitado = true;
+        $inscripcion->save();
+
+        return response()->json([
+            'message' => 'Comprobante actualizado correctamente',
+            'inscripcion' => $inscripcion,
+        ]);
+    }
 }
 

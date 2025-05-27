@@ -1,159 +1,151 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
-import { UploadIcon, CheckCircleIcon, LoaderIcon } from "lucide-react";
+import { UploadIcon, CheckCircleIcon, LoaderIcon, XCircle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import Tesseract from "tesseract.js";
+import axios from "axios";
 
 const UploadProofPage = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
+  const [imagen, setImagen] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploaded, setUploaded] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [processed, setProcessed] = useState(false);
-  const handleUpload = () => {
-    setUploading(true);
-    // Simulate upload delay
-    setTimeout(() => {
-      setUploading(false);
-      setUploaded(true);
-      setProcessing(true);
-      // Simulate OCR processing delay
-      setTimeout(() => {
-        setProcessing(false);
-        setProcessed(true);
-      }, 2000);
-    }, 1500);
+  const [processedData, setProcessedData] = useState(null);
+  const [error, setError] = useState("");
+
+  const handleImagenChange = (e) => {
+    setImagen(e.target.files[0]);
+    setProcessedData(null);
+    setError("");
   };
+
+  const procesarTexto = (text) => {
+    const lineas = text.split('\n').map(l => l.trim());
+
+    // Nuevo patrón para detectar "Número de transacción"
+    let numero = null;
+    for (let linea of lineas) {
+      const match = linea.match(/n[úu]mero de transacci[oó]n\s*(\d+)/i);
+      if (match) {
+        numero = match[1];
+        break;
+      }
+    }
+
+    const inscripcionId = text.match(/ID DE INSCRIPC[IÍ]ON\s*(\d+)/i)?.[1] || null;
+    const tutor = text.match(/Tutor:\s*(.*)/i)?.[1]?.trim() || null;
+    const monto = text.match(/Bs\.\s*([\d,.]+)/i)?.[1]?.replace(",", ".") || null;
+
+    const datos = { numero, inscripcion_id: inscripcionId, tutor, monto };
+    console.log("📄 Datos extraídos:", datos);
+    setProcessedData(datos);
+    return datos;
+  };
+
+
+  const handleUpload = () => {
+    if (!imagen) return;
+    setUploading(true);
+    setProcessing(false);
+    setError("");
+
+    Tesseract.recognize(imagen, "spa", {
+      logger: (m) => console.log("OCR progreso:", m),
+    })
+      .then(({ data: { text } }) => {
+        const datos = procesarTexto(text);
+        if (datos.numero && datos.inscripcion_id) {
+          enviarAlBackend(datos);
+        } else {
+          setError("No se pudieron extraer los datos correctamente del comprobante.");
+        }
+      })
+      .catch((err) => {
+        console.error("Error OCR:", err);
+        setError("Error durante el procesamiento del OCR.");
+      })
+      .finally(() => {
+        setUploading(false);
+      });
+  };
+
+  const enviarAlBackend = async (datos) => {
+    setProcessing(true);
+    try {
+      await axios.post(
+        "http://localhost:8000/api/tutor/confirmar-comprobante",
+        datos,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setProcessing(false);
+    } catch (err) {
+      console.error("Error al enviar al backend:", err);
+      setError("Error al guardar el comprobante. Verifica los datos.");
+      setProcessing(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F2EEE3]">
       <Sidebar />
       <div className="ml-64 flex-grow p-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Subir Comprobante de Pago</h1>
-          <div className="flex items-center">
-            <span className="mr-4">{user?.role || "Usuario"}</span>
-            <div className="w-10 h-10 bg-[#A9B2AC] rounded-full"></div>
-          </div>
         </div>
+
         <div className="bg-white rounded-lg shadow-sm border border-[#D9D9D9] p-6 max-w-2xl mx-auto">
           <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold">
-              Comprobante para Orden: ORD-2023-0587
-            </h2>
+            <h2 className="text-xl font-semibold">Comprobante OCR</h2>
             <p className="text-gray-500 mt-1">
-              Sube el comprobante de transferencia o depósito
+              Sube el comprobante de transferencia para su validación
             </p>
           </div>
-          {!uploaded ? (
-            <div className="border-2 border-dashed border-[#D9D9D9] rounded-md p-12 text-center mb-6">
-              <UploadIcon size={48} className="mx-auto mb-4 text-[#A9B2AC]" />
-              <p className="mb-4">Arrastra y suelta tu comprobante o</p>
-              <button
-                type="button"
-                className="text-[#A9B2AC] font-medium hover:underline"
-                onClick={handleUpload}
-              >
-                Selecciona un archivo
-              </button>
-              <p className="text-sm text-gray-500 mt-2">
-                Formatos aceptados: JPG, PNG, PDF (Max. 5MB)
-              </p>
-            </div>
-          ) : (
-            <div className="mb-6">
-              <div className="bg-gray-50 border border-[#D9D9D9] rounded-md p-4 flex items-center justify-between">
-                <div className="flex items-center">
-                  <FileIcon />
-                  <span className="ml-2">comprobante.jpg</span>
-                </div>
-                <CheckCircleIcon className="text-green-500" size={20} />
-              </div>
-              {processing && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-md flex items-center">
-                  <LoaderIcon
-                    className="animate-spin text-[#A9B2AC] mr-2"
-                    size={20}
-                  />
-                  <span>Procesando OCR...</span>
-                </div>
-              )}
-              {processed && (
-                <div className="mt-4 p-4 bg-green-50 rounded-md border border-green-200">
-                  <h3 className="font-medium mb-2">Información extraída:</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        Número de comprobante:
-                      </p>
-                      <p className="font-medium">TRX-982374</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        Nombre del pagador:
-                      </p>
-                      <p className="font-medium">María Pérez</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Fecha de pago:</p>
-                      <p className="font-medium">15/11/2023</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Monto:</p>
-                      <p className="font-medium">Bs. 350.00</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          <div className="flex justify-between">
+
+          <div className="border-2 border-dashed border-[#D9D9D9] rounded-md p-12 text-center mb-6">
+            <UploadIcon size={48} className="mx-auto mb-4 text-[#A9B2AC]" />
+            <input type="file" accept="image/*" onChange={handleImagenChange} />
             <button
-              onClick={() => navigate("/payment-slip")}
-              className="border border-[#D9D9D9] text-[#4F4F4F] py-2 px-6 rounded-md hover:bg-[#F2EEE3] transition-colors"
+              className="mt-4 text-[#A9B2AC] font-medium hover:underline"
+              onClick={handleUpload}
+              disabled={uploading}
             >
-              Volver
-            </button>
-            <button
-              onClick={() => navigate("/reports")}
-              className={`bg-[#A9B2AC] text-white py-2 px-6 rounded-md transition-colors ${
-                processed
-                  ? "hover:bg-opacity-90"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
-              disabled={!processed}
-            >
-              Confirmar Pago
+              {uploading ? "Procesando imagen..." : "Procesar Comprobante"}
             </button>
           </div>
+
+          {processing && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-md flex items-center">
+              <LoaderIcon className="animate-spin text-[#A9B2AC] mr-2" size={20} />
+              <span>Guardando comprobante...</span>
+            </div>
+          )}
+
+          {processedData && !processing && (
+            <div className="mt-4 p-4 bg-green-50 rounded-md border border-green-200">
+              <CheckCircleIcon className="text-green-500 mb-2" />
+              <h3 className="font-medium mb-2">Información extraída:</h3>
+              <p><strong>ID Inscripción:</strong> {processedData.inscripcion_id}</p>
+              <p><strong>Número comprobante:</strong> {processedData.numero}</p>
+              <p><strong>Tutor:</strong> {processedData.tutor}</p>
+              <p><strong>Monto:</strong> Bs. {processedData.monto}</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md border border-red-300 flex items-center">
+              <XCircle className="mr-2" /> {error}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
-// Simple file icon component
-const FileIcon = () => (
-  <svg
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
-      stroke="#4F4F4F"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M14 2V8H20"
-      stroke="#4F4F4F"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+
 export default UploadProofPage;

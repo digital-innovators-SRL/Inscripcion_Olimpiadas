@@ -47,6 +47,7 @@ Route::middleware(['auth:api', 'role:Tutor'])->prefix('tutor')->group(function (
     Route::get('/categorias', [CategoriaController::class, 'index']);
     Route::get('/areas', [AreaController::class, 'index']);
     Route::post('/ordenPago', [InscripcionController::class, 'obtenerOrdenPago']);
+    Route::post('/confirmar-comprobante', [InscripcionController::class, 'confirmarComprobante']);
 });
 
 Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
