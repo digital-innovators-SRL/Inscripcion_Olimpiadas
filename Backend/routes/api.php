@@ -43,4 +43,6 @@ Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function 
     Route::apiResource('inscripciones', InscripcionController::class);
     Route::apiResource('categorias', CategoriaController::class);
     Route::apiResource('competencias', CompetenciaController::class);
+    Route::get('/tutor/dashboard/filtros', [TutorDashboardController::class, 'getFiltros']);
+    Route::post('/tutor/dashboard/inscripciones-filtradas', [TutorDashboardController::class, 'filtrarInscripciones']);
 });

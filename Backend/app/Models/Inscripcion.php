@@ -22,18 +22,18 @@ class Inscripcion extends Model
 
     // Relaciones
 
+    public function areaCategoria()
+    {
+        return $this->belongsTo(AreaCategoria::class, 'area_id', 'area_id');
+    }
+
+    public function areasCompetencia()
+    {
+        return $this->hasMany(AreasCompetencia::class, 'area', 'area_id');
+    }
+
     public function estudiante()
     {
-        return $this->belongsTo(Estudiante::class);
-    }
-
-    public function competencia()
-    {
-        return $this->belongsTo(Competencia::class);
-    }
-
-    public function tutor()
-    {
-        return $this->belongsTo(User::class, 'tutor_id');
+        return $this->belongsTo(Estudiante::class, 'estudiante_id');
     }
 }
