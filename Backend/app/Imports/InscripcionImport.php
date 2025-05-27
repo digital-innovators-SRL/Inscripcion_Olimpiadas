@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Imports;
+
 use Illuminate\Support\Facades\DB;
 use App\Models\Estudiante;
 use App\Models\Inscripcion;
@@ -10,6 +11,7 @@ use App\Models\Area;
 use App\Models\Categoria;
 use App\Models\AreaCategoria;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -20,6 +22,9 @@ class InscripcionImport implements ToModel, WithHeadingRow, WithBatchInserts, Wi
 {
     public function model(array $row)
     {
+        // Limpiar todos los datos de entrada
+        $row = $this->limpiarFila($row);
+
         // 1. Crear o buscar estudiante
         $estudiante = Estudiante::firstOrCreate(
             ['ci' => $row['ci']],
@@ -40,7 +45,7 @@ class InscripcionImport implements ToModel, WithHeadingRow, WithBatchInserts, Wi
             ['name' => $row['tutor']],
             [
                 'email' => Str::slug($row['tutor']) . '@default.com',
-                'password' => bcrypt('password123'),
+                'password' => Hash::make('password123'),
                 'celular' => $row['contacto_celular'],
                 'role' => 'tutor',
             ]
@@ -88,6 +93,17 @@ class InscripcionImport implements ToModel, WithHeadingRow, WithBatchInserts, Wi
             'comprobante_pago' => '',
             'habilitado' => 0,
         ]);
+    }
+
+    private function limpiarFila(array $fila): array
+    {
+        foreach ($fila as $key => $value) {
+            if (is_string($value)) {
+                // Quita saltos de línea y espacios raros
+                $fila[$key] = preg_replace('/[\r\n]+/', ' ', trim($value));
+            }
+        }
+        return $fila;
     }
 
     public function batchSize(): int
