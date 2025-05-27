@@ -109,7 +109,7 @@ const validateForm = () => {
 // ---------------------- Envío de inscripción ----------------------
 const registrarInscripcion = async () => {
   try {
-    const response = await fetch("http://dis.tis.cs.umss.edu.bo/api/inscripciones", {
+    const response = await fetch("http://localhost:8000/api/inscripciones", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -283,7 +283,7 @@ const subirArchivoExcel = async () => {
   formData.append("archivo", excelFile);
 
   try {
-    const response = await fetch("http://dis.tis.cs.umss.edu.bo/api/importar-inscripciones", {
+    const response = await fetch("http://localhost:8000/api/importar-inscripciones", {
       method: "POST",
       body: formData,
       // headers: { Authorization: `Bearer ${token}` }, // si usas JWT

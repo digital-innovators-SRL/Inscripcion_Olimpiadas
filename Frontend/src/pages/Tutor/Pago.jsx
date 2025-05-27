@@ -11,7 +11,7 @@ const Pagos = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("http://dis.tis.cs.umss.edu.bo/api/tutor/inscripciones", {
+    axios.get("http://localhost:8000/api/tutor/inscripciones", {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then((res) => {

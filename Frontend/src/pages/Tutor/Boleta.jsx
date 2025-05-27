@@ -24,7 +24,7 @@ const Boleta = () => {
   const handleDownloadPDF = async (id, codigo) => {
     try {
       const res = await axios.get(
-        `http://dis.tis.cs.umss.edu.bo/api/tutor/boleta/${id}/pdf`,
+        `http://localhost:8000/api/tutor/boleta/${id}/pdf`,
         {
           responseType: "blob",
           headers: {
