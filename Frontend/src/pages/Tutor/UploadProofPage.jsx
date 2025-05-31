@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import { UploadIcon, CheckCircleIcon, LoaderIcon, XCircle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import Tesseract from "tesseract.js";
 import axios from "axios";
+import imageCompression from "browser-image-compression";
 
 const UploadProofPage = () => {
   const { user, token } = useAuth();
@@ -14,6 +14,8 @@ const UploadProofPage = () => {
   const [processing, setProcessing] = useState(false);
   const [processedData, setProcessedData] = useState(null);
   const [error, setError] = useState("");
+  const [textoOCR, setTextoOCR] = useState(""); 
+
 
   const handleImagenChange = (e) => {
     setImagen(e.target.files[0]);
@@ -22,21 +24,42 @@ const UploadProofPage = () => {
   };
 
   const procesarTexto = (text) => {
-    const lineas = text.split('\n').map(l => l.trim());
-
-    // Nuevo patrón para detectar "Número de transacción"
+    const lineas = text.split('\n').map(l => l.trim()).filter(Boolean);
     let numero = null;
-    for (let linea of lineas) {
-      const match = linea.match(/n[úu]mero de transacci[oó]n\s*(\d+)/i);
-      if (match) {
-        numero = match[1];
-        break;
+    let inscripcionId = null;
+    let tutor = null;
+    let monto = null;
+
+    for (let i = 0; i < lineas.length; i++) {
+      const linea = lineas[i];
+
+      if (!numero && /N[úu]mero de transacci[oó]n/i.test(linea)) {
+        // puede ser "Número de transacción: 12345" o en dos líneas
+        const inline = linea.match(/(\d{4,})/);
+        const nextline = lineas[i + 1]?.match(/^\d{4,}$/);
+        numero = inline?.[1] || nextline?.[0] || null;
+      }
+
+      if (!inscripcionId && /ID\s+DE\s+INSCRIPC[IÍ][OÓ]N/i.test(linea)) {
+        const inline = linea.match(/ID\s+DE\s+INSCRIPC[IÍ]ON[\s:]*([\d]+)/i);
+        const nextline = lineas[i + 1]?.match(/^\d+$/);
+        inscripcionId = inline?.[1] || nextline?.[0] || null;
+      }
+
+      if (!tutor) {
+        if (linea.match(/^Tutor[:]?$/i)) {
+          tutor = lineas[i + 1]?.trim(); // ← toma la siguiente línea
+        } else {
+          const match = linea.match(/Tutor[:\s]*([A-ZÁÉÍÓÚÑ\s]+)/i);
+          if (match) tutor = match[1].trim();
+        }
+      }
+
+      if (!monto) {
+        const match = linea.match(/Bs\.?\s*([\d,.]+)/i);
+        if (match) monto = match[1].replace(",", ".").trim();
       }
     }
-
-    const inscripcionId = text.match(/ID DE INSCRIPC[IÍ]ON\s*(\d+)/i)?.[1] || null;
-    const tutor = text.match(/Tutor:\s*(.*)/i)?.[1]?.trim() || null;
-    const monto = text.match(/Bs\.\s*([\d,.]+)/i)?.[1]?.replace(",", ".") || null;
 
     const datos = { numero, inscripcion_id: inscripcionId, tutor, monto };
     console.log("📄 Datos extraídos:", datos);
@@ -45,30 +68,69 @@ const UploadProofPage = () => {
   };
 
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!imagen) return;
     setUploading(true);
     setProcessing(false);
     setError("");
 
-    Tesseract.recognize(imagen, "spa", {
-      logger: (m) => console.log("OCR progreso:", m),
-    })
-      .then(({ data: { text } }) => {
-        const datos = procesarTexto(text);
-        if (datos.numero && datos.inscripcion_id) {
-          enviarAlBackend(datos);
-        } else {
-          setError("No se pudieron extraer los datos correctamente del comprobante.");
-        }
-      })
-      .catch((err) => {
-        console.error("Error OCR:", err);
-        setError("Error durante el procesamiento del OCR.");
-      })
-      .finally(() => {
-        setUploading(false);
+    const formData = new FormData();
+    let filename = "";
+    let filetype = "";
+
+    try {
+      if (imagen.type === "application/pdf") {
+        // ➤ Si es PDF, no se comprime
+        formData.append("file", imagen, "comprobante.pdf");
+        filetype = "pdf";
+      } else if (imagen.type.startsWith("image/")) {
+        // ➤ Si es imagen, comprimirla
+        const compressedFile = await imageCompression(imagen, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1000,
+          useWebWorker: true,
+        });
+
+        formData.append("file", compressedFile, "comprobante.png");
+        filetype = "png";
+      } else {
+        throw new Error("Tipo de archivo no soportado.");
+      }
+
+      formData.append("language", "spa");
+      formData.append("isOverlayRequired", "false");
+      formData.append("filetype", filetype); // tipo correcto
+
+      const res = await fetch("https://api.ocr.space/parse/image", {
+        method: "POST",
+        headers: {
+          apikey: "K83603773288957",
+        },
+        body: formData,
       });
+
+      const data = await res.json();
+
+      if (data.IsErroredOnProcessing || !data.ParsedResults) {
+        throw new Error(data.ErrorMessage || "Error en el OCR.");
+      }
+
+      const texto = data.ParsedResults[0].ParsedText;
+      console.log("Texto detectado:", texto);
+      setTextoOCR(texto); 
+
+      const datos = procesarTexto(texto);
+      if (datos.numero && datos.inscripcion_id) {
+        enviarAlBackend(datos);
+      } else {
+        setError("No se pudieron extraer los datos correctamente del comprobante.");
+      }
+    } catch (err) {
+      console.error("Error al usar OCR.Space:", err);
+      setError(err.message || "Error durante el reconocimiento OCR.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const enviarAlBackend = async (datos) => {
@@ -109,7 +171,7 @@ const UploadProofPage = () => {
 
           <div className="border-2 border-dashed border-[#D9D9D9] rounded-md p-12 text-center mb-6">
             <UploadIcon size={48} className="mx-auto mb-4 text-[#A9B2AC]" />
-            <input type="file" accept="image/*" onChange={handleImagenChange} />
+            <input type="file" accept="image/*,.pdf" onChange={handleImagenChange} />
             <button
               className="mt-4 text-[#A9B2AC] font-medium hover:underline"
               onClick={handleUpload}
@@ -126,20 +188,10 @@ const UploadProofPage = () => {
             </div>
           )}
 
-          {processedData && !processing && (
-            <div className="mt-4 p-4 bg-green-50 rounded-md border border-green-200">
-              <CheckCircleIcon className="text-green-500 mb-2" />
-              <h3 className="font-medium mb-2">Información extraída:</h3>
-              <p><strong>ID Inscripción:</strong> {processedData.inscripcion_id}</p>
-              <p><strong>Número comprobante:</strong> {processedData.numero}</p>
-              <p><strong>Tutor:</strong> {processedData.tutor}</p>
-              <p><strong>Monto:</strong> Bs. {processedData.monto}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md border border-red-300 flex items-center">
-              <XCircle className="mr-2" /> {error}
+          {textoOCR && (
+            <div className="mt-4 p-4 bg-yellow-50 rounded-md border border-yellow-300">
+              <h3 className="font-medium mb-2 text-yellow-700">Texto completo detectado:</h3>
+              <pre className="text-sm text-yellow-900 whitespace-pre-wrap">{textoOCR}</pre>
             </div>
           )}
         </div>
