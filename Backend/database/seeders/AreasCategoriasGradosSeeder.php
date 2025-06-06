@@ -78,7 +78,7 @@ class AreasCategoriasGradosSeeder extends Seeder
         $areaCategoriaIds = DB::table('area_categoria')->get();
         foreach ($areaCategoriaIds as $ac) {
             DB::table('competencias')->insert([
-                'tutor_id' => 1, // Asegúrate que el usuario con ID 1 sea un tutor válido
+                'tutor_id' => 3, // Asegúrate que el usuario con ID 1 sea un tutor válido
                 'area_categoria_id' => $ac->id,
                 'nombre' => 'Competencia de ' . $ac->id,
                 'fecha_competencia' => now()->addWeeks(2),

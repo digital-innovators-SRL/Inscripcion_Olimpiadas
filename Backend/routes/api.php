@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Organizador\OrganizadorDashboardController;
 use App\Http\Controllers\AreaController;
+use App\Http\Controllers\AreaCategoriaController;
 
 
 /*
@@ -21,7 +22,7 @@ use App\Http\Controllers\AreaController;
 */
 
 
-
+// Autenticación general
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware(['jwt.exceptions', 'auth:api'])->group(function () {
@@ -30,19 +31,28 @@ Route::middleware(['jwt.exceptions', 'auth:api'])->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
+// Dashboard por rol
 Route::middleware(['auth:api', 'role:Administrador'])->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
 Route::middleware(['auth:api', 'role:Tutor'])->get('/tutor/dashboard', [TutorDashboardController::class, 'index']);
 Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
 
+// Rutas Áreas para Admin
 Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->group(function () {
-    Route::apiResource('areas', AreaController::class);
-
+    Route::get('areas', [AreaController::class, 'index']);
+    Route::get('areas/{area}', [AreaController::class, 'show']);
+    Route::post('areas', [AreaController::class, 'store']);
+    Route::put('areas/{area}', [AreaController::class, 'update']);
+    Route::delete('areas/{area}', [AreaController::class, 'destroy']);
 });
 
+// Rutas Áreas para Tutor (solo lectura)
 Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function () {
-    Route::apiResource('inscripciones', InscripcionController::class);
-    Route::apiResource('categorias', CategoriaController::class);
-    Route::apiResource('competencias', CompetenciaController::class);
+    Route::get('areas', [AreaController::class, 'indexForTutor']);
+
+    Route::apiResource('/inscripciones', InscripcionController::class);
+    Route::apiResource('/categorias', CategoriaController::class);
+    Route::apiResource('/competencias', CompetenciaController::class);
+
     Route::get('/tutor/dashboard/filtros', [TutorDashboardController::class, 'getFiltros']);
     Route::post('/tutor/dashboard/inscripciones-filtradas', [TutorDashboardController::class, 'filtrarInscripciones']);
 });

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
@@ -54,9 +55,9 @@ const RegistrationPage = () => {
     const obtenerDatosIniciales = async () => {
       try {
         const [areasRes, categoriasRes, competenciasRes] = await Promise.all([
-          axios.get('/api/areas'),
-          axios.get('/api/categorias'),
-          axios.get('/api/competencias'),
+          axios.get('/areas'),
+          axios.get('/categorias'),
+          axios.get('/competencias'),
         ]);
 
         setAvailableAreas(areasRes.data);
@@ -109,13 +110,39 @@ const validateForm = () => {
 // ---------------------- Envío de inscripción ----------------------
 const registrarInscripcion = async () => {
   try {
+    // Preparar el payload para el backend
+    const payload = {
+      estudiante: {
+        name: student.name,
+        document_id: student.documentId,
+        birth_date: student.birthDate,
+        school: student.school,
+        grade: student.grade,
+        course: student.course,
+        department: student.department,
+        province: student.province,
+        email: student.email,
+        phone: student.phone,
+      },
+      tutor: {
+        nombre: student.tutors[0]?.name || "",
+        email: student.tutors[0]?.email || "",
+        telefono: student.tutors[0]?.phone || "",
+        relacion: student.tutors[0]?.relationship || "",
+      },
+      grados: student.areas.map(area => ({
+        area_id: area.id,
+        categoria_id: area.level,  // OJO: 'level' debe contener el id de la categoría
+      })),
+      contacto_email: student.email,
+      contacto_celular: student.phone,
+      nombre_tutor: student.tutors[0]?.name || "",
+    };
+
     const response = await fetch("http://localhost:8001/api/inscripciones", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Authorization: `Bearer ${token}` si usas autenticación
-      },
-      body: JSON.stringify(student),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) throw new Error("Error al registrar la inscripción");
@@ -126,14 +153,10 @@ const registrarInscripcion = async () => {
     setTimeout(() => navigate("/payment-slip"), 1500);
   } catch (error) {
     console.error(error);
-    setErrors([
-      {
-        field: "general",
-        message: "Hubo un problema al guardar la inscripción.",
-      },
-    ]);
+    setErrors([{ field: "general", message: "Hubo un problema al guardar la inscripción." }]);
   }
 };
+
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -175,19 +198,23 @@ const handleAreaChange = (index, areaId) => {
   }
 };
 
-const handleGradeChange = (index, grade) => {
+const handleGradeChange = (index, selectedGrade) => {
   const newAreas = [...student.areas];
   const selectedArea = newAreas[index];
   const areaData = availableAreas.find((a) => a.id === selectedArea.id);
-  const gradeData = areaData?.levels.find((l) => l.grade === grade);
+
+  // En lugar de buscar por nombre de grado, busca la categoría que coincida
+  // Si tus niveles tienen la estructura [{ id: 1, grade: "3ro Primaria", cost: 20 }, ...]
+  const gradeData = areaData?.levels.find((l) => l.grade === selectedGrade);
 
   newAreas[index] = {
     ...selectedArea,
-    level: grade,
+    level: gradeData ? gradeData.id : "",  // Guarda el id de la categoría aquí
     cost: gradeData ? gradeData.cost : 0,
   };
   setStudent({ ...student, areas: newAreas });
 };
+
 
 const handleRemoveArea = (index) => {
   const newAreas = student.areas.filter((_, i) => i !== index);

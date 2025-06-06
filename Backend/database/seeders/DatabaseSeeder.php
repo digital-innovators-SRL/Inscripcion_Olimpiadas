@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        // Crear usuarios principales
         User::insert([
             [
                 'name' => 'Administrador General',
@@ -26,7 +27,7 @@ class DatabaseSeeder extends Seeder
                 'email' => 'organizador@example.com',
                 'password' => Hash::make('organizador123'),
                 'celular' => '70000002',
-                'role' => 'Organizador', // ✅ corregido
+                'role' => 'Organizador',
             ],
             [
                 'name' => 'Tutor Juan Pérez',
@@ -35,6 +36,11 @@ class DatabaseSeeder extends Seeder
                 'celular' => '70000003',
                 'role' => 'Tutor',
             ]
+        ]);
+
+        // Ejecutar seeder de áreas, categorías, relaciones y competencias
+        $this->call([
+            AreasCategoriasGradosSeeder::class,
         ]);
     }
 }

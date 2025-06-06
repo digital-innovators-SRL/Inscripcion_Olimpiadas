@@ -1,80 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import { DownloadIcon, FilterIcon, SearchIcon } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import axios from "axios";
 
 const ReportsPage = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [dateFilter, setDateFilter] = useState("");
   const [areaFilter, setAreaFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  // Mock data for the table
-  const registrations = [
-    {
-      id: 1,
-      student: "Juan Pérez",
-      area: "Matemáticas",
-      level: "Avanzado",
-      date: "15/11/2023",
-      status: "Confirmado",
-    },
-    {
-      id: 2,
-      student: "María García",
-      area: "Física",
-      level: "Intermedio",
-      date: "14/11/2023",
-      status: "Pendiente",
-    },
-    {
-      id: 3,
-      student: "Carlos López",
-      area: "Química",
-      level: "Básico",
-      date: "13/11/2023",
-      status: "Confirmado",
-    },
-    {
-      id: 4,
-      student: "Ana Martínez",
-      area: "Biología",
-      level: "Avanzado",
-      date: "12/11/2023",
-      status: "Confirmado",
-    },
-    {
-      id: 5,
-      student: "Pedro Ramírez",
-      area: "Matemáticas",
-      level: "Intermedio",
-      date: "11/11/2023",
-      status: "Pendiente",
-    },
-    {
-      id: 6,
-      student: "Laura Sánchez",
-      area: "Física",
-      level: "Básico",
-      date: "10/11/2023",
-      status: "Confirmado",
-    },
-    {
-      id: 7,
-      student: "Miguel Torres",
-      area: "Química",
-      level: "Avanzado",
-      date: "09/11/2023",
-      status: "Pendiente",
-    },
-    {
-      id: 8,
-      student: "Sofía Flores",
-      area: "Biología",
-      level: "Intermedio",
-      date: "08/11/2023",
-      status: "Confirmado",
-    },
-  ];
+  const [registrations, setRegistrations] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchRegistrations = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/tutor/reports`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            date: dateFilter,
+            area: areaFilter,
+            status: statusFilter,
+          },
+        }
+      );
+      setRegistrations(response.data.data || []);
+    } catch (error) {
+      console.error("Error al obtener los reportes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegistrations();
+  }, []); // Solo al montar la página
+
+  const handleSearch = () => {
+    fetchRegistrations(); // Actualizar datos con filtros
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F2EEE3]">
       <Sidebar />
@@ -86,6 +55,8 @@ const ReportsPage = () => {
             <div className="w-10 h-10 bg-[#A9B2AC] rounded-full"></div>
           </div>
         </div>
+
+        {/* Filtros */}
         <div className="bg-white rounded-lg shadow-sm border border-[#D9D9D9] p-6 mb-8">
           <div className="flex items-center mb-4">
             <FilterIcon size={20} className="mr-2 text-[#4F4F4F]" />
@@ -140,13 +111,18 @@ const ReportsPage = () => {
               </select>
             </div>
             <div className="flex items-end">
-              <button className="bg-[#A9B2AC] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors flex items-center">
+              <button
+                className="bg-[#A9B2AC] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors flex items-center"
+                onClick={handleSearch}
+              >
                 <SearchIcon size={18} className="mr-2" />
                 Buscar
               </button>
             </div>
           </div>
         </div>
+
+        {/* Tabla */}
         <div className="bg-white rounded-lg shadow-sm border border-[#D9D9D9] p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold">Inscripciones Registradas</h2>
@@ -168,48 +144,47 @@ const ReportsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {registrations.map((reg) => (
-                  <tr key={reg.id} className="border-b border-[#D9D9D9]">
-                    <td className="py-3 px-4">{reg.id}</td>
-                    <td className="py-3 px-4">{reg.student}</td>
-                    <td className="py-3 px-4">{reg.area}</td>
-                    <td className="py-3 px-4">{reg.level}</td>
-                    <td className="py-3 px-4">{reg.date}</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          reg.status === "Confirmado"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {reg.status}
-                      </span>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="py-4 px-4 text-center">
+                      Cargando...
                     </td>
                   </tr>
-                ))}
+                ) : registrations.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-4 px-4 text-center">
+                      No hay resultados.
+                    </td>
+                  </tr>
+                ) : (
+                  registrations.map((reg) => (
+                    <tr key={reg.id} className="border-b border-[#D9D9D9]">
+                      <td className="py-3 px-4">{reg.id}</td>
+                      <td className="py-3 px-4">{reg.student}</td>
+                      <td className="py-3 px-4">{reg.area}</td>
+                      <td className="py-3 px-4">{reg.level}</td>
+                      <td className="py-3 px-4">{reg.date}</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            reg.status === "Confirmado"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {reg.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-          </div>
-          <div className="flex justify-between items-center mt-6">
-            <p className="text-sm text-gray-500">
-              Mostrando 1-8 de 24 resultados
-            </p>
-            <div className="flex space-x-2">
-              <button className="px-3 py-1 border border-[#D9D9D9] rounded-md bg-gray-50">
-                1
-              </button>
-              <button className="px-3 py-1 border border-[#D9D9D9] rounded-md hover:bg-gray-50">
-                2
-              </button>
-              <button className="px-3 py-1 border border-[#D9D9D9] rounded-md hover:bg-gray-50">
-                3
-              </button>
-            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default ReportsPage;

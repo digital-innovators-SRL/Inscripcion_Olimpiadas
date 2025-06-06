@@ -5,74 +5,79 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import axios from 'axios';
 import {
-  PlusIcon,
-  SaveIcon,
-  TrashIcon,
-  AlertCircleIcon,
-  CheckCircleIcon,
-  XIcon,
+  PlusIcon, SaveIcon, TrashIcon,
+  AlertCircleIcon, CheckCircleIcon, XIcon,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
 // ============================
 // CONFIGURACIÓN GLOBAL DE AXIOS
 // ============================
+const { token } = useAuth();
+
 axios.defaults.baseURL = 'http://localhost:8001/api';
-axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 
 // ============================
 // COMPONENTE PRINCIPAL
 // ============================
 const ConfigurationPage = () => {
   // ============================
-  // CONTEXTO Y ESTADOS PRINCIPALES
+  // CONTEXTO Y ESTADOS GLOBALES
   // ============================
   const { user } = useAuth();
   const [areas, setAreas] = useState([]);
+  const [errors, setErrors] = useState([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [editingArea, setEditingArea] = useState(null);
+
+  // ============================
+  // ESTADO PARA CREAR/EDITAR ÁREA
+  // ============================
   const [newArea, setNewArea] = useState({
     name: "",
     cost: "",
     maxStudents: "",
     description: "",
+    categories: [], // categorías nuevas añadidas por el usuario
   });
-  const [errors, setErrors] = useState([]);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [editingArea, setEditingArea] = useState(null);
+
+  // ============================
+  // ESTADOS PARA GRADOS Y CATEGORÍAS
+  // ============================
+  const [categoryInput, setCategoryInput] = useState({ name: '', grades: '' });
   const [gradeInputs, setGradeInputs] = useState({});
+
   const GRADOS_DISPONIBLES = [
     "3ro de Primaria", "4to de Primaria", "5to de Primaria", "6to de Primaria",
     "1ro de Secundaria", "2do de Secundaria", "3ro de Secundaria",
     "4to de Secundaria", "5to de Secundaria", "6to de Secundaria"
   ];
-  
+
   // ============================
-  // CARGA INICIAL DE ÁREAS
+  // CARGA INICIAL DE ÁREAS DEL BACKEND
   // ============================
   useEffect(() => {
     const fetchAreas = async () => {
       try {
-        const response = await axios.get('/areas');
-        const areasDesdeAPI = response.data.data || response.data;
-        const areasTransformadas = areasDesdeAPI.map((a) => ({
-          id: a.id,
-          name: a.nombre,
-          description: a.descripcion,
-          cost: a.costo,
-          maxStudents: a.max_estudiantes,
-          grades: [],
-          isActive: true,
-        }));
-        setAreas(areasTransformadas);
+        const response = await axios.get("/areas");
+        setAreas(response.data);
       } catch (error) {
-        console.error("Error al cargar áreas:", error);
+        console.error("Error cargando áreas:", error);
       }
     };
-
     fetchAreas();
   }, []);
 
   // ============================
-  // VALIDACIÓN DE CAMPOS DE ÁREA
+  // VALIDACIÓN DE FORMULARIO DE ÁREA
   // ============================
   const validateArea = () => {
     const newErrors = [];
@@ -80,28 +85,20 @@ const ConfigurationPage = () => {
     if (!newArea.name.trim()) {
       newErrors.push({ field: "name", message: "El nombre es requerido" });
     }
-
     if (!newArea.cost || Number(newArea.cost) <= 0) {
       newErrors.push({ field: "cost", message: "El costo debe ser mayor a 0" });
     }
-
     if (newArea.maxStudents && Number(newArea.maxStudents) <= 0) {
-      newErrors.push({
-        field: "maxStudents",
-        message: "El número máximo de estudiantes debe ser mayor a 0",
-      });
+      newErrors.push({ field: "maxStudents", message: "Cantidad inválida" });
     }
-
     if (
       areas.some(
         (area) =>
-          area.name.toLowerCase() === newArea.name.toLowerCase() && !editingArea
+          area.name.toLowerCase() === newArea.name.toLowerCase() &&
+          (!editingArea || area.id !== editingArea.id)
       )
     ) {
-      newErrors.push({
-        field: "name",
-        message: "Ya existe un área con este nombre",
-      });
+      newErrors.push({ field: "name", message: "Ya existe un área con ese nombre" });
     }
 
     setErrors(newErrors);
@@ -109,14 +106,14 @@ const ConfigurationPage = () => {
   };
 
   // ============================
-  // CREAR O ACTUALIZAR ÁREA
+  // CREAR O ACTUALIZAR ÁREA EN BACKEND
   // ============================
   const addArea = async () => {
     if (!validateArea()) return;
 
     try {
       if (editingArea) {
-        // Actualizar área existente
+        // ACTUALIZAR ÁREA
         const response = await axios.put(`/areas/${editingArea.id}`, {
           nombre: newArea.name,
           descripcion: newArea.description,
@@ -126,8 +123,8 @@ const ConfigurationPage = () => {
 
         const updatedArea = response.data.data || response.data;
 
-        setAreas((prevAreas) =>
-          prevAreas.map((area) =>
+        setAreas((prev) =>
+          prev.map((area) =>
             area.id === editingArea.id
               ? {
                   ...area,
@@ -142,22 +139,26 @@ const ConfigurationPage = () => {
 
         setEditingArea(null);
       } else {
-        // Crear nueva área
+        // CREAR NUEVA ÁREA
         const response = await axios.post('/areas', {
           nombre: newArea.name,
           descripcion: newArea.description,
           costo: Number(newArea.cost),
           max_estudiantes: newArea.maxStudents || null,
+          categorias: newArea.categories.map((cat) => ({
+            id: cat.id,
+            grados: cat.grades, // asegúrate que esto sea un array de strings/números
+          })),
         });
 
-        const nuevaAreaGuardada = response.data.data || response.data;
+        const nuevaArea = response.data.data || response.data;
 
         const areaFormateada = {
-          id: nuevaAreaGuardada.id,
-          name: nuevaAreaGuardada.nombre,
-          cost: nuevaAreaGuardada.costo,
-          maxStudents: nuevaAreaGuardada.max_estudiantes,
-          description: nuevaAreaGuardada.descripcion,
+          id: nuevaArea.id,
+          name: nuevaArea.nombre,
+          cost: nuevaArea.costo,
+          maxStudents: nuevaArea.max_estudiantes,
+          description: nuevaArea.descripcion,
           grades: [],
           isActive: true,
         };
@@ -165,18 +166,18 @@ const ConfigurationPage = () => {
         setAreas((prev) => [...prev, areaFormateada]);
       }
 
+      // LIMPIAR FORMULARIO
       setNewArea({
         name: "",
         cost: "",
-        level: "",
         maxStudents: "",
         description: "",
+        categories: [],
       });
 
       showSuccessMessage();
     } catch (error) {
-      console.error("Error al guardar el área:", error);
-
+      console.error("Error al guardar el área:", error.response.data);
       if (error.response?.data?.errors) {
         const erroresAPI = Object.entries(error.response.data.errors).map(
           ([campo, mensajes]) => ({
@@ -190,16 +191,16 @@ const ConfigurationPage = () => {
   };
 
   // ============================
-  // EDITAR ÁREA
+  // EDITAR ÁREA SELECCIONADA
   // ============================
   const editArea = (area) => {
     setEditingArea(area);
     setNewArea({
       name: area.name,
       cost: area.cost,
-      level: area.level || "",
       maxStudents: area.maxStudents || "",
       description: area.description || "",
+      categories: [], // Se puede agregar lógica para precargar categorías si se requiere
     });
   };
 
@@ -210,29 +211,30 @@ const ConfigurationPage = () => {
     const grade = gradeInputs[areaId]?.trim();
     if (!grade) return;
 
-    // Simulación (actualización local)
-    setAreas((prev) =>
-      prev.map((area) =>
-        area.id === areaId
-          ? {
-              ...area,
-              grades: [...new Set([...(area.grades || []), grade])],
-            }
-          : area
-      )
-    );
-
-    setGradeInputs({ ...gradeInputs, [areaId]: "" });
-    showSuccessMessage();
-
     try {
+      // Simulación en frontend
+      setAreas((prev) =>
+        prev.map((area) =>
+          area.id === areaId
+            ? {
+                ...area,
+                grades: [...new Set([...(area.grades || []), grade])],
+              }
+            : area
+        )
+      );
+
+      setGradeInputs({ ...gradeInputs, [areaId]: "" });
+      showSuccessMessage();
+
+      // Registro en backend (ajustar categoria_id si lo manejas dinámico)
       await axios.post('/area-categorias', {
         area_id: areaId,
         categoria_id: 1,
         grado: grade,
       });
     } catch (error) {
-      console.warn("Simulación: no se pudo guardar en el backend, pero se agregó visualmente.");
+      console.warn("No se pudo registrar el grado en backend:", error);
     }
   };
 
@@ -258,7 +260,7 @@ const ConfigurationPage = () => {
   const removeArea = async (areaId) => {
     try {
       await axios.delete(`/areas/${areaId}`);
-      setAreas((prevAreas) => prevAreas.filter((area) => area.id !== areaId));
+      setAreas((prev) => prev.filter((area) => area.id !== areaId));
       showSuccessMessage();
     } catch (error) {
       console.error("Error al eliminar el área:", error);
@@ -269,19 +271,49 @@ const ConfigurationPage = () => {
   // ACTIVAR / DESACTIVAR ÁREA
   // ============================
   const toggleAreaStatus = (areaId) => {
-    setAreas(
-      areas.map((area) =>
-        area.id === areaId ? { ...area, isActive: !area.isActive } : area
+    setAreas((prev) =>
+      prev.map((area) =>
+        area.id === areaId
+          ? { ...area, isActive: !area.isActive }
+          : area
       )
     );
   };
 
   // ============================
-  // MOSTRAR MENSAJE DE ÉXITO
+  // MENSAJE DE ÉXITO
   // ============================
   const showSuccessMessage = () => {
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  // ============================
+  // AGREGAR CATEGORÍA A ÁREA NUEVA
+  // ============================
+  const addCategory = () => {
+    if (!categoryInput.name.trim() || !categoryInput.grades.trim()) return;
+
+    const grades = categoryInput.grades
+      .split(",")
+      .map((g) => g.trim())
+      .filter((g) => g !== "");
+
+    setNewArea((prev) => ({
+      ...prev,
+      categories: [...prev.categories, { name: categoryInput.name, grades }],
+    }));
+
+    setCategoryInput({ name: "", grades: "" });
+  };
+
+  // ============================
+  // ELIMINAR CATEGORÍA DE ÁREA NUEVA
+  // ============================
+  const removeCategory = (index) => {
+    const updated = [...newArea.categories];
+    updated.splice(index, 1);
+    setNewArea({ ...newArea, categories: updated });
   };
 
   return (
@@ -315,93 +347,106 @@ const ConfigurationPage = () => {
           <h2 className="text-xl font-semibold mb-6">
             {editingArea ? "Editar Área" : "Nueva Área de Competencia"}
           </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Nombre del Área *
-              </label>
+              <label className="block text-sm font-medium mb-1">Nombre del Área *</label>
               <input
                 type="text"
                 value={newArea.name}
-                onChange={(e) =>
-                  setNewArea({
-                    ...newArea,
-                    name: e.target.value,
-                  })
-                }
+                onChange={(e) => setNewArea({ ...newArea, name: e.target.value })}
                 className={`w-full px-3 py-2 border ${
-                  errors.some((e) => e.field === "name")
-                    ? "border-red-300"
-                    : "border-[#D9D9D9]"
+                  errors.some((e) => e.field === "name") ? "border-red-300" : "border-[#D9D9D9]"
                 } rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]`}
                 placeholder="Ej: Matemáticas"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Costo (Bs.) *
-              </label>
+              <label className="block text-sm font-medium mb-1">Costo (Bs.) *</label>
               <input
                 type="number"
                 value={newArea.cost}
-                onChange={(e) =>
-                  setNewArea({
-                    ...newArea,
-                    cost: e.target.value,
-                  })
-                }
+                onChange={(e) => setNewArea({ ...newArea, cost: e.target.value })}
                 className={`w-full px-3 py-2 border ${
-                  errors.some((e) => e.field === "cost")
-                    ? "border-red-300"
-                    : "border-[#D9D9D9]"
+                  errors.some((e) => e.field === "cost") ? "border-red-300" : "border-[#D9D9D9]"
                 } rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]`}
                 placeholder="Ej: 350"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Máximo de Estudiantes
-              </label>
+              <label className="block text-sm font-medium mb-1">Máximo de Estudiantes</label>
               <input
                 type="number"
                 value={newArea.maxStudents}
-                onChange={(e) =>
-                  setNewArea({
-                    ...newArea,
-                    maxStudents: e.target.value,
-                  })
-                }
+                onChange={(e) => setNewArea({ ...newArea, maxStudents: e.target.value })}
                 className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
                 placeholder="Ej: 50"
               />
             </div>
             <div className="md:col-span-3">
-              <label className="block text-sm font-medium mb-1">
-                Descripción
-              </label>
+              <label className="block text-sm font-medium mb-1">Descripción</label>
               <textarea
                 value={newArea.description}
-                onChange={(e) =>
-                  setNewArea({
-                    ...newArea,
-                    description: e.target.value,
-                  })
-                }
+                onChange={(e) => setNewArea({ ...newArea, description: e.target.value })}
                 className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
                 rows={3}
                 placeholder="Descripción del área de competencia"
               />
             </div>
-            <div className="md:col-span-3 flex justify-end">
+          </div>
+
+          {/* NUEVO BLOQUE DE CATEGORÍAS */}
+          <div className="bg-[#FAFAFA] border border-[#D9D9D9] rounded-md p-4 mb-6">
+            <h3 className="text-lg font-medium mb-4">Categorías / Niveles</h3>
+            {newArea.categories.map((cat, idx) => (
+              <div key={idx} className="border border-gray-300 rounded-md p-4 mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-semibold">Categoría: {cat.name}</span>
+                  <button onClick={() => removeCategory(idx)} className="text-red-500 text-sm hover:underline">Eliminar</button>
+                </div>
+                <p className="text-sm mb-2">Grados: {cat.grades.join(', ')}</p>
+              </div>
+            ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mt-4">
+              <div>
+                <label className="text-sm font-medium block mb-1">Nombre de Categoría</label>
+                <input
+                  type="text"
+                  value={categoryInput.name}
+                  onChange={(e) => setCategoryInput({ ...categoryInput, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
+                  placeholder="Ej: Nivel 1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Grados (separados por coma)</label>
+                <input
+                  type="text"
+                  value={categoryInput.grades}
+                  onChange={(e) => setCategoryInput({ ...categoryInput, grades: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
+                  placeholder="Ej: 1,2,3"
+                />
+              </div>
               <button
-                onClick={addArea}
-                className="bg-[#C8B7A6] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors flex items-center"
+                onClick={addCategory}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
-                <PlusIcon size={18} className="mr-2" />
-                {editingArea ? "Guardar Cambios" : "Agregar Área"}
+                Agregar Categoría
               </button>
             </div>
           </div>
+
+          <div className="md:col-span-3 flex justify-end">
+            <button
+              onClick={addArea}
+              className="bg-[#C8B7A6] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors flex items-center"
+            >
+              <PlusIcon size={18} className="mr-2" />
+              {editingArea ? "Guardar Cambios" : "Agregar Área"}
+            </button>
+          </div>
+
           <div className="space-y-4">
             {areas.map((area) => (
               <div
@@ -432,6 +477,18 @@ const ConfigurationPage = () => {
                       <p className="text-sm text-gray-500 mt-2">
                         {area.description}
                       </p>
+                    )}
+                    {area.categories && area.categories.length > 0 && (
+                      <div className="mt-2">
+                        <h4 className="text-sm font-semibold mb-1">Categorías:</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-600">
+                          {area.categories.map((cat, i) => (
+                            <li key={i}>
+                              <span className="font-medium">{cat.name}:</span> {cat.grades.join(", ")}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </div>
                   <div className="flex space-x-2">

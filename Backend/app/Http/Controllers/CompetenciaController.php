@@ -13,7 +13,8 @@ class CompetenciaController extends Controller
      */
     public function index()
     {
-        //
+          $competencias = Competencia::all();
+             return response()->json($competencias);
     }
 
     /**
