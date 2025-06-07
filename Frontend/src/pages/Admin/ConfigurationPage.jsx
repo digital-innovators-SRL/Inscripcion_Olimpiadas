@@ -13,17 +13,8 @@ import { useAuth } from "../../contexts/AuthContext";
 // ============================
 // CONFIGURACIÓN GLOBAL DE AXIOS
 // ============================
-const { token } = useAuth();
-
 axios.defaults.baseURL = 'http://localhost:8001/api';
-axios.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
+axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
 
 // ============================
 // COMPONENTE PRINCIPAL
