@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   User, 
   Users, 
@@ -14,13 +16,15 @@ import {
 } from 'lucide-react'
 
 const LoginPage = () => {
+  const navigate = useNavigate()
+  const { login, loginError } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [showError, setShowError] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showUserTypes, setShowUserTypes] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setShowError(false)
     setIsLoading(true)
@@ -28,12 +32,21 @@ const LoginPage = () => {
     // Simular login - credenciales válidas ahora son email vacío o cualquier contraseña
     setTimeout(() => {
       if (formData.email.trim() !== '' && formData.password.trim() !== '') {
-        alert('Login exitoso!')
+        //alert('Login exitoso!')
+            setIsLoading(false)
       } else {
         setShowError(true)
       }
-      setIsLoading(false)
+      
     }, 1500)
+
+    // Aquí iría la lógica real de autenticación
+     try {
+      await login(formData.email, formData.password)
+      navigate('/dashboard')
+    } catch (err) {
+      setShowError(true)
+    }
   }
 
   // Manejar el evento de tecla Enter
@@ -43,7 +56,7 @@ const LoginPage = () => {
     }
   }
 
-  const userTypes = [
+const userTypes = [
     {
       icon: User,
       title: 'Administrador',
@@ -70,6 +83,7 @@ const LoginPage = () => {
     }
   ]
 
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative" style={{background: 'linear-gradient(135deg, #FAF7F2 0%, #F2EEE3 50%, #E8DDD4 100%)'}}>
       {/* Floating Users Panel */}
@@ -84,11 +98,12 @@ const LoginPage = () => {
               <Users className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
             </div>
             <span className="font-medium text-xs sm:text-sm" style={{color: '#5A4A3A'}}>Usuarios</span>
-            {showUserTypes ? 
-              <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" style={{color: '#8B7355'}} /> : 
+            {showUserTypes ?
+              <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" style={{color: '#8B7355'}} /> :
               <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" style={{color: '#8B7355'}} />
             }
           </button>
+
 
           {showUserTypes && (
             <div className="absolute top-full left-0 mt-2 w-64 sm:w-80 bg-white/90 backdrop-blur-md border rounded-lg sm:rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-300" style={{borderColor: '#E8DDD4'}}>
@@ -126,6 +141,7 @@ const LoginPage = () => {
         </div>
       </div>
 
+
       {/* Main Content */}
       <div className="w-full max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 w-full">
@@ -142,11 +158,12 @@ const LoginPage = () => {
             </p>
           </div>
 
+
           {/* Right Column - Login Form */}
           <div className="flex items-center justify-center">
-            <form 
+            <form
               onSubmit={handleSubmit}
-              className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg sm:shadow-2xl border overflow-hidden w-full max-w-md" 
+              className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg sm:shadow-2xl border overflow-hidden w-full max-w-md"
               style={{borderColor: '#E8DDD4'}}
             >
               {/* Header */}
@@ -162,6 +179,7 @@ const LoginPage = () => {
                 </p>
               </div>
 
+
               {/* Form */}
               <div className="p-4 sm:p-6 md:p-8 pt-4 sm:pt-6">
                 {showError && (
@@ -170,6 +188,7 @@ const LoginPage = () => {
                     <span>Por favor ingresa tanto el email como la contraseña</span>
                   </div>
                 )}
+
 
                 <div className="space-y-4 sm:space-y-6">
                   {/* Email Field */}
@@ -197,6 +216,7 @@ const LoginPage = () => {
                       />
                     </div>
                   </div>
+
 
                   {/* Password Field */}
                   <div className="space-y-2 sm:space-y-3">
@@ -232,12 +252,14 @@ const LoginPage = () => {
                     </div>
                   </div>
 
+
                   {/* Forgot Password */}
                   <div className="text-right">
                     <button type="button" className="text-xs sm:text-sm hover:underline transition-all duration-200 font-medium" style={{color: '#8B7355'}}>
                       ¿Recuperar contraseña?
                     </button>
                   </div>
+
 
                   {/* Submit Button */}
                   <button
@@ -265,6 +287,7 @@ const LoginPage = () => {
         </div>
       </div>
 
+
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 text-center p-2 sm:p-4">
         <p className="text-xs" style={{color: '#8B7355'}}>
@@ -272,9 +295,10 @@ const LoginPage = () => {
         </p>
       </div>
 
+
       {/* Overlay for mobile when dropdown is open */}
       {showUserTypes && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/10 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
           onClick={() => setShowUserTypes(false)}
         />
@@ -282,5 +306,6 @@ const LoginPage = () => {
     </div>
   )
 }
+
 
 export default LoginPage
