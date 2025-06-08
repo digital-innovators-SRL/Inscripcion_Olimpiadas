@@ -8,7 +8,9 @@ use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Http\Controllers\Organizador\OrganizadorDashboardController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AreaCategoriaController;
-
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\CompetenciaController;
+use App\Http\Controllers\InscripcionController;
 
 /*
 |--------------------------------------------------------------------------
