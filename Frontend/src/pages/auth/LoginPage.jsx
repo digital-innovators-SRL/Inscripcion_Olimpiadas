@@ -1,131 +1,284 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext';
-import {
-  UserIcon,
-  UsersIcon,
-  AlertCircleIcon,
-  ShieldCheckIcon,
+import { 
+  User, 
+  Users, 
+  ShieldCheck, 
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  BookOpen,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 
 const LoginPage = () => {
-  const navigate = useNavigate()
-  const { login, loginError } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [showError, setShowError] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showUserTypes, setShowUserTypes] = useState(false)
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     setShowError(false)
+    setIsLoading(true)
 
-    try {
-      await login(formData.email, formData.password)
-      navigate('/dashboard')
-    } catch (err) {
-      setShowError(true)
+    // Simular login - credenciales válidas ahora son email vacío o cualquier contraseña
+    setTimeout(() => {
+      if (formData.email.trim() !== '' && formData.password.trim() !== '') {
+        alert('Login exitoso!')
+      } else {
+        setShowError(true)
+      }
+      setIsLoading(false)
+    }, 1500)
+  }
+
+  // Manejar el evento de tecla Enter
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e)
     }
   }
 
+  const userTypes = [
+    {
+      icon: User,
+      title: 'Administrador',
+      description: 'Gestión completa del sistema',
+      color: '#8B5A3C',
+      bgColor: '#FAF7F2',
+      borderColor: '#E8DDD4'
+    },
+    {
+      icon: Users,
+      title: 'Tutor',
+      description: 'Supervisión de estudiantes',
+      color: '#6B4423',
+      bgColor: '#FAF7F2',
+      borderColor: '#DDD0C4'
+    },
+    {
+      icon: ShieldCheck,
+      title: 'Organizador',
+      description: 'Revisión y reportes',
+      color: '#5A4A3A',
+      bgColor: '#FAF7F2',
+      borderColor: '#D4C4B4'
+    }
+  ]
+
   return (
-    <div className="min-h-screen flex bg-[#F2EEE3]">
-      <div className="hidden lg:flex lg:w-1/3 xl:w-1/4 bg-white flex-col">
-        <div className="p-8">
-          <h2 className="text-2xl font-bold text-[#4F4F4F] mb-6">
-            Bienvenido de nuevo
-          </h2>
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-[#C8B7A6] text-white rounded-full mr-4">
-                <UserIcon className="w-6 h-6" />
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative" style={{background: 'linear-gradient(135deg, #FAF7F2 0%, #F2EEE3 50%, #E8DDD4 100%)'}}>
+      {/* Floating Users Panel */}
+      <div className="fixed top-4 left-4 sm:top-6 sm:left-6 z-50">
+        <div className="relative">
+          <button
+            onClick={() => setShowUserTypes(!showUserTypes)}
+            className="bg-white/80 backdrop-blur-md border rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 sm:space-x-3 hover:bg-white/90"
+            style={{borderColor: '#E8DDD4'}}
+          >
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #C8B7A6, #B8A494)'}}>
+              <Users className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+            </div>
+            <span className="font-medium text-xs sm:text-sm" style={{color: '#5A4A3A'}}>Usuarios</span>
+            {showUserTypes ? 
+              <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" style={{color: '#8B7355'}} /> : 
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" style={{color: '#8B7355'}} />
+            }
+          </button>
+
+          {showUserTypes && (
+            <div className="absolute top-full left-0 mt-2 w-64 sm:w-80 bg-white/90 backdrop-blur-md border rounded-lg sm:rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-300" style={{borderColor: '#E8DDD4'}}>
+              <div className="p-3 sm:p-4 border-b" style={{background: 'linear-gradient(135deg, #FAF7F2, #F2EEE3)', borderColor: '#E8DDD4'}}>
+                <h3 className="font-bold text-sm sm:text-base flex items-center space-x-2" style={{color: '#5A4A3A'}}>
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5" style={{color: '#8B7355'}} />
+                  <span>Usuarios del Sistema</span>
+                </h3>
+                <p className="text-xs mt-1" style={{color: '#8B7355'}}>Roles y permisos disponibles</p>
               </div>
-              <div>
-                <p className="font-semibold text-[#4F4F4F]">Administrador</p>
-                <p className="text-sm text-gray-500">Gestión completa</p>
+              <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+                {userTypes.map((userType, index) => {
+                  const IconComponent = userType.icon
+                  return (
+                    <div key={index} className="group p-3 sm:p-4 rounded-lg hover:shadow-md transition-all duration-300 cursor-pointer border" style={{backgroundColor: userType.bgColor, borderColor: userType.borderColor}}>
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border" style={{borderColor: '#E8DDD4'}}>
+                          <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" style={{color: userType.color}} />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-xs sm:text-sm group-hover:opacity-80 transition-opacity" style={{color: '#5A4A3A'}}>
+                            {userType.title}
+                          </h4>
+                          <p className="text-xs mt-1" style={{color: '#8B7355'}}>
+                            {userType.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-            <div className="flex items-center">
-              <div className="p-2 bg-[#C8B7A6] text-white rounded-full mr-4">
-                <UsersIcon className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#4F4F4F]">Tutor</p>
-                <p className="text-sm text-gray-500">Control de estudiantes</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="p-2 bg-[#C8B7A6] text-white rounded-full mr-4">
-                <ShieldCheckIcon className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#4F4F4F]">Organizador</p>
-                <p className="text-sm text-gray-500">Revisión y reportes</p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#4F4F4F]">
-              Sistema de Inscripciones
+      {/* Main Content */}
+      <div className="w-full max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 w-full">
+          {/* Left Column - Logo */}
+          <div className="hidden lg:flex flex-col items-center justify-center">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl flex items-center justify-center shadow-xl mx-auto mb-4 sm:mb-6 border" style={{background: 'linear-gradient(135deg, #C8B7A6, #B8A494)', borderColor: '#E8DDD4'}}>
+              <BookOpen className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4" style={{background: 'linear-gradient(135deg, #5A4A3A, #8B7355)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+              Oh Sansi!
             </h1>
-            <div className="mt-4 bg-[#A9B2AC] h-16 w-16 mx-auto rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl">LOGO</span>
-            </div>
+            <p className="text-sm sm:text-base md:text-lg" style={{color: '#8B7355'}}>
+              Sistema Integral de Gestión Académica
+            </p>
           </div>
 
-          {showError || loginError ? (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-red-600">
-              <AlertCircleIcon className="w-5 h-5 mr-2" />
-              {loginError || 'Credenciales inválidas'}
-            </div>
-          ) : null}
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
-                Correo Electrónico
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                placeholder="usuario@ejemplo.com"
-                required
-              />
-            </div>
-            <div className="mb-6">
-              <label htmlFor="password" className="block text-sm font-medium mb-1">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            <div className="mb-6 text-right">
-              <a href="#" className="text-sm text-[#4F4F4F] hover:underline">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-[#C8B7A6] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors"
+          {/* Right Column - Login Form */}
+          <div className="flex items-center justify-center">
+            <form 
+              onSubmit={handleSubmit}
+              className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg sm:shadow-2xl border overflow-hidden w-full max-w-md" 
+              style={{borderColor: '#E8DDD4'}}
             >
-              Iniciar Sesión
-            </button>
-          </form>
+              {/* Header */}
+              <div className="p-6 sm:p-8 pb-4 sm:pb-6 text-center border-b" style={{
+                background: 'linear-gradient(135deg, #E8DDD4, #D4C4B4)',
+                borderColor: 'rgba(91, 74, 58, 0.3)'
+              }}>
+                <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2" style={{color: '#5A4A3A'}}>
+                  Sistema de inscripciones
+                </h2>
+                <p className="text-xs sm:text-sm font-medium" style={{color: '#5A4A3A'}}>
+                  Ingresa tus credenciales para continuar
+                </p>
+              </div>
+
+              {/* Form */}
+              <div className="p-4 sm:p-6 md:p-8 pt-4 sm:pt-6">
+                {showError && (
+                  <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg sm:rounded-xl flex items-center text-red-700 text-xs sm:text-sm">
+                    <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
+                    <span>Por favor ingresa tanto el email como la contraseña</span>
+                  </div>
+                )}
+
+                <div className="space-y-4 sm:space-y-6">
+                  {/* Email Field */}
+                  <div className="space-y-2 sm:space-y-3">
+                    <label htmlFor="email" className="block text-xs sm:text-sm font-semibold" style={{color: '#5A4A3A'}}>
+                      Correo Electrónico
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5" style={{color: '#8B7355'}} />
+                      <input
+                        type="email"
+                        id="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onKeyPress={handleKeyPress}
+                        className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-300 text-sm sm:text-base"
+                        style={{
+                          backgroundColor: '#FAF7F2',
+                          borderColor: '#E8DDD4',
+                          color: '#5A4A3A',
+                          focusRingColor: '#C8B7A6'
+                        }}
+                        placeholder="tu-email@ejemplo.com"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="space-y-2 sm:space-y-3">
+                    <label htmlFor="password" className="block text-xs sm:text-sm font-semibold" style={{color: '#5A4A3A'}}>
+                      Contraseña
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5" style={{color: '#8B7355'}} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        onKeyPress={handleKeyPress}
+                        className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 border rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-300 text-sm sm:text-base"
+                        style={{
+                          backgroundColor: '#FAF7F2',
+                          borderColor: '#E8DDD4',
+                          color: '#5A4A3A',
+                          focusRingColor: '#C8B7A6'
+                        }}
+                        placeholder="••••••••••"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 hover:opacity-70 transition-all duration-200"
+                        style={{color: '#8B7355'}}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Forgot Password */}
+                  <div className="text-right">
+                    <button type="button" className="text-xs sm:text-sm hover:underline transition-all duration-200 font-medium" style={{color: '#8B7355'}}>
+                      ¿Recuperar contraseña?
+                    </button>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl font-semibold shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base"
+                    style={{
+                      background: 'linear-gradient(135deg, #C8B7A6, #B8A494)',
+                      focusRingColor: '#C8B7A6'
+                    }}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center space-x-2 sm:space-x-3">
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                        <span>Verificando credenciales...</span>
+                      </div>
+                    ) : (
+                      'Iniciar Sesión'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-0 left-0 right-0 text-center p-2 sm:p-4">
+        <p className="text-xs" style={{color: '#8B7355'}}>
+          © 2025 Oh Sansi! Plataforma educativa de nueva generación.
+        </p>
+      </div>
+
+      {/* Overlay for mobile when dropdown is open */}
+      {showUserTypes && (
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          onClick={() => setShowUserTypes(false)}
+        />
+      )}
     </div>
   )
 }
