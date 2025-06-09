@@ -171,12 +171,13 @@ const UploadProofPage = () => {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #FAF7F2 0%, #F2EEE3 50%, #E8DDD4 100%)' }}>
-{!isLoginPage && (
+        {!isLoginPage && (
       <Sidebar 
         isOpen={sidebarOpen} 
         onToggle={() => setSidebarOpen(!sidebarOpen)} 
       />
-    )}      <div className="ml-64 p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+        )}
+          <div className="ml-64 p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
         <div className="flex items-center space-x-3 mb-2">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg border"
             style={{ background: 'linear-gradient(135deg, #C8B7A6, #B8A494)', borderColor: '#E8DDD4' }}>
