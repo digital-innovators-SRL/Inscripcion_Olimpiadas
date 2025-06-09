@@ -49,7 +49,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
     {
       path: "/registration2",
       icon: <ClipboardIcon size={20} />,
-      label: "Inscripción2",
+      label: "Comprobante",
     },
     {
       path: "/payment-slip",
