@@ -9,6 +9,8 @@ const Pagos = () => {
   const [pagos, setPagos] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(true); // ← Añade esto
+  const isLoginPage = location.pathname === '/login';
 
   useEffect(() => {
     axios.get("http://localhost:8000/api/tutor/inscripciones", {
@@ -24,7 +26,12 @@ const Pagos = () => {
 
   return (
     <div className="flex min-h-screen bg-[#F2EEE3]">
-      <Sidebar />
+        {!isLoginPage && (  
+           <Sidebar 
+            isOpen={sidebarOpen}  
+            onToggle={() => setSidebarOpen(!sidebarOpen)} 
+            />
+        )}
       <div className="ml-64 p-6 w-full">
         <h1 className="text-2xl font-bold mb-6">Pagos de Estudiantes</h1>
         {loading ? (
