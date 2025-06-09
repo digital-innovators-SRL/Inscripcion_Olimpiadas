@@ -3,12 +3,29 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../components/Sidebar";
 import { useAuth } from "../../contexts/AuthContext";
-import { ArrowLeftIcon, CheckCircle2, XCircle } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  CheckCircle2,
+  XCircle,
+  FileText,
+  User,
+  Mail,
+  Phone,
+  School,
+  MapPin,
+  Calendar,
+  CreditCard,
+  Download,
+  Loader2
+} from "lucide-react";
+
 
 const OrdenDePago = () => {
   const { id } = useParams();
   const { token, user } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
 
   const [form, setForm] = useState({
     estudiante: {
@@ -27,9 +44,11 @@ const OrdenDePago = () => {
     nombre_tutor: user?.name || "",
   });
 
+
   const [competencia, setCompetencia] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notificacion, setNotificacion] = useState({ tipo: "", mensaje: "" });
+
 
   useEffect(() => {
     const fetchCompetencia = async () => {
@@ -46,6 +65,7 @@ const OrdenDePago = () => {
     fetchCompetencia();
   }, [id, token]);
 
+
   const handleChange = (e, campo, nested = false) => {
     const { name, value } = e.target;
     if (nested) {
@@ -55,10 +75,12 @@ const OrdenDePago = () => {
     }
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setNotificacion({ tipo: "", mensaje: "" });
+
 
     try {
       const res = await axios.post("http://localhost:8000/api/tutor/ordenPago", {
@@ -69,6 +91,7 @@ const OrdenDePago = () => {
         responseType: "blob"
       });
 
+
       const blob = new Blob([res.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -77,6 +100,7 @@ const OrdenDePago = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+
 
       setNotificacion({ tipo: "success", mensaje: "Orden de pago generada exitosamente." });
       setTimeout(() => navigate("/payment-slip"), 1800);
@@ -89,19 +113,42 @@ const OrdenDePago = () => {
     }
   };
 
+
   return (
-    <div className="flex min-h-screen bg-[#F2EEE3]">
-      <Sidebar />
-      <div className="ml-64 p-8 w-full max-w-5xl">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-sm mb-4 text-[#4F4F4F] hover:underline"
-        >
-          <ArrowLeftIcon className="mr-2" size={18} /> Volver
-        </button>
+    <div className="min-h-screen" style={{background: 'linear-gradient(135deg, #FAF7F2 0%, #F2EEE3 50%, #E8DDD4 100%)'}}>
+      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+     
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'} p-6 lg:p-8`}>
+        {/* Header con botón de volver */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center text-sm mb-4 px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-md border bg-white/80 backdrop-blur-md hover:bg-white/90"
+            style={{borderColor: '#E8DDD4', color: '#5A4A3A'}}
+          >
+            <ArrowLeftIcon className="mr-2" size={18} />
+            Volver
+          </button>
 
-        <h1 className="text-2xl font-bold mb-2">Generar Orden de Pago</h1>
 
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border"
+                 style={{background: 'linear-gradient(135deg, #C8B7A6, #B8A494)', borderColor: '#E8DDD4'}}>
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-2xl lg:text-3xl font-bold"
+                style={{background: 'linear-gradient(135deg, #5A4A3A, #8B7355)',
+                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+              Generar Orden de Pago
+            </h1>
+          </div>
+          <p className="text-sm" style={{color: '#8B7355'}}>
+            Complete los datos para generar la orden de pago de la competencia
+          </p>
+        </div>
+
+
+        {/* Información de la competencia */}
         {competencia && (
           <div className="bg-white border border-[#D9D9D9] rounded-md p-4 mb-6 shadow-sm">
             <h2 className="text-lg font-semibold mb-1">{competencia.nombre}</h2>
@@ -113,37 +160,75 @@ const OrdenDePago = () => {
           </div>
         )}
 
+
+        {/* Notificación */}
         {notificacion.mensaje && (
-          <div className={`flex items-center mb-4 p-3 rounded-md text-white shadow-sm
-            ${notificacion.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}>
+          <div className={`flex items-center mb-6 p-4 rounded-xl text-white shadow-lg backdrop-blur-md animate-in slide-in-from-top-2 duration-300
+            ${notificacion.tipo === "success" ? "bg-green-500/90" : "bg-red-500/90"}`}>
             {notificacion.tipo === "success" ? (
-              <CheckCircle2 size={20} className="mr-2" />
+              <CheckCircle2 size={20} className="mr-3 flex-shrink-0" />
             ) : (
-              <XCircle size={20} className="mr-2" />
+              <XCircle size={20} className="mr-3 flex-shrink-0" />
             )}
-            {notificacion.mensaje}
+            <span className="font-medium">{notificacion.mensaje}</span>
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-md shadow-sm border border-[#D9D9D9]"
-        >
-          <h2 className="text-lg font-semibold mb-4">Datos del Estudiante</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              "nombres", "apellidos", "ci", "fecha_nacimiento", "email",
-              "colegio", "curso", "departamento", "provincia"
-            ].map((field, idx) => (
-              <input
-                key={idx}
-                name={field}
-                type={field === "fecha_nacimiento" ? "date" : "text"}
-                onChange={(e) => handleChange(e, "estudiante", true)}
-                placeholder={field.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
-                className="p-2 border border-[#D9D9D9] rounded-md"
-              />
-            ))}
+
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Datos del Estudiante */}
+          <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border overflow-hidden"
+               style={{borderColor: '#E8DDD4'}}>
+            <div className="p-4 border-b"
+                 style={{background: 'linear-gradient(135deg, #E8DDD4, #D4C4B4)', borderColor: 'rgba(91, 74, 58, 0.3)'}}>
+              <h2 className="text-lg font-bold flex items-center space-x-2" style={{color: '#5A4A3A'}}>
+                <User className="w-5 h-5" style={{color: '#8B7355'}} />
+                <span>Datos del Estudiante</span>
+              </h2>
+              <p className="text-sm mt-1" style={{color: '#8B7355'}}>Información personal del participante</p>
+            </div>
+           
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  { field: "nombres", label: "Nombres", icon: User, type: "text" },
+                  { field: "apellidos", label: "Apellidos", icon: User, type: "text" },
+                  { field: "ci", label: "Cédula de Identidad", icon: FileText, type: "text" },
+                  { field: "fecha_nacimiento", label: "Fecha de Nacimiento", icon: Calendar, type: "date" },
+                  { field: "email", label: "Correo Electrónico", icon: Mail, type: "email" },
+                  { field: "colegio", label: "Colegio", icon: School, type: "text" },
+                  { field: "curso", label: "Curso", icon: FileText, type: "text" },
+                  { field: "departamento", label: "Departamento", icon: MapPin, type: "text" },
+                  { field: "provincia", label: "Provincia", icon: MapPin, type: "text" }
+                ].map(({ field, label, icon: Icon, type }, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <label className="block text-sm font-semibold" style={{color: '#5A4A3A'}}>
+                      {label}
+                    </label>
+                    <div className="relative">
+                      <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                            style={{color: '#8B7355'}} />
+                      <input
+                        name={field}
+                        type={type}
+                        value={form.estudiante[field]}
+                        onChange={(e) => handleChange(e, "estudiante", true)}
+                        className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-300"
+                        style={{
+                          backgroundColor: '#FAF7F2',
+                          borderColor: '#E8DDD4',
+                          color: '#5A4A3A',
+                          focusRingColor: '#C8B7A6'
+                        }}
+                        placeholder={`Ingrese ${label.toLowerCase()}`}
+                        required
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <h2 className="text-lg font-semibold mt-6 mb-4">Datos de Contacto</h2>
@@ -183,5 +268,6 @@ const OrdenDePago = () => {
     </div>
   );
 };
+
 
 export default OrdenDePago;
