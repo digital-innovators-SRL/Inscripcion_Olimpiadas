@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\AreaCompetencia;
 use App\Models\Competencia;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf as DomPdf;
-use Spatie\PdfToImage\Pdf;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class InscripcionController extends Controller

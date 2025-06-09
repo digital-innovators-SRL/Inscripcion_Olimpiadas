@@ -90,6 +90,7 @@
             <p class="info-line"><span class="label">Nombre:</span> {{ $competencia->nombre }}</p>
             <p class="info-line"><span class="label">Área:</span> {{ $competencia->areaCategoria->area->nombre }}</p>
             <p class="info-line"><span class="label">Categoría:</span> {{ $competencia->areaCategoria->categoria->nombre }}</p>
+            <p class="info-line"><span class="label">Grado:</span> {{ $competencia->areaCategoria->grado }}</p>
             <p class="info-line"><span class="label">Fecha:</span> {{ $competencia->fecha_competencia }}</p>
             <p class="info-line"><span class="label">Monto a pagar:</span> Bs. {{ number_format($competencia->monto, 2) }}</p>
         </div>
