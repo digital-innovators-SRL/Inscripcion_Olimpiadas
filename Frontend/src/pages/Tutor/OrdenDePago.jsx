@@ -3,10 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../components/Sidebar";
 import { useAuth } from "../../contexts/AuthContext";
-import { 
-  ArrowLeftIcon, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  ArrowLeftIcon,
+  CheckCircle2,
+  XCircle,
   FileText,
   User,
   Mail,
@@ -19,10 +19,13 @@ import {
   Loader2
 } from "lucide-react";
 
+
 const OrdenDePago = () => {
   const { id } = useParams();
   const { token, user } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
 
   const [form, setForm] = useState({
     estudiante: {
@@ -41,9 +44,11 @@ const OrdenDePago = () => {
     nombre_tutor: user?.name || "",
   });
 
+
   const [competencia, setCompetencia] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notificacion, setNotificacion] = useState({ tipo: "", mensaje: "" });
+
 
   useEffect(() => {
     const fetchCompetencia = async () => {
@@ -60,6 +65,7 @@ const OrdenDePago = () => {
     fetchCompetencia();
   }, [id, token]);
 
+
   const handleChange = (e, campo, nested = false) => {
     const { name, value } = e.target;
     if (nested) {
@@ -69,10 +75,12 @@ const OrdenDePago = () => {
     }
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setNotificacion({ tipo: "", mensaje: "" });
+
 
     try {
       const res = await axios.post("http://localhost:8000/api/tutor/ordenPago", {
@@ -83,6 +91,7 @@ const OrdenDePago = () => {
         responseType: "blob"
       });
 
+
       const blob = new Blob([res.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -91,6 +100,7 @@ const OrdenDePago = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+
 
       setNotificacion({ tipo: "success", mensaje: "Orden de pago generada exitosamente." });
       setTimeout(() => navigate("/payment-slip"), 1800);
@@ -103,11 +113,12 @@ const OrdenDePago = () => {
     }
   };
 
+
   return (
     <div className="min-h-screen" style={{background: 'linear-gradient(135deg, #FAF7F2 0%, #F2EEE3 50%, #E8DDD4 100%)'}}>
-      <Sidebar />
-      
-      <div className="ml-64 p-6 lg:p-8">
+      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+     
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'} p-6 lg:p-8`}>
         {/* Header con botón de volver */}
         <div className="mb-6">
           <button
@@ -119,13 +130,14 @@ const OrdenDePago = () => {
             Volver
           </button>
 
+
           <div className="flex items-center space-x-3 mb-2">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border" 
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border"
                  style={{background: 'linear-gradient(135deg, #C8B7A6, #B8A494)', borderColor: '#E8DDD4'}}>
               <FileText className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-2xl lg:text-3xl font-bold" 
-                style={{background: 'linear-gradient(135deg, #5A4A3A, #8B7355)', 
+            <h1 className="text-2xl lg:text-3xl font-bold"
+                style={{background: 'linear-gradient(135deg, #5A4A3A, #8B7355)',
                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
               Generar Orden de Pago
             </h1>
@@ -135,11 +147,12 @@ const OrdenDePago = () => {
           </p>
         </div>
 
+
         {/* Información de la competencia */}
         {competencia && (
           <div className="bg-white/90 backdrop-blur-md border rounded-xl shadow-lg mb-6 overflow-hidden"
                style={{borderColor: '#E8DDD4'}}>
-            <div className="p-4 border-b" 
+            <div className="p-4 border-b"
                  style={{background: 'linear-gradient(135deg, #E8DDD4, #D4C4B4)', borderColor: 'rgba(91, 74, 58, 0.3)'}}>
               <h2 className="text-lg font-bold flex items-center space-x-2" style={{color: '#5A4A3A'}}>
                 <CreditCard className="w-5 h-5" style={{color: '#8B7355'}} />
@@ -171,6 +184,7 @@ const OrdenDePago = () => {
           </div>
         )}
 
+
         {/* Notificación */}
         {notificacion.mensaje && (
           <div className={`flex items-center mb-6 p-4 rounded-xl text-white shadow-lg backdrop-blur-md animate-in slide-in-from-top-2 duration-300
@@ -184,12 +198,13 @@ const OrdenDePago = () => {
           </div>
         )}
 
+
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Datos del Estudiante */}
           <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border overflow-hidden"
                style={{borderColor: '#E8DDD4'}}>
-            <div className="p-4 border-b" 
+            <div className="p-4 border-b"
                  style={{background: 'linear-gradient(135deg, #E8DDD4, #D4C4B4)', borderColor: 'rgba(91, 74, 58, 0.3)'}}>
               <h2 className="text-lg font-bold flex items-center space-x-2" style={{color: '#5A4A3A'}}>
                 <User className="w-5 h-5" style={{color: '#8B7355'}} />
@@ -197,7 +212,7 @@ const OrdenDePago = () => {
               </h2>
               <p className="text-sm mt-1" style={{color: '#8B7355'}}>Información personal del participante</p>
             </div>
-            
+           
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
@@ -216,7 +231,7 @@ const OrdenDePago = () => {
                       {label}
                     </label>
                     <div className="relative">
-                      <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                      <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
                             style={{color: '#8B7355'}} />
                       <input
                         name={field}
@@ -240,10 +255,11 @@ const OrdenDePago = () => {
             </div>
           </div>
 
+
           {/* Datos de Contacto */}
           <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border overflow-hidden"
                style={{borderColor: '#E8DDD4'}}>
-            <div className="p-4 border-b" 
+            <div className="p-4 border-b"
                  style={{background: 'linear-gradient(135deg, #E8DDD4, #D4C4B4)', borderColor: 'rgba(91, 74, 58, 0.3)'}}>
               <h2 className="text-lg font-bold flex items-center space-x-2" style={{color: '#5A4A3A'}}>
                 <Phone className="w-5 h-5" style={{color: '#8B7355'}} />
@@ -251,7 +267,7 @@ const OrdenDePago = () => {
               </h2>
               <p className="text-sm mt-1" style={{color: '#8B7355'}}>Información para comunicaciones</p>
             </div>
-            
+           
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -259,7 +275,7 @@ const OrdenDePago = () => {
                     Email de Contacto
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
                           style={{color: '#8B7355'}} />
                     <input
                       name="contacto_email"
@@ -279,12 +295,13 @@ const OrdenDePago = () => {
                   </div>
                 </div>
 
+
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold" style={{color: '#5A4A3A'}}>
                     Celular de Contacto
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
                            style={{color: '#8B7355'}} />
                     <input
                       name="contacto_celular"
@@ -307,10 +324,11 @@ const OrdenDePago = () => {
             </div>
           </div>
 
+
           {/* Datos del Tutor */}
           <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border overflow-hidden"
                style={{borderColor: '#E8DDD4'}}>
-            <div className="p-4 border-b" 
+            <div className="p-4 border-b"
                  style={{background: 'linear-gradient(135deg, #E8DDD4, #D4C4B4)', borderColor: 'rgba(91, 74, 58, 0.3)'}}>
               <h2 className="text-lg font-bold flex items-center space-x-2" style={{color: '#5A4A3A'}}>
                 <User className="w-5 h-5" style={{color: '#8B7355'}} />
@@ -318,14 +336,14 @@ const OrdenDePago = () => {
               </h2>
               <p className="text-sm mt-1" style={{color: '#8B7355'}}>Responsable del estudiante</p>
             </div>
-            
+           
             <div className="p-6">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold" style={{color: '#5A4A3A'}}>
                   Nombre del Tutor
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
                         style={{color: '#8B7355'}} />
                   <input
                     name="nombre_tutor"
@@ -346,6 +364,7 @@ const OrdenDePago = () => {
               </div>
             </div>
           </div>
+
 
           {/* Botón de envío */}
           <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border p-6"
@@ -377,5 +396,6 @@ const OrdenDePago = () => {
     </div>
   );
 };
+
 
 export default OrdenDePago;
