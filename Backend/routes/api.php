@@ -12,7 +12,7 @@ use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\CompetenciaController;
 
-
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\InscripcionController;
 use App\Models\Categoria;
 
@@ -63,6 +63,13 @@ Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function 
     Route::apiResource('categorias', CategoriaController::class);
     Route::apiResource('competencias', CompetenciaController::class);
 });
+
+
+Route::get('/tutores', [UserController::class, 'indexTutores']);
+Route::get('/competencias', [CompetenciaController::class, 'index']);
+
+
+
 
 
 Route::get('/getCategorias', [CategoriaController::class, 'index']);

@@ -103,6 +103,9 @@ const CompetenciasTutor = () => {
                   <strong>Categoría:</strong> {comp.area_categoria.categoria.nombre}
                 </p>
                 <p className="text-sm text-gray-700 mb-1">
+                  <strong>Grado:</strong> {comp.area_categoria.grado}
+                </p>
+                <p className="text-sm text-gray-700 mb-1">
                   <strong>Fecha competencia:</strong> {comp.fecha_competencia}
                 </p>
                 <p className="text-sm text-gray-700 mb-1">

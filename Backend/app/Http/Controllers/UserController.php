@@ -23,6 +23,16 @@ class UserController extends Controller
         ]);
     }
 
+    public function indexTutores()
+    {
+        $users = User::where('role', 'Tutor')->get(); 
+
+        return response()->json([
+            'success' => true,
+            'data' => $users
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      *

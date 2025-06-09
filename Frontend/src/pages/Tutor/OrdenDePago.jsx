@@ -22,8 +22,8 @@ const OrdenDePago = () => {
       departamento: "",
       provincia: ""
     },
-    contacto_email: "",
-    contacto_celular: "",
+    contacto_email: user?.email || "",
+    contacto_celular: user?.celular || "",
     nombre_tutor: user?.name || "",
   });
 
@@ -107,7 +107,8 @@ const OrdenDePago = () => {
             <h2 className="text-lg font-semibold mb-1">{competencia.nombre}</h2>
             <p className="text-sm text-gray-700">
               <strong>Área:</strong> {competencia.area_categoria.area.nombre} &nbsp;|&nbsp;
-              <strong>Categoría:</strong> {competencia.area_categoria.categoria.nombre}
+              <strong>Categoría:</strong> {competencia.area_categoria.categoria.nombre} &nbsp;|&nbsp;
+              <strong>Grado:</strong> {competencia.area_categoria.grado}
             </p>
           </div>
         )}
@@ -148,12 +149,14 @@ const OrdenDePago = () => {
           <h2 className="text-lg font-semibold mt-6 mb-4">Datos de Contacto</h2>
           <input
             name="contacto_email"
+            value={form.contacto_email}
             onChange={handleChange}
             placeholder="Email de contacto"
             className="p-2 border border-[#D9D9D9] rounded-md w-full mb-3"
           />
           <input
             name="contacto_celular"
+            value={form.contacto_celular}
             onChange={handleChange}
             placeholder="Celular de contacto"
             className="p-2 border border-[#D9D9D9] rounded-md w-full mb-3"
