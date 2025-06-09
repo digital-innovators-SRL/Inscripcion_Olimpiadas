@@ -14,7 +14,7 @@ use App\Http\Controllers\CompetenciaController;
 
 
 use App\Http\Controllers\InscripcionController;
-
+use App\Models\Categoria;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,8 +52,9 @@ Route::middleware(['auth:api', 'role:Tutor'])->prefix('tutor')->group(function (
 
 Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
 
-Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->group(function () {
-    Route::apiResource('areas', AreaController::class);
+Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->prefix('admin')->group(function () {
+        Route::get('/areas', [AreaController::class, 'index']);
+
 
 });
 
@@ -64,3 +65,6 @@ Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function 
 });
 
 
+Route::get('/getCategorias', [CategoriaController::class, 'index']);
+
+Route::post('/crearCompetencia', [CompetenciaController::class, 'crearCompetencia']);

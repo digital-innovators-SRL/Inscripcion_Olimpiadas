@@ -11,6 +11,8 @@ import adminRoutes from '../src/routes/adminRoutes'
 import tutorRoutes from '../src/routes/tutorRoutes'
 import organizadorRoutes from '../src/routes/organizadorRoutes'
 
+import { Toaster } from 'react-hot-toast' // 🟢 Importamos el Toaster
+
 const App = () => {
   const { user, isLoading } = useAuth()
 
@@ -39,6 +41,9 @@ const App = () => {
 
   return (
     <Router>
+      {/* Toaster global para notificaciones */}
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
