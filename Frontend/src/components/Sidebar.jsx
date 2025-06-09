@@ -11,6 +11,7 @@ import {
   LogOutIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  FileUp,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -48,7 +49,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
     },
     {
       path: "/registration2",
-      icon: <ClipboardIcon size={20} />,
+      icon: <FileUp size={20} />,
       label: "Comprobante",
     },
     {
