@@ -1,80 +1,128 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from '../../components/Sidebar';
-import { DownloadIcon, FilterIcon, SearchIcon } from 'lucide-react';
+import { DownloadIcon, SearchIcon } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const DashboardPageTutor = () => {
-  // Estados para filtros dinámicos
+  const [registrations, setRegistrations] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
   const [categorias, setCategorias] = useState([]);
   const [areas, setAreas] = useState([]);
   const [grados, setGrados] = useState([]);
   const [niveles, setNiveles] = useState([]);
 
-  // Estados para filtros seleccionados
   const [categoriaFilter, setCategoriaFilter] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
   const [gradoFilter, setGradoFilter] = useState('');
   const [nivelFilter, setNivelFilter] = useState('');
-  const [estadoFilter, setEstadoFilter] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState('Confirmado');
   const [fechaFilter, setFechaFilter] = useState('');
 
-  // Resultados filtrados
-  const [filteredRegistrations, setFilteredRegistrations] = useState([]);
-
-  // Obtener datos de filtros dinámicos al cargar la página
   useEffect(() => {
-    fetch('/api/tutor/dashboard/filtros', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        setCategorias(data.categorias || []);
-        setAreas(data.areas || []);
-        setGrados(data.grados || []);
-        setNiveles(data.niveles || []);
-      })
-      .catch(err => console.error('Error cargando filtros:', err));
-  }, []);
+    const fetchFiltros = async () => {
+      try {
+        const token = localStorage.getItem('token');
 
-  // Función para buscar inscripciones filtradas
-  const handleBuscar = async () => {
-    const body = {
-      categoria_id: categoriaFilter || undefined,
-      area_id: areaFilter || undefined,
-      grado: gradoFilter || undefined,
-      nivel: nivelFilter || undefined,
-      estado: estadoFilter || undefined,
-      fecha: fechaFilter || undefined,
+        const [catRes, areaRes, gradoRes, nivelRes] = await Promise.all([
+          fetch('/api/filtros/categorias', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/filtros/areas', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/filtros/grados', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/filtros/niveles', { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+
+        const [catData, areaData, gradoData, nivelData] = await Promise.all([
+          catRes.json(),
+          areaRes.json(),
+          gradoRes.json(),
+          nivelRes.json()
+        ]);
+
+        setCategorias(catData);
+        setAreas(areaData);
+        setGrados(gradoData);
+        setNiveles(nivelData);
+
+        if (catData.length) setCategoriaFilter(catData[0].categoria_id);
+        if (areaData.length) setAreaFilter(areaData[0].area_id);
+        if (gradoData.length) setGradoFilter(gradoData[0].grado);
+        if (nivelData.length) setNivelFilter(nivelData[0].nivel);
+      } catch (error) {
+        console.error('Error cargando filtros:', error);
+      }
     };
 
-    try {
-      const response = await fetch('/api/tutor/dashboard/inscripciones-filtradas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(body),
-      });
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:8000/api/tutor/getDashboardData', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-      if (!response.ok) {
-        throw new Error('Error en la consulta');
+        if (!response.ok) throw new Error('Error al obtener los datos del dashboard');
+
+        const data = await response.json();
+        setRegistrations(data.inscripciones);
+      } catch (error) {
+        console.error('Error en el fetch del dashboard:', error);
       }
+    };
 
-      const data = await response.json();
-      setFilteredRegistrations(data);
-    } catch (error) {
-      console.error('Error buscando inscripciones:', error);
-      setFilteredRegistrations([]);
+    fetchFiltros();
+    fetchDashboardData();
+  }, []);
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
     }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = useMemo(() => {
+    let sortable = [...registrations];
+    if (searchTerm) {
+      sortable = sortable.filter(reg =>
+        Object.values(reg).some(val =>
+          String(val).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
+    if (sortConfig.key !== null) {
+      sortable.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortable.slice(0, 20); // Paginación simple
+  }, [registrations, searchTerm, sortConfig]);
+
+  const exportToExcel = () => {
+    const dataToExport = sortedData.map(reg => ({
+      ID: reg.id,
+      Estudiante: `${reg.estudiante_nombre} ${reg.estudiante_apellido}`,
+      Área: reg.area_nombre,
+      Nivel: reg.categoria_nombre,
+      Estado: reg.habilitado ? 'Habilitado' : 'Deshabilitado'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inscripciones');
+    XLSX.writeFile(workbook, 'Reporte_Inscripciones.xlsx');
   };
 
   return (
     <div className="flex min-h-screen bg-[#F2EEE3]">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-      
-      <div className={`flex-grow p-8 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <Sidebar />
+      <div className="ml-64 flex-grow p-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Reportes</h1>
           <div className="flex items-center">
@@ -83,163 +131,54 @@ const DashboardPageTutor = () => {
           </div>
         </div>
 
-        {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm border border-[#D9D9D9] p-6 mb-8">
-          <div className="flex items-center mb-4">
-            <FilterIcon size={20} className="mr-2 text-[#4F4F4F]" />
-            <h2 className="text-lg font-semibold">Filtros</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div>
-              <label htmlFor="categoria" className="block text-sm font-medium mb-1">Categoría</label>
-              <select
-                id="categoria"
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                value={categoriaFilter}
-                onChange={e => setCategoriaFilter(e.target.value)}
-              >
-                <option value="">Todas</option>
-                {categorias.map(cat => (
-                  <option key={cat.categoria_id} value={cat.categoria_id}>
-                    {`Categoría ${cat.categoria_id}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="area" className="block text-sm font-medium mb-1">Área</label>
-              <select
-                id="area"
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                value={areaFilter}
-                onChange={e => setAreaFilter(e.target.value)}
-              >
-                <option value="">Todas</option>
-                {areas.map(area => (
-                  <option key={area.area_id} value={area.area_id}>
-                    {`Área ${area.area_id}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="grado" className="block text-sm font-medium mb-1">Grado</label>
-              <select
-                id="grado"
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                value={gradoFilter}
-                onChange={e => setGradoFilter(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {grados.map(g => (
-                  <option key={g.grado} value={g.grado}>
-                    {`Grado ${g.grado}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="nivel" className="block text-sm font-medium mb-1">Nivel</label>
-              <select
-                id="nivel"
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                value={nivelFilter}
-                onChange={e => setNivelFilter(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {niveles.map(n => (
-                  <option key={n.nivel} value={n.nivel}>
-                    {n.nivel}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="estado" className="block text-sm font-medium mb-1">Estado</label>
-              <select
-                id="estado"
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                value={estadoFilter}
-                onChange={e => setEstadoFilter(e.target.value)}
-              >
-                <option value="">Todos</option>
-                <option value="Confirmado">Confirmado</option>
-                <option value="Pendiente">Pendiente</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="fecha" className="block text-sm font-medium mb-1">Fecha</label>
-              <input
-                type="date"
-                id="fecha"
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md focus:outline-none focus:ring-1 focus:ring-[#A9B2AC]"
-                value={fechaFilter}
-                onChange={e => setFechaFilter(e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-end">
-              <button
-                onClick={handleBuscar}
-                className="bg-[#A9B2AC] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors flex items-center"
-              >
-                <SearchIcon size={18} className="mr-2" />
-                Buscar
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabla de resultados */}
         <div className="bg-white rounded-lg shadow-sm border border-[#D9D9D9] p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold">Inscripciones Registradas</h2>
-            <button className="bg-[#C8B7A6] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors flex items-center">
+            <button onClick={exportToExcel} className="bg-[#C8B7A6] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors flex items-center">
               <DownloadIcon size={18} className="mr-2" />
               Exportar a Excel
             </button>
           </div>
 
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mb-4 p-2 border rounded w-full"
+          />
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-[#D9D9D9]">
-                  <th className="text-left py-3 px-4">ID</th>
-                  <th className="text-left py-3 px-4">Estudiante</th>
-                  <th className="text-left py-3 px-4">Área</th>
-                  <th className="text-left py-3 px-4">Nivel</th>
-                  <th className="text-left py-3 px-4">Fecha</th>
-                  <th className="text-left py-3 px-4">Estado</th>
+                  <th onClick={() => requestSort('id')} className="py-3 px-4 cursor-pointer">ID</th>
+                  <th onClick={() => requestSort('estudiante_nombre')} className="py-3 px-4 cursor-pointer">Estudiante</th>
+                  <th onClick={() => requestSort('area_nombre')} className="py-3 px-4 cursor-pointer">Área</th>
+                  <th onClick={() => requestSort('categoria_nombre')} className="py-3 px-4 cursor-pointer">Nivel</th>
+                  <th onClick={() => requestSort('habilitado')} className="py-3 px-4 cursor-pointer">Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRegistrations.length === 0 ? (
+                {sortedData.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-4 text-gray-500">
+                    <td colSpan="5" className="text-center py-4 text-gray-500">
                       No se encontraron resultados
                     </td>
                   </tr>
                 ) : (
-                  filteredRegistrations.map(reg => (
+                  sortedData.map(reg => (
                     <tr key={reg.id} className="border-b border-[#D9D9D9]">
                       <td className="py-3 px-4">{reg.id}</td>
-                      <td className="py-3 px-4">{reg.estudiante?.nombre || 'N/A'}</td>
-                      <td className="py-3 px-4">{reg.areaCategoria?.area_id || 'N/A'}</td>
-                      <td className="py-3 px-4">{reg.areasCompetencia?.nivel || 'N/A'}</td>
-                      <td className="py-3 px-4">{new Date(reg.created_at).toLocaleDateString()}</td>
+                      <td className="py-3 px-4">{reg.estudiante_nombre} {reg.estudiante_apellido}</td>
+                      <td className="py-3 px-4">{reg.area_nombre}</td>
+                      <td className="py-3 px-4">{reg.categoria_nombre}</td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            reg.estado_pago === 'Confirmado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {reg.estado_pago}
-                        </span>
+                        {reg.habilitado ? (
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Habilitado</span>
+                        ) : (
+                          <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Deshabilitado</span>
+                        )}
                       </td>
                     </tr>
                   ))
