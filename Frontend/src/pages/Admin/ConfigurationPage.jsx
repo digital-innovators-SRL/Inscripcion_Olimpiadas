@@ -58,7 +58,7 @@ const ConfigurationPage = () => {
   useEffect(() => {
     const fetchAreas = async () => {
       try {
-        const response = await axios.get("/areas");
+        const response = await axios.get("admin/areas");
         setAreas(response.data);
       } catch (error) {
         console.error("Error cargando áreas:", error);
