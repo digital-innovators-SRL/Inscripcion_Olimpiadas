@@ -127,6 +127,5 @@ const CompetenciasTutor = () => {
     </div>
   );
 }; 
-// CompetenciasTutor.jsx
 
 export default CompetenciasTutor;
