@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import {
   UploadIcon,
@@ -16,6 +16,7 @@ import imageCompression from "browser-image-compression";
 const UploadProofPage = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [imagen, setImagen] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
