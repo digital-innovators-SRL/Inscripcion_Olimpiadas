@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import { UploadIcon, CheckCircleIcon, LoaderIcon, XCircle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -9,13 +9,17 @@ import imageCompression from "browser-image-compression";
 const UploadProofPage = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [imagen, setImagen] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [processedData, setProcessedData] = useState(null);
   const [error, setError] = useState("");
   const [textoOCR, setTextoOCR] = useState(""); 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Determinar si estamos en la página de login
+  const isLoginPage = location.pathname === '/login';
 
   const handleImagenChange = (e) => {
     setImagen(e.target.files[0]);
@@ -34,7 +38,6 @@ const UploadProofPage = () => {
       const linea = lineas[i];
 
       if (!numero && /N[úu]mero de transacci[oó]n/i.test(linea)) {
-        // puede ser "Número de transacción: 12345" o en dos líneas
         const inline = linea.match(/(\d{4,})/);
         const nextline = lineas[i + 1]?.match(/^\d{4,}$/);
         numero = inline?.[1] || nextline?.[0] || null;
@@ -48,7 +51,7 @@ const UploadProofPage = () => {
 
       if (!tutor) {
         if (linea.match(/^Tutor[:]?$/i)) {
-          tutor = lineas[i + 1]?.trim(); // ← toma la siguiente línea
+          tutor = lineas[i + 1]?.trim();
         } else {
           const match = linea.match(/Tutor[:\s]*([A-ZÁÉÍÓÚÑ\s]+)/i);
           if (match) tutor = match[1].trim();
@@ -67,7 +70,6 @@ const UploadProofPage = () => {
     return datos;
   };
 
-
   const handleUpload = async () => {
     if (!imagen) return;
     setUploading(true);
@@ -80,11 +82,9 @@ const UploadProofPage = () => {
 
     try {
       if (imagen.type === "application/pdf") {
-        // ➤ Si es PDF, no se comprime
         formData.append("file", imagen, "comprobante.pdf");
         filetype = "pdf";
       } else if (imagen.type.startsWith("image/")) {
-        // ➤ Si es imagen, comprimirla
         const compressedFile = await imageCompression(imagen, {
           maxSizeMB: 1,
           maxWidthOrHeight: 1000,
@@ -99,7 +99,7 @@ const UploadProofPage = () => {
 
       formData.append("language", "spa");
       formData.append("isOverlayRequired", "false");
-      formData.append("filetype", filetype); // tipo correcto
+      formData.append("filetype", filetype);
 
       const res = await fetch("https://api.ocr.space/parse/image", {
         method: "POST",
@@ -155,8 +155,20 @@ const UploadProofPage = () => {
 
   return (
     <div className="flex min-h-screen bg-[#F2EEE3]">
-      <Sidebar />
-      <div className="ml-64 flex-grow p-8">
+      {/* Sidebar con control de visibilidad y estado */}
+      {!isLoginPage && (
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onToggle={() => setSidebarOpen(!sidebarOpen)} 
+        />
+      )}
+      
+      {/* Contenido principal con margen condicional */}
+      <div 
+        className={`flex-grow p-8 transition-all duration-300 ${
+          !isLoginPage ? (sidebarOpen ? 'ml-64' : 'ml-20') : ''
+        }`}
+      >
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Subir Comprobante de Pago</h1>
         </div>
