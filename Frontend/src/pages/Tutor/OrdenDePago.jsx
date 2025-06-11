@@ -174,7 +174,125 @@ const OrdenDePago = () => {
           </div>
         )}
 
+<<<<<<< HEAD
 
+=======
+          <div className="mt-4 mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                const link = document.createElement("a");
+                link.href = "http://localhost:8000/assets/planilla.xlsx"; // Asegúrate de que exista
+                link.setAttribute("download", "planilla_ejemplo.xlsx");
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+              }}
+              className="flex items-center bg-[#8B7355] text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all duration-300 shadow"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Descargar planilla de ejemplo
+            </button>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border overflow-hidden mb-8"
+              style={{ borderColor: '#E8DDD4' }}>
+            <div className="p-4 border-b"
+                style={{ background: 'linear-gradient(135deg, #E8DDD4, #D4C4B4)', borderColor: 'rgba(91, 74, 58, 0.3)' }}>
+              <h2 className="text-lg font-bold flex items-center space-x-2" style={{ color: '#5A4A3A' }}>
+                <FileText className="w-5 h-5" style={{ color: '#8B7355' }} />
+                <span>Importar estudiantes desde Excel</span>
+              </h2>
+              <p className="text-sm mt-1" style={{ color: '#8B7355' }}>
+                Cargue un archivo Excel (.xlsx, .xls, .csv) con varios estudiantes.
+              </p>
+            </div>
+
+            <div className="p-6">
+              <label className="block text-sm font-semibold mb-2" style={{ color: '#5A4A3A' }}>
+                Seleccionar archivo
+              </label>
+
+              <div className="flex items-center space-x-4">
+                <label
+                  htmlFor="archivoExcel"
+                  className="cursor-pointer bg-[#C8B7A6] text-white px-6 py-2 rounded-md hover:bg-opacity-90 transition-all duration-300 shadow"
+                >
+                  Elegir archivo
+                </label>
+                <span className="text-sm text-gray-700" id="archivoSeleccionado">Ningún archivo seleccionado</span>
+              </div>
+
+              <input
+                id="archivoExcel"
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                style={{ display: 'none' }}
+                onChange={async (e) => {
+                            const label = document.getElementById("archivoSeleccionado");
+                            if (!e.target.files[0]) {
+                              label.textContent = "Ningún archivo seleccionado";
+                              return;
+                            }
+
+                            const file = e.target.files[0];
+                            label.textContent = file.name;
+
+                            const formData = new FormData();
+                            formData.append("archivo", file);
+                            formData.append("competencia_id", id);
+
+                            try {
+                              setLoading(true);
+
+                              // 1. Enviar archivo Excel
+                              const res = await axios.post(
+                                "http://localhost:8000/api/tutor/importar-inscripciones",
+                                formData,
+                                {
+                                  headers: {
+                                    Authorization: `Bearer ${token}`,
+                                    "Content-Type": "multipart/form-data",
+                                  },
+                                }
+                              );
+
+                              // 2. Mostrar notificación
+                              setNotificacion({ tipo: "success", mensaje: res.data.message });
+
+                              // 3. Descargar automáticamente el ZIP
+                              const zipRes = await axios.get(
+                                `http://localhost:8000/api/tutor/ordenes-masivas/${id}`,
+                                {
+                                  headers: { Authorization: `Bearer ${token}` },
+                                  responseType: "blob",
+                                }
+                              );
+
+                              const blob = new Blob([zipRes.data], { type: "application/zip" });
+                              const url = window.URL.createObjectURL(blob);
+                              const link = document.createElement("a");
+                              link.href = url;
+                              link.setAttribute("download", `ordenes_pago_${id}.zip`);
+                              document.body.appendChild(link);
+                              link.click();
+                              link.remove();
+
+                            } catch (err) {
+                              console.error(err);
+                              setNotificacion({
+                                tipo: "error",
+                                mensaje: err.response?.data?.error || "Error al importar archivo o generar ZIP",
+                              });
+                            } finally {
+                              setLoading(false);
+                            }
+                          }}
+              />
+            </div>
+          </div>
+          
+>>>>>>> origin/Adru0
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Datos del Estudiante */}
@@ -270,4 +388,8 @@ const OrdenDePago = () => {
 };
 
 
+<<<<<<< HEAD
 export default OrdenDePago;
+=======
+export default OrdenDePago;
+>>>>>>> origin/Adru0
