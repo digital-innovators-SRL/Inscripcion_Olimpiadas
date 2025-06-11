@@ -49,6 +49,14 @@ Route::middleware(['auth:api', 'role:Tutor'])->prefix('tutor')->group(function (
     Route::post('/ordenPago', [InscripcionController::class, 'obtenerOrdenPago']);
     Route::post('/confirmar-comprobante', [InscripcionController::class, 'confirmarComprobante']);
 
+    Route::get('/importar-inscripciones', [InscripcionController::class, 'mostrarFormulario']);
+    Route::post('/importar-inscripciones', [InscripcionController::class, 'importarExcel']);
+    Route::get('/ordenes-masivas/{competencia_id}', [InscripcionController::class, 'generarPDFMasivo']);
+
+    Route::get('/getAreas', [TutorDashboardController::class, 'getAreas']);
+    Route::get('/getCategorias', [TutorDashboardController::class, 'getCategorias']);
+    Route::get('/getDashboardData', [TutorDashboardController::class, 'getDashboardData']);
+
     Route::get('/getAreas', [TutorDashboardController::class, 'getAreas']);
     Route::get('/getCategorias', [TutorDashboardController::class, 'getCategorias']);
     Route::get('/getDashboardData', [TutorDashboardController::class, 'getDashboardData']);
@@ -80,3 +88,5 @@ Route::get('/getCategorias', [CategoriaController::class, 'index']);
 Route::post('/crearCompetencia', [CompetenciaController::class, 'crearCompetencia']);
 
 Route::post('/register', [AuthController::class, 'register']);
+
+
