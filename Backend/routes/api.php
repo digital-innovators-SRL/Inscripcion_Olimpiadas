@@ -53,6 +53,9 @@ Route::middleware(['auth:api', 'role:Tutor'])->prefix('tutor')->group(function (
     Route::get('/getCategorias', [TutorDashboardController::class, 'getCategorias']);
     Route::get('/getDashboardData', [TutorDashboardController::class, 'getDashboardData']);
 
+    Route::get('/importar-inscripciones', [InscripcionController::class, 'mostrarFormulario']);
+    Route::post('/importar-inscripciones', [InscripcionController::class, 'importarExcel']);
+
 
 });
 
@@ -70,17 +73,10 @@ Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function 
     Route::apiResource('competencias', CompetenciaController::class);
 });
 
-
 Route::get('/tutores', [UserController::class, 'indexTutores']);
 Route::get('/competencias', [CompetenciaController::class, 'index']);
 
-
-
-
-
 Route::get('/getCategorias', [CategoriaController::class, 'index']);
-
 Route::post('/crearCompetencia', [CompetenciaController::class, 'crearCompetencia']);
-Route::get('/getDashboardData', [TutorDashboardController::class, 'getDashboardData']);
 
-
+Route::post('/register', [AuthController::class, 'register']);

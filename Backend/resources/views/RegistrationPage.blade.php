@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscripción</title>
+    <title>Registro de Tutor</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -31,7 +31,7 @@
             display: block;
             font-weight: bold;
         }
-        .input-group input, .input-group select {
+        .input-group input {
             width: 100%;
             padding: 8px;
             border: 1px solid #D9D9D9;
@@ -48,113 +48,59 @@
         .button:hover {
             background: #8a958f;
         }
+        .back-btn {
+            background: #d3d3d3;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .back-btn:hover {
+            background: #b0b0b0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Inscripción</h1>
+        <button class="button back-btn" onclick="window.location.href='/'">Atrás</button>
+        <h1>Registro de Tutor</h1>
         <div class="card">
-            <h2>Formulario de Inscripción</h2>
-            <form id="registrationForm">
-                <!-- Información del estudiante -->
+            <h2>Formulario de Tutor</h2>
+            <form id="tutorForm">
                 <div class="input-group">
-                    <label for="name">Nombre del estudiante</label>
+                    <label for="name">Nombre completo</label>
                     <input type="text" id="name" required>
                 </div>
                 <div class="input-group">
-                    <label for="id">Número de Cédula de Identidad</label>
-                    <input type="text" id="id" required>
+                    <label for="celular">Celular</label>
+                    <input type="tel" id="celular" required>
                 </div>
                 <div class="input-group">
-                    <label for="birthdate">Fecha de nacimiento</label>
-                    <input type="date" id="birthdate" required>
-                </div>
-
-                <!-- Áreas de competencia -->
-                <h3>Áreas de Competencia</h3>
-                <div class="input-group">
-                    <label for="area">Área de competencia</label>
-                    <select id="area" required>
-                        <option value="">Seleccionar área</option>
-                        <option value="matematicas">Matemáticas</option>
-                        <option value="fisica">Física</option>
-                        <option value="quimica">Química</option>
-                        <option value="biologia">Biología</option>
-                    </select>
+                    <label for="email">Correo electrónico</label>
+                    <input type="email" id="email" required>
                 </div>
                 <div class="input-group">
-                    <label for="level">Nivel/Categoría</label>
-                    <select id="level" required>
-                        <option value="">Seleccionar nivel</option>
-                        <option value="basico">Básico</option>
-                        <option value="intermedio">Intermedio</option>
-                        <option value="avanzado">Avanzado</option>
-                    </select>
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required>
                 </div>
-
-                <!-- Tutores -->
-                <h3>Tutores</h3>
-                <div class="input-group">
-                    <label for="tutorName">Nombre del tutor</label>
-                    <input type="text" id="tutorName" required>
-                </div>
-                <div class="input-group">
-                    <label for="relationship">Parentesco</label>
-                    <input type="text" id="relationship" required>
-                </div>
-                <div class="input-group">
-                    <label for="phone">Teléfono</label>
-                    <input type="tel" id="phone" required>
-                </div>
-
-                <br><br>
-                <!-- Botón para enviar el formulario -->
-                <button type="submit" class="button">Generar Boleta de Pago</button>
+                <input type="hidden" id="role" value="Tutor">
+                <br>
+                <button type="submit" class="button">Registrar Tutor</button>
             </form>
         </div>
     </div>
 
     <script>
-        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+        document.getElementById('tutorForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
-            // Obtener áreas de competencia
-            const areas = [{
-                competencia: document.getElementById('area').value,
-                nivel: document.getElementById('level').value
-            }];
-
-            // Obtener tutores
-            const tutors = [{
-                nombre: document.getElementById('tutorName').value,
-                parentesco: document.getElementById('relationship').value,
-                telefono: document.getElementById('phone').value
-            }];
-
-            // Crear objeto con los datos a enviar
             const data = {
                 name: document.getElementById('name').value,
-                id: document.getElementById('id').value,
-                birthdate: document.getElementById('birthdate').value,
-                areas: areas,
-                tutors: tutors
+                celular: document.getElementById('celular').value,
+                role: document.getElementById('role').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
             };
 
-            // Mostrar los datos en la consola
-            console.log('Datos del formulario:', data);
-
-            // Validar que al menos un área o tutor haya sido agregado
-            if (areas.length === 0) {
-                alert('Por favor, agregue al menos una área de competencia.');
-                return;
-            }
-            if (tutors.length === 0) {
-                alert('Por favor, agregue al menos un tutor.');
-                return;
-            }
-
-            // Enviar los datos al servidor mediante Fetch API
-            fetch('http://127.0.0.1:8000/inscripcion', {
+            fetch('http://dis.tis.cs.umss.edu.bo/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -163,11 +109,11 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Comprobar si el mensaje contiene éxito
-                if (data.message === 'Inscripción realizada con éxito') {
-                    alert('Inscripción exitosa. ¡Boleta generada!');
+                if (data.user) {
+                    alert('Tutor registrado exitosamente.');
+                    window.location.href = '/';
                 } else {
-                    alert('Hubo un error al realizar la inscripción. Por favor, inténtelo nuevamente.');
+                    alert('Hubo un error al registrar el tutor. Por favor, inténtelo nuevamente.');
                 }
             })
             .catch(error => {

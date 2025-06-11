@@ -53,7 +53,7 @@ const OrdenDePago = () => {
   useEffect(() => {
     const fetchCompetencia = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/tutor/competencias`, {
+        const res = await axios.get(`http://dis.tis.cs.umss.edu.bo/api/tutor/competencias`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const encontrada = res.data.find(c => c.id === parseInt(id));
@@ -83,7 +83,7 @@ const OrdenDePago = () => {
 
 
     try {
-      const res = await axios.post("http://localhost:8000/api/tutor/ordenPago", {
+      const res = await axios.post("http://dis.tis.cs.umss.edu.bo/api/tutor/ordenPago", {
         ...form,
         competencia_id: id,
       }, {

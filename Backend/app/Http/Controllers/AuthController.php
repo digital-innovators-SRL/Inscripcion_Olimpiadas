@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -42,4 +44,27 @@ class AuthController extends Controller
             'user' => auth('api')->user()
         ]);
     }
+    public function register(Request $request)
+{
+    $request->validate([
+        'name' => 'required',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|min:6',
+        'celular' => 'required',
+        'role' => 'string|required'
+    ]);
+
+    $user = User::create([
+        'name' => $request->name,
+        'celular' => $request->celular,
+        'role' => $request->role,
+        'email' => $request->email,
+        'password' => Hash::make($request->password)
+    ]);
+
+    return response()->json([
+        'message' => 'Usuario registrado correctamente',
+        'user' => $user
+    ], 201);
+}
 }

@@ -21,9 +21,9 @@ const CompetenciasTutor = () => {
       try {
         const headers = { Authorization: `Bearer ${token}` };
         const [compRes, areasRes, categoriasRes] = await Promise.all([
-          axios.get("http://localhost:8000/api/tutor/competencias", { headers }),
-          axios.get("http://localhost:8000/api/tutor/areas", { headers }),
-          axios.get("http://localhost:8000/api/categorias", { headers }),
+          axios.get("http://dis.tis.cs.umss.edu.bo/api/tutor/competencias", { headers }),
+          axios.get("http://dis.tis.cs.umss.edu.bo/api/tutor/areas", { headers }),
+          axios.get("http://dis.tis.cs.umss.edu.bo/api/categorias", { headers }),
         ]);
 
         setCompetencias(compRes.data);

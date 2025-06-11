@@ -8,6 +8,7 @@ const DashboardPage = () => {
       <div className="ml-64 flex-grow p-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Dashboard del Administrador</h1>
+          <div><button><a href="http://dis.tis.cs.umss.edu.bo/registro">Register</a></button></div>
         </div>
       </div>
     </div>

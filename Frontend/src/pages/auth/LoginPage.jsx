@@ -87,59 +87,7 @@ const userTypes = [
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative" style={{background: 'linear-gradient(135deg, #FAF7F2 0%, #F2EEE3 50%, #E8DDD4 100%)'}}>
       {/* Floating Users Panel */}
-      <div className="fixed top-4 left-4 sm:top-6 sm:left-6 z-50">
-        <div className="relative">
-          <button
-            onClick={() => setShowUserTypes(!showUserTypes)}
-            className="bg-white/80 backdrop-blur-md border rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 sm:space-x-3 hover:bg-white/90"
-            style={{borderColor: '#E8DDD4'}}
-          >
-            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #C8B7A6, #B8A494)'}}>
-              <Users className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-            </div>
-            <span className="font-medium text-xs sm:text-sm" style={{color: '#5A4A3A'}}>Usuarios</span>
-            {showUserTypes ?
-              <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" style={{color: '#8B7355'}} /> :
-              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" style={{color: '#8B7355'}} />
-            }
-          </button>
-
-
-          {showUserTypes && (
-            <div className="absolute top-full left-0 mt-2 w-64 sm:w-80 bg-white/90 backdrop-blur-md border rounded-lg sm:rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-300" style={{borderColor: '#E8DDD4'}}>
-              <div className="p-3 sm:p-4 border-b" style={{background: 'linear-gradient(135deg, #FAF7F2, #F2EEE3)', borderColor: '#E8DDD4'}}>
-                <h3 className="font-bold text-sm sm:text-base flex items-center space-x-2" style={{color: '#5A4A3A'}}>
-                  <Users className="w-4 h-4 sm:w-5 sm:h-5" style={{color: '#8B7355'}} />
-                  <span>Usuarios del Sistema</span>
-                </h3>
-                <p className="text-xs mt-1" style={{color: '#8B7355'}}>Roles y permisos disponibles</p>
-              </div>
-              <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-                {userTypes.map((userType, index) => {
-                  const IconComponent = userType.icon
-                  return (
-                    <div key={index} className="group p-3 sm:p-4 rounded-lg hover:shadow-md transition-all duration-300 cursor-pointer border" style={{backgroundColor: userType.bgColor, borderColor: userType.borderColor}}>
-                      <div className="flex items-center space-x-2 sm:space-x-3">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border" style={{borderColor: '#E8DDD4'}}>
-                          <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" style={{color: userType.color}} />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-xs sm:text-sm group-hover:opacity-80 transition-opacity" style={{color: '#5A4A3A'}}>
-                            {userType.title}
-                          </h4>
-                          <p className="text-xs mt-1" style={{color: '#8B7355'}}>
-                            {userType.description}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+  
 
 
       {/* Main Content */}
