@@ -18,6 +18,7 @@ use App\Models\AreaCompetencia;
 use App\Models\Competencia;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use ZipArchive;
 
 
 class InscripcionController extends Controller
@@ -153,16 +154,76 @@ class InscripcionController extends Controller
     public function importarExcel(Request $request)
     {
         $request->validate([
-            'archivo' => 'required|file|mimes:xlsx,xls,csv'
+            'archivo' => 'required|file|mimes:xlsx,xls,csv',
+            'competencia_id' => 'required|exists:competencias,id',
         ]);
 
         try {
-            Excel::import(new InscripcionImport, $request->file('archivo'));
+            Excel::import(
+                new InscripcionImport(
+                    $request->competencia_id,
+                    auth()->id(),
+                    $request->user()->email,
+                    $request->user()->celular,
+                    $request->user()->name
+                ),
+                $request->file('archivo')
+            );
 
-            return back()->with('success', 'Importación completada exitosamente.');
+            return response()->json(['message' => 'Importación completada exitosamente.']);
         } catch (\Exception $e) {
-            return back()->with('error', 'Error durante la importación: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error durante la importación',
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
+
+    public function generarPDFMasivo($competencia_id)
+    {
+        $tutor_id = auth()->id();
+
+        // Buscar inscripciones del tutor para esa competencia
+        $inscripciones = Inscripcion::with(['estudiante', 'competencia.areaCategoria.area', 'competencia.areaCategoria.categoria'])
+            ->where('tutor_id', $tutor_id)
+            ->where('competencia_id', $competencia_id)
+            ->get();
+
+        if ($inscripciones->isEmpty()) {
+            return response()->json(['message' => 'No hay inscripciones registradas.'], 404);
+        }
+
+        // Crear carpeta temporal
+        $zipFileName = "ordenes_pago_{$competencia_id}.zip";
+        $zipPath = storage_path("app/public/tmp/$zipFileName");
+        $tmpDir = storage_path("app/public/tmp/ordenes_$competencia_id");
+
+        if (!file_exists($tmpDir)) {
+            mkdir($tmpDir, 0777, true);
+        }
+
+        // Generar PDFs
+        foreach ($inscripciones as $inscripcion) {
+            $pdf = Pdf::loadView('pdf.orden_pago', [
+                'inscripcion' => $inscripcion,
+                'estudiante' => $inscripcion->estudiante,
+                'competencia' => $inscripcion->competencia,
+            ]);
+
+            $pdf->save("$tmpDir/orden_pago_{$inscripcion->id}.pdf");
+        }
+
+        // Crear ZIP
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            foreach (glob("$tmpDir/*.pdf") as $file) {
+                $zip->addFile($file, basename($file));
+            }
+            $zip->close();
+        }
+
+        // Descargar ZIP
+        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
         public function index1()
     {

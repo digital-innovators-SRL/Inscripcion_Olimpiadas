@@ -14,7 +14,7 @@ use App\Http\Controllers\CompetenciaController;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InscripcionController;
-
+use App\Models\Categoria;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,12 +48,21 @@ Route::middleware(['auth:api', 'role:Tutor'])->prefix('tutor')->group(function (
     Route::get('/areas', [AreaController::class, 'index']);
     Route::post('/ordenPago', [InscripcionController::class, 'obtenerOrdenPago']);
     Route::post('/confirmar-comprobante', [InscripcionController::class, 'confirmarComprobante']);
+
+    Route::get('/importar-inscripciones', [InscripcionController::class, 'mostrarFormulario']);
+    Route::post('/importar-inscripciones', [InscripcionController::class, 'importarExcel']);
+    Route::get('/ordenes-masivas/{competencia_id}', [InscripcionController::class, 'generarPDFMasivo']);
+
+    Route::get('/getAreas', [TutorDashboardController::class, 'getAreas']);
+    Route::get('/getCategorias', [TutorDashboardController::class, 'getCategorias']);
+    Route::get('/getDashboardData', [TutorDashboardController::class, 'getDashboardData']);
 });
 
 Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard', [OrganizadorDashboardController::class, 'index']);
 
-Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->group(function () {
-    Route::apiResource('areas', AreaController::class);
+Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->prefix('admin')->group(function () {
+        Route::get('/areas', [AreaController::class, 'index']);
+
 
 });
 
@@ -63,11 +72,12 @@ Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function 
     Route::apiResource('competencias', CompetenciaController::class);
 });
 
-
 Route::get('/tutores', [UserController::class, 'indexTutores']);
 Route::get('/competencias', [CompetenciaController::class, 'index']);
 
+Route::get('/getCategorias', [CategoriaController::class, 'index']);
+Route::post('/crearCompetencia', [CompetenciaController::class, 'crearCompetencia']);
 
-
+Route::post('/register', [AuthController::class, 'register']);
 
 
