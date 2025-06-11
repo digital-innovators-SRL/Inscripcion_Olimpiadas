@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { PlusIcon } from "lucide-react";
+import { useLocation } from 'react-router-dom';
+import { PlusIcon, Trophy } from "lucide-react";
 import toast from "react-hot-toast";
 import Sidebar from "../../components/Sidebar";
 import axios from "axios";
@@ -21,6 +22,12 @@ const initialArea = {
 };
 
 const ConfigurationPage = () => {
+  // Estados para el sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+
+  // Estados existentes
   const [areas, setAreas] = useState([]);
   const [categories, setCategories] = useState([]);
   const [newArea, setNewArea] = useState(initialArea);
@@ -43,35 +50,26 @@ const ConfigurationPage = () => {
     setErrors(validationErrors);
     return validationErrors.length === 0;
   };
-  /*const sendAreasToBackend = async () => {
-  try {
-    await axios.post("http://localhost:8000/api/crearCompetencia", { areas }); // Reemplaza con tu URL
-    toast.success("Áreas enviadas al backend correctamente");
-  } catch (error) {
-    console.error("Error al enviar las áreas:", error);
-    toast.error("Error al enviar las áreas");
-  }
-};*/
-const sendAreasToBackend = async () => {
-  try {
-    const payload = {
-      areas: areas.map((area) => ({
-        name: area.name,
-        cost: area.cost,
-        category: isNaN(area.category) ? area.category : parseInt(area.category), // puede ser un ID o un string
-        grade_level: area.gradeLevel,
-        max_students: area.maxStudents,
-      })),
-    };
 
-    await axios.post("http://localhost:8000/api/crearCompetencia", payload);
-    toast.success("Áreas enviadas al backend correctamente");
-  } catch (error) {
-    console.error("Error al enviar las áreas:", error.response?.data || error.message);
-    toast.error("Error al enviar las áreas");
-  }
-};
+  const sendAreasToBackend = async () => {
+    try {
+      const payload = {
+        areas: areas.map((area) => ({
+          name: area.name,
+          cost: area.cost,
+          category: isNaN(area.category) ? area.category : parseInt(area.category), // puede ser un ID o un string
+          grade_level: area.gradeLevel,
+          max_students: area.maxStudents,
+        })),
+      };
 
+      await axios.post("http://localhost:8000/api/crearCompetencia", payload);
+      toast.success("Áreas enviadas al backend correctamente");
+    } catch (error) {
+      console.error("Error al enviar las áreas:", error.response?.data || error.message);
+      toast.error("Error al enviar las áreas");
+    }
+  };
 
   const addOrUpdateArea = () => {
     if (!validateArea()) return;
@@ -102,124 +100,260 @@ const sendAreasToBackend = async () => {
   };
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="flex min-h-screen bg-[#F2EEE3]">
-        <Sidebar />
-        <div className="ml-64 flex-grow p-8">
-          {/* Formulario de Área */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="Nombre del Área"
-              value={newArea.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              className={getErrorClass("name", errors)}
-            />
-            <input
-              type="number"
-              placeholder="Costo"
-              value={newArea.cost}
-              onChange={(e) => handleInputChange("cost", e.target.value)}
-              className={getErrorClass("cost", errors)}
-            />
-            <input
-              type="number"
-              placeholder="Máx. Estudiantes (opcional)"
-              value={newArea.maxStudents}
-              onChange={(e) => handleInputChange("maxStudents", e.target.value)}
-              className={getErrorClass("maxStudents", errors)}
-            />
+    <div className="flex min-h-screen bg-gradient-to-br from-[#FAF7F2] via-[#F2EEE3] to-[#E8DDD4]">
+      {/* Sidebar condicional */}
+      {!isLoginPage && (
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
+      )}
+      
+      {/* Contenido principal con margen dinámico */}
+      <div 
+        className={`flex-grow p-4 sm:p-8 transition-all duration-300 ${
+          !isLoginPage ? (sidebarOpen ? 'ml-64' : 'ml-20') : ''
+        }`}
+      >
+        {/* Header con información del usuario */}
+        <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg border border-[#E8DDD4] p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="p-2 sm:p-3 bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] rounded-xl sm:rounded-2xl shadow-lg">
+                <Trophy size={20} className="sm:hidden text-white" />
+                <Trophy size={28} className="hidden sm:block text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-[#5A4A3A] to-[#8B7355] bg-clip-text text-transparent">
+                  Crear Competencia
+                </h1>
+                <p className="text-sm sm:text-base text-[#8B7355] mt-1">
+                  Gestiona las áreas de competencia y configuración
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-[#5A4A3A]">Administrador General</p>
+                <p className="text-xs text-[#8B7355]">Administrador</p>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] rounded-xl flex items-center justify-center shadow-md">
+                <span className="text-white font-semibold">A</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            <select
-              value={newArea.category}
-              onChange={(e) => handleInputChange("category", e.target.value)}
-              className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
-            >
-              <option value="">Seleccione una categoría</option>
-                            <option value="Otro" style={{ fontWeight: 'bold' }} >OTRO</option>
-              {categories.map((categoria) => (
-                <option key={categoria.id} value={categoria.id}>
-                  {categoria.nombre}
-                </option>
-              ))}
+        {/* Formulario de Área */}
+        <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg border border-[#E8DDD4] p-4 sm:p-8 mb-6 sm:mb-8">
+          <div className="mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] rounded-xl shadow-md">
+                <Trophy size={16} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold text-[#5A4A3A]">
+                  Información del Área
+                </h2>
+                <p className="text-sm text-[#8B7355]">
+                  Actualiza los datos del área de competencia
+                </p>
+              </div>
+            </div>
+          </div>
 
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
+                Nombre del Área
+              </label>
+              <input
+                type="text"
+                placeholder="Nombre del Área"
+                value={newArea.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                className={`${getErrorClass("name", errors)} w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355] text-sm sm:text-base`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
+                Costo
+              </label>
+              <input
+                type="number"
+                placeholder="Costo"
+                value={newArea.cost}
+                onChange={(e) => handleInputChange("cost", e.target.value)}
+                className={`${getErrorClass("cost", errors)} w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355] text-sm sm:text-base`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
+                Máx. Estudiantes (opcional)
+              </label>
+              <input
+                type="number"
+                placeholder="Máx. Estudiantes (opcional)"
+                value={newArea.maxStudents}
+                onChange={(e) => handleInputChange("maxStudents", e.target.value)}
+                className={`${getErrorClass("maxStudents", errors)} w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355] text-sm sm:text-base`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
+                Categoría
+              </label>
+              <select
+                value={newArea.category}
+                onChange={(e) => handleInputChange("category", e.target.value)}
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] text-sm sm:text-base"
+              >
+                <option value="">Seleccione una categoría</option>
+                <option value="Otro" style={{ fontWeight: 'bold' }}>OTRO</option>
+                {categories.map((categoria) => (
+                  <option key={categoria.id} value={categoria.id}>
+                    {categoria.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {newArea.category === "Otro" && (
-              <input
-                type="text"
-                placeholder="Escribe tu categoría"
-                value={newArea.customCategory}
-                onChange={(e) => handleInputChange("customCategory", e.target.value)}
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
-              />
+              <div>
+                <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
+                  Categoría Personalizada
+                </label>
+                <input
+                  type="text"
+                  placeholder="Escribe tu categoría"
+                  value={newArea.customCategory}
+                  onChange={(e) => handleInputChange("customCategory", e.target.value)}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355] text-sm sm:text-base"
+                />
+              </div>
             )}
-            <select
-              value={newArea.gradeLevel}
-              onChange={(e) => handleInputChange("gradeLevel", e.target.value)}
-              className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
-            >
-              <option value="Otro" style={{ fontWeight: 'bold' }}>OTRO</option>
-              <option value="">Seleccione grado</option>
-              {["1P", "2P", "3P", "4P", "5P", "6P", "1S", "2S", "3S", "4S", "5S", "6S", "1U", "2U", "3U", "4U", "5U", "6U"].map((grade) => (
-                <option key={grade} value={grade}>
-                  {grade}
-                </option>
-              ))}
-              
-            </select>
+
+            <div>
+              <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
+                Nivel de Grado
+              </label>
+              <select
+                value={newArea.gradeLevel}
+                onChange={(e) => handleInputChange("gradeLevel", e.target.value)}
+                className="w-full px-4 py-3 border-2 border-[#E8DDD4] rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A]"
+              >
+                <option value="">Seleccione grado</option>
+                <option value="Otro" style={{ fontWeight: 'bold' }}>OTRO</option>
+                {["1P", "2P", "3P", "4P", "5P", "6P", "1S", "2S", "3S", "4S", "5S", "6S", "1U", "2U", "3U", "4U", "5U", "6U"].map((grade) => (
+                  <option key={grade} value={grade}>
+                    {grade}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {newArea.gradeLevel === "Otro" && (
-              <input
-                type="text"
-                placeholder="Escribe tu grado"
-                value={newArea.customGrade}
-                onChange={(e) => handleInputChange("customGrade", e.target.value)}
-                className="w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
-              />
+              <div>
+                <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
+                  Grado Personalizado
+                </label>
+                <input
+                  type="text"
+                  placeholder="Escribe tu grado"
+                  value={newArea.customGrade}
+                  onChange={(e) => handleInputChange("customGrade", e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-[#E8DDD4] rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355]"
+                />
+              </div>
             )}
           </div>
 
           {/* Botón de Agregar / Editar */}
-          <div>
+          <div className="mt-6">
             <button
               onClick={addOrUpdateArea}
-              className="bg-[#C8B7A6] text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors flex items-center"
+              className="bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] text-white py-3 px-6 rounded-xl hover:scale-[1.02] transition-all duration-300 flex items-center shadow-lg font-medium"
             >
               <PlusIcon size={18} className="mr-2" />
               {editingArea ? "Guardar Cambios" : "Agregar Área"}
             </button>
           </div>
-
-          {/* Lista de Áreas con opción de edición */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-            {areas.map((area) => (
-              <div key={area.id} className="border p-4 rounded-md shadow-sm space-y-2">
-                <h2 className="text-lg font-semibold">{area.name}</h2>
-                <p className="text-sm text-gray-600">Costo: ${area.cost}</p>
-                <p className="text-sm text-gray-600">Categoría: {area.category}</p>
-                <p className="text-sm text-gray-600">Grado: {area.gradeLevel}</p>
-                {area.maxStudents && <p className="text-sm text-gray-600">Máx. Estudiantes: {area.maxStudents}</p>}
-                {area.description && <p className="text-sm text-gray-600">📌 {area.description}</p>}
-                <button
-                  onClick={() => {
-                    setEditingArea(area);
-                    setNewArea({ ...area });
-                  }}
-                  className="text-blue-500 hover:text-blue-600 text-sm"
-                >
-                  Editar
-                </button>
-              </div>
-            ))}
-          </div>
-          <button
-  onClick={sendAreasToBackend}
-  className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
->
-  Enviar Áreas al Backend
-</button>
-
         </div>
-        
+
+        {/* Lista de Áreas con opción de edición */}
+        {areas.length > 0 && (
+          <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg border border-[#E8DDD4] p-4 sm:p-8 mb-6 sm:mb-8">
+            <div className="mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] rounded-xl shadow-md">
+                  <Trophy size={16} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-semibold text-[#5A4A3A]">
+                    Áreas Configuradas
+                  </h2>
+                  <p className="text-sm text-[#8B7355]">
+                    Gestiona las áreas de competencia creadas
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {areas.map((area) => (
+                <div key={area.id} className="bg-white/90 backdrop-blur-md border-2 border-[#E8DDD4] p-6 rounded-xl shadow-md hover:scale-[1.02] transition-all duration-300 space-y-2">
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-[#5A4A3A]">{area.name}</h3>
+                    <button
+                      onClick={() => {
+                        setEditingArea(area);
+                        setNewArea({ ...area });
+                      }}
+                      className="text-[#C8B7A6] hover:text-[#5A4A3A] hover:bg-[#FAF7F2] text-sm font-medium px-3 py-2 rounded-lg transition-all duration-300"
+                    >
+                      Editar
+                    </button>
+                  </div>
+                  
+                  <p className="text-sm text-[#8B7355]">Costo: <span className="font-medium text-[#5A4A3A]">${area.cost}</span></p>
+                  <p className="text-sm text-[#8B7355]">Categoría: <span className="font-medium text-[#5A4A3A]">{area.category}</span></p>
+                  <p className="text-sm text-[#8B7355]">Grado: <span className="font-medium text-[#5A4A3A]">{area.gradeLevel}</span></p>
+                  {area.maxStudents && <p className="text-sm text-[#8B7355]">Máx. Estudiantes: <span className="font-medium text-[#5A4A3A]">{area.maxStudents}</span></p>}
+                  {area.description && <p className="text-sm text-[#8B7355]">📌 {area.description}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Acciones Rápidas */}
+        <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg border border-[#E8DDD4] p-4 sm:p-8">
+          <div className="mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] rounded-xl shadow-md">
+                <span className="text-white text-sm">⚡</span>
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold text-[#5A4A3A]">
+                  Acciones Rápidas
+                </h2>
+                <p className="text-sm text-[#8B7355]">
+                  Opciones adicionales de gestión
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={sendAreasToBackend}
+            className="bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] text-white py-3 px-6 rounded-xl hover:scale-[1.02] transition-all duration-300 shadow-lg font-medium"
+          >
+            Enviar Áreas al Backend
+          </button>
+        </div>
       </div>
     </div>
   );
