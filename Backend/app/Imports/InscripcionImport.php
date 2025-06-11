@@ -1,85 +1,102 @@
 <?php
 
 namespace App\Imports;
-
+use Illuminate\Support\Facades\DB;
 use App\Models\Estudiante;
 use App\Models\Inscripcion;
+use App\Models\Competencia;
+use App\Models\User;
+use App\Models\Area;
+use App\Models\Categoria;
+use App\Models\AreaCategoria;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\ToCollection;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class InscripcionImport implements ToCollection, WithHeadingRow
+class InscripcionImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading
 {
-    protected $competencia_id;
-    protected $tutor_id;
-    protected $contacto_email;
-    protected $contacto_celular;
-    protected $nombre_tutor;
-
-    public function __construct($competencia_id, $tutor_id, $contacto_email, $contacto_celular, $nombre_tutor)
+    public function model(array $row)
     {
-        $this->competencia_id = $competencia_id;
-        $this->tutor_id = $tutor_id;
-        $this->contacto_email = $contacto_email;
-        $this->contacto_celular = $contacto_celular;
-        $this->nombre_tutor = $nombre_tutor;
+        // 1. Crear o buscar estudiante
+        $estudiante = Estudiante::firstOrCreate(
+            ['ci' => $row['ci']],
+            [
+                'nombres' => $row['nombres'],
+                'apellidos' => $row['apellidos'],
+                'email' => $row['email'],
+                'fecha_nacimiento' => Carbon::parse($row['fecha_de_nacimiento'])->format('Y-m-d'),
+                'colegio' => $row['colegio'],
+                'curso' => $row['curso'],
+                'departamento' => $row['departamento'],
+                'provincia' => $row['provincia'],
+            ]
+        );
+
+        // 2. Crear o buscar tutor
+        $tutor = User::firstOrCreate(
+            ['name' => $row['tutor']],
+            [
+                'email' => Str::slug($row['tutor']) . '@default.com',
+                'password' => bcrypt('password123'),
+                'celular' => $row['contacto_celular'],
+                'role' => 'tutor',
+            ]
+        );
+
+        // 3. Crear o buscar área
+        $area = Area::firstOrCreate(['nombre' => $row['area']]);
+
+        // 4. Crear o buscar categoría
+        $categoria = Categoria::firstOrCreate(['nombre' => $row['categoria']]);
+
+        // 5. Crear o buscar area_categoria
+        $areaCategoria = AreaCategoria::firstOrCreate(
+            [
+                'area_id' => $area->id,
+                'categoria_id' => $categoria->id
+            ],
+            [
+                'grado' => $row['curso']
+            ]
+        );
+
+        // 6. Crear o buscar competencia
+        $competencia = Competencia::firstOrCreate(
+            [
+                'nombre' => $row['competencia'],
+                'area_categoria_id' => $areaCategoria->id
+            ],
+            [
+                'tutor_id' => $tutor->id,
+                'fecha_competencia' => now()->addDays(30),
+                'fecha_fin_inscripcion' => now()->addDays(15),
+                'max_competidores' => 50
+            ]
+        );
+
+        // 7. Crear inscripción
+        return new Inscripcion([
+            'estudiante_id' => $estudiante->id,
+            'competencia_id' => $competencia->id,
+            'tutor_id' => $tutor->id,
+            'contacto_email' => $row['contacto_email'],
+            'contacto_celular' => $row['contacto_celular'],
+            'nombre_tutor' => $tutor->name,
+            'comprobante_pago' => '',
+            'habilitado' => 0,
+        ]);
     }
 
-    public function collection(Collection $rows)
+    public function batchSize(): int
     {
-        foreach ($rows as $row) {
-            // Validar campos requeridos
-            if (
-                empty($row['nombres']) ||
-                empty($row['apellidos']) ||
-                empty($row['ci']) ||
-                empty($row['fecha_de_nacimiento']) ||
-                empty($row['email']) ||
-                empty($row['colegio']) ||
-                empty($row['curso']) ||
-                empty($row['departamento']) ||
-                empty($row['provincia'])
-            ) {
-                continue; // Saltar fila incompleta
-            }
+        return 4000;
+    }
 
-            // Crear o buscar estudiante
-            $estudiante = Estudiante::firstOrCreate(
-                ['ci' => $row['ci']],
-                [
-                    'nombres' => $row['nombres'],
-                    'apellidos' => $row['apellidos'],
-                    'email' => $row['email'],
-                    'fecha_nacimiento' => Carbon::parse($row['fecha_de_nacimiento'])->format('Y-m-d'),
-                    'colegio' => $row['colegio'],
-                    'curso' => $row['curso'],
-                    'departamento' => $row['departamento'],
-                    'provincia' => $row['provincia'],
-                ]
-            );
-
-            // Verificar si ya está inscrito en esta competencia
-            $yaInscrito = Inscripcion::where('estudiante_id', $estudiante->id)
-                ->where('competencia_id', $this->competencia_id)
-                ->exists();
-
-            if ($yaInscrito) {
-                continue; // Saltar duplicado
-            }
-
-            // Crear inscripción
-            Inscripcion::create([
-                'estudiante_id' => $estudiante->id,
-                'competencia_id' => $this->competencia_id,
-                'tutor_id' => $this->tutor_id,
-                'contacto_email' => $this->contacto_email,
-                'contacto_celular' => $this->contacto_celular,
-                'nombre_tutor' => $this->nombre_tutor,
-                'comprobante_pago' => '',
-                'habilitado' => false,
-                'created_at' => now(),
-            ]);
-        }
+    public function chunkSize(): int
+    {
+        return 4000;
     }
 }
