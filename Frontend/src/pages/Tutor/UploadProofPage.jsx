@@ -148,7 +148,7 @@ const UploadProofPage = () => {
     setProcessing(true);
     try {
       await axios.post(
-        "http://localhost:8000/api/tutor/confirmar-comprobante",
+        "http://dis.tis.cs.umss.edu.bo/api/tutor/confirmar-comprobante",
         datos,
         {
           headers: {

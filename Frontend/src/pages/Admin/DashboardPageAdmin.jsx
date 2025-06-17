@@ -60,7 +60,7 @@ const DashboardPage = () => {
             Recuerda revisar regularmente las diferentes secciones del sistema para mantener 
             todo actualizado y funcionando sin problemas. ¡Tu trabajo es muy importante!
           </p>
-          <div><button><a href="http://localhost:8000/registro">Register</a></button></div>
+          <div><button><a href="http://dis.tis.cs.umss.edu.bo/registro">Register</a></button></div>
         </div>
       </div>
     </div>

@@ -35,7 +35,7 @@ const ConfigurationPage = () => {
   const [errors, setErrors] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/getCategorias") // Reemplaza con tu endpoint real
+    fetch("http://dis.tis.cs.umss.edu.bo/api/getCategorias") // Reemplaza con tu endpoint real
       .then((response) => response.json())
       .then((data) => setCategories(data))
       .catch((error) => console.error("Error al obtener categorías:", error));
@@ -63,7 +63,7 @@ const ConfigurationPage = () => {
         })),
       };
 
-      await axios.post("http://localhost:8000/api/crearCompetencia", payload);
+      await axios.post("http://dis.tis.cs.umss.edu.bo/api/crearCompetencia", payload);
       toast.success("Áreas enviadas al backend correctamente");
     } catch (error) {
       console.error("Error al enviar las áreas:", error.response?.data || error.message);
