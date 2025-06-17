@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
 import { PlusIcon, PencilIcon, TrashIcon, UserIcon } from 'lucide-react';
 
@@ -9,37 +10,62 @@ const UserManagementPage = () => {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
 
-  // Estados existentes para la gestión de usuarios
-  const [users] = useState([
-    {
-      id: '1',
-      name: 'Admin User',
-      email: 'admin@example.com',
-      role: 'admin',
-      status: 'active',
-    },
-    {
-      id: '2',
-      name: 'Juan Pérez',
-      email: 'juan@example.com',
-      role: 'tutor',
-      status: 'active',
-    },
-    {
-      id: '3',
-      name: 'María García',
-      email: 'maria@example.com',
-      role: 'student',
-      status: 'active',
-    },
-  ]);
-
+  // Estados para la gestión de usuarios
+  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({ name: '', email: '', password: '', celular: '', role: 'Administrador' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get('http://dis.tis.cs.umss.edu.bo/api/users');
+      setUsers(res.data.data || []);
+    } catch (e) {
+      setError('Error al cargar usuarios');
+    }
+    setLoading(false);
+  };
+
   const handleEditUser = (user) => {
     setSelectedUser(user);
+    setForm({
+      name: user.name,
+      email: user.email,
+      password: '',
+      celular: user.celular || '',
+      role: user.role,
+    });
     setShowModal(true);
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm('¿Seguro que deseas eliminar este usuario?')) return;
+    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/users/${user.id}`);
+    fetchUsers();
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (selectedUser) {
+        await axios.put(`http://dis.tis.cs.umss.edu.bo/api/users/${selectedUser.id}`, form);
+      } else {
+        await axios.post('http://dis.tis.cs.umss.edu.bo/api/users', form);
+      }
+      setShowModal(false);
+      fetchUsers();
+    } catch (e) {
+      setError('Error al guardar usuario');
+    }
+    setLoading(false);
   };
 
   return (
@@ -90,7 +116,7 @@ const UserManagementPage = () => {
                 <th className="text-left py-4 px-6 text-[#5A4A3A] font-bold text-sm uppercase tracking-wider">Usuario</th>
                 <th className="text-left py-4 px-6 text-[#5A4A3A] font-bold text-sm uppercase tracking-wider">Email</th>
                 <th className="text-left py-4 px-6 text-[#5A4A3A] font-bold text-sm uppercase tracking-wider">Rol</th>
-                <th className="text-left py-4 px-6 text-[#5A4A3A] font-bold text-sm uppercase tracking-wider">Estado</th>
+               {/* <th className="text-left py-4 px-6 text-[#5A4A3A] font-bold text-sm uppercase tracking-wider">Estado</th> */}
                 <th className="text-left py-4 px-6 text-[#5A4A3A] font-bold text-sm uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
@@ -119,17 +145,7 @@ const UserManagementPage = () => {
                       {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                     </span>
                   </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-3 py-1 rounded-xl text-xs font-semibold border transition-all duration-300 ${
-                        user.status === 'active'
-                          ? 'bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] text-[#5A4A3A] border-[#8B7355]'
-                          : 'bg-gradient-to-r from-[#E8DDD4] to-[#F2EEE3] text-[#8B7355] border-[#C8B7A6]'
-                      }`}
-                    >
-                      {user.status === 'active' ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
+               
                   <td className="py-4 px-6">
                     <div className="flex space-x-3">
                       <button
@@ -138,7 +154,10 @@ const UserManagementPage = () => {
                       >
                         <PencilIcon size={18} />
                       </button>
-                      <button className="text-[#B8A494] hover:text-[#8B7355] hover:scale-110 transition-all duration-300 p-2 rounded-lg hover:bg-[#F2EEE3]">
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        className="text-[#B8A494] hover:text-[#8B7355] hover:scale-110 transition-all duration-300 p-2 rounded-lg hover:bg-[#F2EEE3]"
+                      >
                         <TrashIcon size={18} />
                       </button>
                     </div>
@@ -157,14 +176,16 @@ const UserManagementPage = () => {
             <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#5A4A3A] to-[#8B7355] bg-clip-text text-transparent">
               {selectedUser ? 'Editar Usuario' : 'Nuevo Usuario'}
             </h2>
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-semibold mb-2 text-[#5A4A3A]">Nombre</label>
                 <input
                   type="text"
                   className="w-full px-4 py-3 border border-[#E8DDD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B7A6] focus:border-[#B8A494] transition-all duration-300 bg-white/80 backdrop-blur-sm text-[#5A4A3A] placeholder-[#8B7355]"
-                  defaultValue={selectedUser?.name}
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
                   placeholder="Ingresa el nombre completo"
+                  required
                 />
               </div>
               <div>
@@ -172,20 +193,45 @@ const UserManagementPage = () => {
                 <input
                   type="email"
                   className="w-full px-4 py-3 border border-[#E8DDD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B7A6] focus:border-[#B8A494] transition-all duration-300 bg-white/80 backdrop-blur-sm text-[#5A4A3A] placeholder-[#8B7355]"
-                  defaultValue={selectedUser?.email}
+                  value={form.email}
+                  onChange={e => setForm({ ...form, email: e.target.value })}
                   placeholder="ejemplo@correo.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-[#5A4A3A]">Celular</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 border border-[#E8DDD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B7A6] focus:border-[#B8A494] transition-all duration-300 bg-white/80 backdrop-blur-sm text-[#5A4A3A] placeholder-[#8B7355]"
+                  value={form.celular}
+                  onChange={e => setForm({ ...form, celular: e.target.value })}
+                  placeholder="Celular"
                 />
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-2 text-[#5A4A3A]">Rol</label>
                 <select
                   className="w-full px-4 py-3 border border-[#E8DDD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B7A6] focus:border-[#B8A494] transition-all duration-300 bg-white/80 backdrop-blur-sm text-[#5A4A3A]"
-                  defaultValue={selectedUser?.role}
+                  value={form.role}
+                  onChange={e => setForm({ ...form, role: e.target.value })}
+                  required
                 >
-                  <option value="admin" className="text-[#5A4A3A] bg-[#FAF7F2]">Administrador</option>
-                  <option value="tutor" className="text-[#5A4A3A] bg-[#FAF7F2]">Tutor</option>
-                  <option value="student" className="text-[#5A4A3A] bg-[#FAF7F2]">Estudiante</option>
+                  <option value="Administrador">Administrador</option>
+                  <option value="Organizador">Organizador</option>
+                  <option value="Tutor">Tutor</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-[#5A4A3A]">Contraseña {selectedUser ? '(dejar vacío para no cambiar)' : ''}</label>
+                <input
+                  type="password"
+                  className="w-full px-4 py-3 border border-[#E8DDD4] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8B7A6] focus:border-[#B8A494] transition-all duration-300 bg-white/80 backdrop-blur-sm text-[#5A4A3A] placeholder-[#8B7355]"
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  placeholder="Contraseña"
+                  {...(selectedUser ? {} : { required: true })}
+                />
               </div>
               <div className="flex justify-end space-x-4 pt-4">
                 <button
@@ -198,6 +244,7 @@ const UserManagementPage = () => {
                 <button
                   type="submit"
                   className="px-6 py-3 bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] text-[#5A4A3A] rounded-xl font-semibold shadow-lg hover:scale-[1.02] transition-all duration-300"
+                  disabled={loading}
                 >
                   {selectedUser ? 'Guardar Cambios' : 'Crear Usuario'}
                 </button>

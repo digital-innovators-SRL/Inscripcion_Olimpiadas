@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Area;
 use App\Models\AreaCategoria;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AreaCategoriaController extends Controller
 {

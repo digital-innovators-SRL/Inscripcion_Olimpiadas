@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Area;
+use App\Models\AreaCategoria;
 use App\Models\Categoria;
 
 
@@ -18,6 +19,18 @@ class AreaController extends Controller
     {
         $areas = Area::all();
         return response()->json($areas);
+    }
+
+        public function categorias()
+    {
+        $areas = Categoria::all();
+        return response()->json($areas);
+    }
+
+        public function grados()
+    {
+        $CategoriaArea = AreaCategoria::all();
+        return response()->json($CategoriaArea);
     }
 
     public function create()

@@ -11,6 +11,7 @@ use App\Http\Controllers\Organizador\OrganizadorDashboardController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\CompetenciaController;
+use App\Http\Controllers\AreaCategoriaController;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InscripcionController;
@@ -71,7 +72,8 @@ Route::middleware(['auth:api', 'role:Organizador'])->get('/organizador/dashboard
 
 Route::middleware(['jwt.exceptions', 'auth:api', 'role:Administrador'])->prefix('admin')->group(function () {
         Route::get('/areas', [AreaController::class, 'index']);
-
+        Route::get('/categorias', [AreaController::class, 'categorias']);
+        Route::get('/grados', [AreaController::class, 'grados']);
 
 });
 
@@ -89,4 +91,15 @@ Route::post('/crearCompetencia', [CompetenciaController::class, 'crearCompetenci
 
 Route::post('/register', [AuthController::class, 'register']);
 
+        Route::get('/areas', [AreaController::class, 'index']);
+        Route::get('/categorias', [AreaController::class, 'categorias']);
+        Route::get('/grados', [AreaController::class, 'grados']);
+        Route::delete('/areas/{id}', [AreaController::class, 'destroy']);
+        Route::delete('/categorias/{id}', [CategoriaController::class, 'destroy']);
+        Route::delete('/grados/{id}', [AreaCategoriaController::class, 'destroy']);
+        Route::get('/exportar-inscritos/{competencia_id}', [InscripcionController::class, 'exportarInscritosExcel']);
 
+Route::get('/users', [UserController::class, 'index']);
+Route::post('/users', [UserController::class, 'store']);
+Route::put('/users/{id}', [UserController::class, 'update']);
+Route::delete('/users/{id}', [UserController::class, 'destroy']);

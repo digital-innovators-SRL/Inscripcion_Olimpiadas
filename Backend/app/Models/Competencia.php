@@ -30,6 +30,6 @@ class Competencia extends Model
 
     public function inscripciones()
     {
-        return $this->belongsTo(Inscripcion::class);
+        return $this->hasMany(Inscripcion::class);
     }
 }

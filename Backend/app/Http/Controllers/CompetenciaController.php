@@ -14,8 +14,9 @@ class CompetenciaController extends Controller
     // === Para TUTOR ===
     public function index()
     {
-        // Devuelve todas las competencias disponibles para inscripción
-        $competencias = Competencia::with(['areaCategoria.area', 'areaCategoria.categoria'])->get();
+        // Devuelve todas las competencias con sus inscripciones y relaciones necesarias
+        $competencias = Competencia::with(['areaCategoria.area', 'areaCategoria.categoria', 'inscripciones'])
+            ->get();
         return response()->json($competencias);
     }
 
@@ -55,7 +56,7 @@ class CompetenciaController extends Controller
         $competencia->area_categoria_id = $areaCategoria->id;
         $competencia->nombre = $data['name']. ' - ' . $data['category'] . ' - ' . $data['grade_level'];
         $competencia->fecha_competencia = $data['competition_date'] ?? now();
-        $competencia->fecha_fin_inscripcion = $data['end_registration'] ?? now()->addDays(7);
+        $competencia->fecha_fin_inscripcion = $data['end_registration'] ?? now()->addDays(30);
         $competencia->max_competidores = $data['max_students'];
         $competencia->monto = $data['cost'];
         $competencia->save();

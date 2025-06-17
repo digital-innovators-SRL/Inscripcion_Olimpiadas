@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Imports\InscripcionImport;
+use App\Exports\InscritosCompetenciaExport;
 use App\Models\Area;
 use App\Models\Categoria;
 use App\Models\Estudiante;
@@ -281,6 +282,17 @@ class InscripcionController extends Controller
             'message' => 'Comprobante actualizado correctamente',
             'inscripcion' => $inscripcion,
         ]);
+    }
+
+    public function exportarInscritosExcel($competencia_id)
+    {
+        $count = \App\Models\Inscripcion::where('competencia_id', $competencia_id)->count();
+        if ($count === 0) {
+            return response()->json(['message' => 'No hay inscritos en esta competencia.'], 404);
+        }
+        $competencia = \App\Models\Competencia::findOrFail($competencia_id);
+        $filename = 'inscritos_' . $competencia->nombre . '.xlsx';
+        return Excel::download(new InscritosCompetenciaExport($competencia_id), $filename);
     }
 }
 

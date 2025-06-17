@@ -51,7 +51,21 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
+            'celular' => 'nullable|string|max:20',
+            'role' => 'required|in:Administrador,Organizador,Tutor',
+        ]);
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'celular' => $request->celular,
+            'role' => $request->role,
+        ]);
+        return response()->json(['success' => true, 'data' => $user], 201);
     }
 
     /**
@@ -85,7 +99,23 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $user = User::findOrFail($id);
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:6',
+            'celular' => 'nullable|string|max:20',
+            'role' => 'sometimes|required|in:Administrador,Organizador,Tutor',
+        ]);
+        $user->name = $request->name ?? $user->name;
+        $user->email = $request->email ?? $user->email;
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->password);
+        }
+        $user->celular = $request->celular ?? $user->celular;
+        $user->role = $request->role ?? $user->role;
+        $user->save();
+        return response()->json(['success' => true, 'data' => $user]);
     }
 
     /**
@@ -96,6 +126,8 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $user = User::findOrFail($id);
+        $user->delete();
+        return response()->json(['success' => true]);
     }
 }

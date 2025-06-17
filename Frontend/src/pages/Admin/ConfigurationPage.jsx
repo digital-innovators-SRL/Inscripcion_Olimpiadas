@@ -19,6 +19,9 @@ const initialArea = {
   customGrade: "",
   maxStudents: "",
   description: "",
+  competitionDate: "",
+  endRegistration: "",
+  customArea: ""
 };
 
 const ConfigurationPage = () => {
@@ -29,24 +32,53 @@ const ConfigurationPage = () => {
 
   // Estados existentes
   const [areas, setAreas] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [newArea, setNewArea] = useState(initialArea);
   const [editingArea, setEditingArea] = useState(null);
   const [errors, setErrors] = useState([]);
+  const [areasDB, setAreasDB] = useState([]);
+  const [categoriesDB, setCategoriesDB] = useState([]);
+  const [gradesDB, setGradesDB] = useState([]);
+  const [deleteAreaId, setDeleteAreaId] = useState("");
+  const [deleteCategoryId, setDeleteCategoryId] = useState("");
+  const [deleteGradeId, setDeleteGradeId] = useState("");
 
   useEffect(() => {
     fetch("http://dis.tis.cs.umss.edu.bo/api/getCategorias") // Reemplaza con tu endpoint real
       .then((response) => response.json())
-      .then((data) => setCategories(data))
+      .then((data) => setCategoriesDB(data))
       .catch((error) => console.error("Error al obtener categorías:", error));
+  }, []);
+
+  useEffect(() => {
+    // Cargar áreas, categorías y grados desde el backend
+    axios.get("http://dis.tis.cs.umss.edu.bo/api/areas")
+      .then(res => setAreasDB(res.data))
+      .catch(() => setAreasDB([]));
+    axios.get("http://dis.tis.cs.umss.edu.bo/api/categorias")
+      .then(res => setCategoriesDB(res.data))
+      .catch(() => setCategoriesDB([]));
+    axios.get("http://dis.tis.cs.umss.edu.bo/api/grados")
+      .then(res => setGradesDB(res.data))
+      .catch(() => setGradesDB([]));
   }, []);
 
   const validateArea = () => {
     const validationErrors = [];
-    if (!newArea.name.trim()) validationErrors.push({ field: "name", message: "El nombre es requerido" });
+    // Validar área
+    if (!newArea.name || (newArea.name === "Otro" && !newArea.customArea)) validationErrors.push({ field: "name", message: "El área es requerida" });
     if (!newArea.cost || isNaN(newArea.cost)) validationErrors.push({ field: "cost", message: "El costo debe ser un número" });
     if (newArea.maxStudents && isNaN(newArea.maxStudents)) validationErrors.push({ field: "maxStudents", message: "Debe ser un número" });
-
+    // Validar categoría
+    if (!newArea.category || (newArea.category === "Otro" && !newArea.customCategory)) validationErrors.push({ field: "category", message: "La categoría es requerida" });
+    // Validar grado
+    if (!newArea.gradeLevel || (newArea.gradeLevel === "Otro" && !newArea.customGrade)) validationErrors.push({ field: "gradeLevel", message: "El grado es requerido" });
+    // Validar fechas
+    const today = new Date();
+    const compDate = newArea.competitionDate ? new Date(newArea.competitionDate) : null;
+    const endReg = newArea.endRegistration ? new Date(newArea.endRegistration) : null;
+    if (!compDate || isNaN(compDate.getTime()) || compDate < today) validationErrors.push({ field: "competitionDate", message: "La fecha de competencia debe ser válida y posterior a hoy" });
+    if (!endReg || isNaN(endReg.getTime()) || endReg < today) validationErrors.push({ field: "endRegistration", message: "La fecha de fin de inscripción debe ser válida y posterior a hoy" });
+    if (compDate && endReg && endReg > compDate) validationErrors.push({ field: "endRegistration", message: "La fecha de fin de inscripción no puede ser después de la competencia" });
     setErrors(validationErrors);
     return validationErrors.length === 0;
   };
@@ -57,14 +89,15 @@ const ConfigurationPage = () => {
         areas: areas.map((area) => ({
           name: area.name,
           cost: area.cost,
-          category: isNaN(area.category) ? area.category : parseInt(area.category), // puede ser un ID o un string
+          category: area.category,
           grade_level: area.gradeLevel,
           max_students: area.maxStudents,
+          competition_date: area.competition_date,
+          end_registration: area.end_registration
         })),
       };
-
       await axios.post("http://dis.tis.cs.umss.edu.bo/api/crearCompetencia", payload);
-      toast.success("Áreas enviadas al backend correctamente");
+      toast.success("Competencia creada correctamente");
     } catch (error) {
       console.error("Error al enviar las áreas:", error.response?.data || error.message);
       toast.error("Error al enviar las áreas");
@@ -73,23 +106,23 @@ const ConfigurationPage = () => {
 
   const addOrUpdateArea = () => {
     if (!validateArea()) return;
-
     const newAreaData = {
       id: editingArea ? editingArea.id : Date.now().toString(),
-      ...newArea,
+      name: newArea.name === "Otro" ? newArea.customArea : newArea.name,
+      cost: Number(newArea.cost),
       category: newArea.category === "Otro" ? newArea.customCategory : newArea.category,
       gradeLevel: newArea.gradeLevel === "Otro" ? newArea.customGrade : newArea.gradeLevel,
-      cost: Number(newArea.cost),
       maxStudents: newArea.maxStudents ? Number(newArea.maxStudents) : undefined,
+      description: newArea.description,
+      competition_date: newArea.competitionDate,
+      end_registration: newArea.endRegistration
     };
-
     if (editingArea) {
       setAreas((prev) => prev.map((area) => (area.id === editingArea.id ? newAreaData : area)));
       setEditingArea(null);
     } else {
       setAreas([...areas, newAreaData]);
     }
-
     setNewArea(initialArea);
     setErrors([]);
     toast.success(editingArea ? "Área editada correctamente" : "Área agregada correctamente");
@@ -97,6 +130,28 @@ const ConfigurationPage = () => {
 
   const handleInputChange = (field, value) => {
     setNewArea((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleDeleteArea = async () => {
+    if (!deleteAreaId) return;
+    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/areas/${deleteAreaId}`);
+    setAreasDB(areasDB.filter(a => a.id !== deleteAreaId));
+    setDeleteAreaId("");
+    toast.success("Área eliminada");
+  };
+  const handleDeleteCategory = async () => {
+    if (!deleteCategoryId) return;
+    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/categorias/${deleteCategoryId}`);
+    setCategoriesDB(categoriesDB.filter(c => c.id !== deleteCategoryId));
+    setDeleteCategoryId("");
+    toast.success("Categoría eliminada");
+  };
+  const handleDeleteGrade = async () => {
+    if (!deleteGradeId) return;
+    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/grados/${deleteGradeId}`);
+    setGradesDB(gradesDB.filter(g => g.id !== deleteGradeId));
+    setDeleteGradeId("");
+    toast.success("Grado eliminado");
   };
 
   return (
@@ -163,17 +218,31 @@ const ConfigurationPage = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
+            {/* Selección de área existente o nueva */}
             <div>
               <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
-                Nombre del Área
+                Área
               </label>
-              <input
-                type="text"
-                placeholder="Nombre del Área"
+              <select
                 value={newArea.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                className={`${getErrorClass("name", errors)} w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355] text-sm sm:text-base`}
-              />
+                onChange={e => handleInputChange("name", e.target.value)}
+                className={getErrorClass("name", errors)}
+              >
+                <option value="">Seleccione un área</option>
+                {areasDB.map(area => (
+                  <option key={area.id} value={area.nombre}>{area.nombre}</option>
+                ))}
+                <option value="Otro">OTRO</option>
+              </select>
+              {newArea.name === "Otro" && (
+                <input
+                  type="text"
+                  placeholder="Nueva área"
+                  value={newArea.customArea || ""}
+                  onChange={e => handleInputChange("customArea", e.target.value)}
+                  className="mt-2 w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
+                />
+              )}
             </div>
 
             <div>
@@ -202,39 +271,32 @@ const ConfigurationPage = () => {
               />
             </div>
 
+            {/* Selección de categoría existente o nueva */}
             <div>
               <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
                 Categoría
               </label>
               <select
                 value={newArea.category}
-                onChange={(e) => handleInputChange("category", e.target.value)}
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] text-sm sm:text-base"
+                onChange={e => handleInputChange("category", e.target.value)}
+                className={getErrorClass("category", errors)}
               >
                 <option value="">Seleccione una categoría</option>
-                <option value="Otro" style={{ fontWeight: 'bold' }}>OTRO</option>
-                {categories.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.nombre}
-                  </option>
+                {categoriesDB.map(cat => (
+                  <option key={cat.id} value={cat.nombre}>{cat.nombre}</option>
                 ))}
+                <option value="Otro">OTRO</option>
               </select>
-            </div>
-
-            {newArea.category === "Otro" && (
-              <div>
-                <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
-                  Categoría Personalizada
-                </label>
+              {newArea.category === "Otro" && (
                 <input
                   type="text"
-                  placeholder="Escribe tu categoría"
-                  value={newArea.customCategory}
-                  onChange={(e) => handleInputChange("customCategory", e.target.value)}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355] text-sm sm:text-base"
+                  placeholder="Nueva categoría"
+                  value={newArea.customCategory || ""}
+                  onChange={e => handleInputChange("customCategory", e.target.value)}
+                  className="mt-2 w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
                 />
-              </div>
-            )}
+              )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
@@ -242,33 +304,44 @@ const ConfigurationPage = () => {
               </label>
               <select
                 value={newArea.gradeLevel}
-                onChange={(e) => handleInputChange("gradeLevel", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-[#E8DDD4] rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A]"
+                onChange={e => handleInputChange("gradeLevel", e.target.value)}
+                className={getErrorClass("gradeLevel", errors)}
               >
-                <option value="">Seleccione grado</option>
-                <option value="Otro" style={{ fontWeight: 'bold' }}>OTRO</option>
-                {["1P", "2P", "3P", "4P", "5P", "6P", "1S", "2S", "3S", "4S", "5S", "6S", "1U", "2U", "3U", "4U", "5U", "6U"].map((grade) => (
-                  <option key={grade} value={grade}>
-                    {grade}
-                  </option>
+                <option value="">Seleccione un grado</option>
+                {gradesDB.map(gr => (
+                  <option key={gr.id} value={gr.grado}>{gr.grado}</option>
                 ))}
+                <option value="Otro">OTRO</option>
               </select>
-            </div>
-
-            {newArea.gradeLevel === "Otro" && (
-              <div>
-                <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
-                  Grado Personalizado
-                </label>
+              {newArea.gradeLevel === "Otro" && (
                 <input
                   type="text"
-                  placeholder="Escribe tu grado"
-                  value={newArea.customGrade}
-                  onChange={(e) => handleInputChange("customGrade", e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-[#E8DDD4] rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355]"
+                  placeholder="Nuevo grado"
+                  value={newArea.customGrade || ""}
+                  onChange={e => handleInputChange("customGrade", e.target.value)}
+                  className="mt-2 w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
                 />
-              </div>
-            )}
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#5A4A3A] mb-2">Fecha de Competencia</label>
+              <input
+                type="date"
+                value={newArea.competitionDate}
+                onChange={e => handleInputChange("competitionDate", e.target.value)}
+                className={getErrorClass("competitionDate", errors)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#5A4A3A] mb-2">Fin de Inscripción</label>
+              <input
+                type="date"
+                value={newArea.endRegistration}
+                onChange={e => handleInputChange("endRegistration", e.target.value)}
+                className={getErrorClass("endRegistration", errors)}
+              />
+            </div>
           </div>
 
           {/* Botón de Agregar / Editar */}
@@ -353,6 +426,37 @@ const ConfigurationPage = () => {
           >
             Enviar Áreas al Backend
           </button>
+        </div>
+
+        {/* --- Gestión de eliminación --- */}
+        <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg border border-[#E8DDD4] p-4 sm:p-8 mt-8">
+          <h2 className="text-lg font-semibold mb-4 text-[#5A4A3A]">Eliminar registros existentes</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label>Área</label>
+              <select onChange={e => setDeleteAreaId(e.target.value)} value={deleteAreaId || ""}>
+                <option value="">Seleccione área</option>
+                {areasDB.map(area => <option key={area.id} value={area.id}>{area.nombre}</option>)}
+              </select>
+              <button onClick={handleDeleteArea} className="ml-2 text-red-600">Eliminar</button>
+            </div>
+            <div>
+              <label>Categoría</label>
+              <select onChange={e => setDeleteCategoryId(e.target.value)} value={deleteCategoryId || ""}>
+                <option value="">Seleccione categoría</option>
+                {categoriesDB.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+              </select>
+              <button onClick={handleDeleteCategory} className="ml-2 text-red-600">Eliminar</button>
+            </div>
+            <div>
+              <label>Grado</label>
+              <select onChange={e => setDeleteGradeId(e.target.value)} value={deleteGradeId || ""}>
+                <option value="">Seleccione grado</option>
+                {gradesDB.map(gr => <option key={gr.id} value={gr.id}>{gr.grado}</option>)}
+              </select>
+              <button onClick={handleDeleteGrade} className="ml-2 text-red-600">Eliminar</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -561,7 +665,7 @@ const ConfigurationPage = () => {
       setGradeInputs({ ...gradeInputs, [areaId]: "" });
       showSuccessMessage();
 
-      // Registro en backend (ajustar categoria_id si lo manejas dinámico)
+      // Registro en backend (ajustar categoria_id si lo manejos dinámico)
       await axios.post('/area-categorias', {
         area_id: areaId,
         categoria_id: 1,
