@@ -125,7 +125,7 @@ const ConfigurationPage = () => {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-[#5A4A3A] to-[#8B7355] bg-clip-text text-transparent">
-                  Crear Competencia
+                  Creación de Competencia
                 </h1>
                 <p className="text-sm sm:text-base text-[#8B7355] mt-1">
                   Gestiona las áreas de competencia y configuración
@@ -153,7 +153,7 @@ const ConfigurationPage = () => {
               </div>
               <div>
                 <h2 className="text-lg sm:text-xl font-semibold text-[#5A4A3A]">
-                  Información del Área
+                  Información de la competencia
                 </h2>
                 <p className="text-sm text-[#8B7355]">
                   Actualiza los datos del área de competencia
@@ -165,7 +165,7 @@ const ConfigurationPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-[#5A4A3A] mb-2">
-                Nombre del Área
+                Nombre de la Competencia
               </label>
               <input
                 type="text"
@@ -269,6 +269,7 @@ const ConfigurationPage = () => {
                 />
               </div>
             )}
+            
           </div>
 
           {/* Botón de Agregar / Editar */}
