@@ -115,6 +115,10 @@ class UserController extends Controller
         $user->celular = $request->celular ?? $user->celular;
         $user->role = $request->role ?? $user->role;
         $user->save();
+
+        // Refresca el modelo para ocultar los campos hidden
+        $user = User::find($user->id);
+
         return response()->json(['success' => true, 'data' => $user]);
     }
 
@@ -129,5 +133,28 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Actualiza el perfil del usuario autenticado
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6',
+            'celular' => 'nullable|string|max:20',
+        ]);
+        $user->name = $request->name ?? $user->name;
+        $user->email = $request->email ?? $user->email;
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->password);
+        }
+        $user->celular = $request->celular ?? $user->celular;
+        $user->save();
+        $user = $user->fresh();
+        return response()->json(['success' => true, 'data' => $user]);
     }
 }

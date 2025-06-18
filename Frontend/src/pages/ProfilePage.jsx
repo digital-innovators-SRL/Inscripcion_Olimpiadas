@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import { useAuth } from '../contexts/AuthContext'
+import axios from 'axios'
 import {
   SaveIcon,
   KeyIcon,
@@ -8,7 +9,6 @@ import {
   User,
   Mail,
   Phone,
-  MapPin,
   Calendar,
   Shield,
   Eye,
@@ -21,7 +21,7 @@ import {
 
 
 const ProfilePage = () => {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -29,13 +29,12 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
  
   const [profile, setProfile] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: '',
-    address: '',
-    bio: ''
+    name: '',
+    email: '',
+    phone: ''
   })
 
 
@@ -46,6 +45,29 @@ const ProfilePage = () => {
   })
 
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoadingProfile(true)
+      try {
+        const res = await axios.get('http://localhost:8000/api/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const data = res.data
+        setProfile({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.celular || ''
+        })
+      } catch (e) {
+        // Manejo de error
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+    if (token) fetchProfile()
+  }, [token])
+
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen)
   }
@@ -54,21 +76,54 @@ const ProfilePage = () => {
   const handleSave = async (e) => {
     e.preventDefault()
     setIsSaving(true)
-   
-    // Simular guardado
-    setTimeout(() => {
-      setIsSaving(false)
+    try {
+      const res = await axios.put(
+        'http://localhost:8000/api/profile',
+        {
+          name: profile.name,
+          email: profile.email,
+          celular: profile.phone,
+          ...(profile.password ? { password: profile.password } : {})
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
       setIsEditing(false)
-      // Aquí iría la lógica para guardar el perfil
-    }, 1500)
+      // Actualiza el usuario en el contexto si es necesario
+      // setUser(res.data.data)
+      // Notificación de éxito
+      alert('Perfil actualizado correctamente')
+    } catch (err) {
+      alert('Error al actualizar el perfil')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
 
   const handlePasswordChange = async (e) => {
     e.preventDefault()
-    // Aquí iría la lógica para cambiar contraseña
-    setShowPasswordModal(false)
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('Las contraseñas no coinciden')
+      return
+    }
+    try {
+      await axios.put(
+        'http://localhost:8000/api/profile',
+        {
+          password: passwordData.newPassword
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      alert('Contraseña actualizada correctamente')
+      setShowPasswordModal(false)
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (error) {
+      alert('Error al actualizar la contraseña')
+    }
   }
 
 
@@ -225,49 +280,6 @@ const ProfilePage = () => {
                     />
                   </div>
                 </div>
-
-                {/* Dirección */}
-                <div className="space-y-2 sm:space-y-3">
-                  <label className="block text-xs sm:text-sm font-semibold" style={{color: '#5A4A3A'}}>
-                    Dirección
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5" style={{color: '#8B7355'}} />
-                    <input
-                      type="text"
-                      value={profile.address}
-                      onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                      disabled={!isEditing}
-                      className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-300 text-sm sm:text-base disabled:opacity-60"
-                      style={{
-                        backgroundColor: isEditing ? '#FAF7F2' : '#F8F8F8',
-                        borderColor: '#E8DDD4',
-                        color: '#5A4A3A'
-                      }}
-                      placeholder="Cochabamba, Bolivia"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Biografía */}
-              <div className="mt-6 space-y-2 sm:space-y-3">
-                <label className="block text-xs sm:text-sm font-semibold" style={{color: '#5A4A3A'}}>
-                  Biografía (Opcional)
-                </label>
-                <textarea
-                  value={profile.bio}
-                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                  disabled={!isEditing}
-                  rows="4"
-                  className="w-full p-3 sm:p-4 border rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-300 text-sm sm:text-base disabled:opacity-60 resize-none"
-                  style={{
-                    backgroundColor: isEditing ? '#FAF7F2' : '#F8F8F8',
-                    borderColor: '#E8DDD4',
-                    color: '#5A4A3A'
-                  }}
-                  placeholder="Cuéntanos un poco sobre ti..."
-                />
               </div>
 
               {/* Action Buttons */}
@@ -344,52 +356,12 @@ const ProfilePage = () => {
               <div className="flex items-center justify-between p-3 rounded-lg" style={{backgroundColor: '#FAF7F2'}}>
                 <div>
                   <p className="text-xs font-medium" style={{color: '#8B7355'}}>Fecha de Registro</p>
-                  <p className="font-semibold text-sm" style={{color: '#5A4A3A'}}>15/11/2023</p>
+                  <p className="font-semibold text-sm" style={{color: '#5A4A3A'}}>
+                    {user?.created_at ? new Date(user.created_at).toLocaleDateString() : ''}
+                  </p>
                 </div>
                 <Calendar className="w-5 h-5" style={{color: '#C8B7A6'}} />
               </div>
-             
-              <div className="flex items-center justify-between p-3 rounded-lg" style={{backgroundColor: '#FAF7F2'}}>
-                <div>
-                  <p className="text-xs font-medium" style={{color: '#8B7355'}}>Estado</p>
-                  <div className="flex items-center space-x-2">
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                      Activo
-                    </span>
-                  </div>
-                </div>
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg border" style={{borderColor: '#E8DDD4'}}>
-            <div className="p-6 border-b" style={{
-              background: 'linear-gradient(135deg, #E8DDD4, #D4C4B4)',
-              borderColor: 'rgba(91, 74, 58, 0.3)'
-            }}>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                     style={{background: 'linear-gradient(135deg, #C8B7A6, #B8A494)'}}>
-                  <Bell className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="text-lg font-bold" style={{color: '#5A4A3A'}}>
-                  Acciones Rápidas
-                </h3>
-              </div>
-            </div>
-            <div className="p-6 space-y-3">
-              <button className="w-full p-3 text-left rounded-lg hover:shadow-md transition-all duration-300 border"
-                      style={{backgroundColor: '#FAF7F2', borderColor: '#E8DDD4'}}>
-                <div className="flex items-center space-x-3">
-                  <Bell className="w-4 h-4" style={{color: '#C8B7A6'}} />
-                  <div>
-                    <p className="font-medium text-sm" style={{color: '#5A4A3A'}}>Notificaciones</p>
-                    <p className="text-xs" style={{color: '#8B7355'}}>Gestionar preferencias</p>
-                  </div>
-                </div>
-              </button>
             </div>
           </div>
         </div>

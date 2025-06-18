@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.get('http://dis.tis.cs.umss.edu.bo/api/me', {
+      axios.get('http://localhost:8000/api/me', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => setUser(res.data))
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const res = await axios.post('http://dis.tis.cs.umss.edu.bo/api/login', {
+      const res = await axios.post('http://localhost:8000/api/login', {
         email,
         password
       })
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('http://dis.tis.cs.umss.edu.bo/api/logout', null, {
+      await axios.post('http://localhost:8000/api/logout', null, {
         headers: { Authorization: `Bearer ${token}` }
       })
     } catch (err) {

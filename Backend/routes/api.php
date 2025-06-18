@@ -94,12 +94,25 @@ Route::post('/register', [AuthController::class, 'register']);
         Route::get('/areas', [AreaController::class, 'index']);
         Route::get('/categorias', [AreaController::class, 'categorias']);
         Route::get('/grados', [AreaController::class, 'grados']);
-        Route::delete('/areas/{id}', [AreaController::class, 'destroy']);
-        Route::delete('/categorias/{id}', [CategoriaController::class, 'destroy']);
-        Route::delete('/grados/{id}', [AreaCategoriaController::class, 'destroy']);
+        Route::delete('/areasDelete/{id}', [AreaController::class, 'destroy']);
+
+        Route::delete('/gradosDelete/{id}', [AreaCategoriaController::class, 'destroy']);
         Route::get('/exportar-inscritos/{competencia_id}', [InscripcionController::class, 'exportarInscritosExcel']);
 
 Route::get('/users', [UserController::class, 'index']);
 Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
+Route::delete('categoriasDelete/{id}', [CategoriaController::class, 'destroy']);
+
+// Rutas para editar y borrar competencias (RESTful)
+Route::put('/competenciasUpdate/{id}', [CompetenciaController::class, 'update']);
+Route::delete('/competenciasDestroy/{id}', [CompetenciaController::class, 'destroy']);
+
+// Obtener perfil del usuario autenticado
+Route::middleware(['jwt.exceptions', 'auth:api'])->get('/profile', function (Request $request) {
+    return response()->json($request->user());
+});
+
+// Actualizar perfil del usuario autenticado
+Route::middleware(['jwt.exceptions', 'auth:api'])->put('/profile', [UserController::class, 'updateProfile']);

@@ -64,4 +64,32 @@ class CompetenciaController extends Controller
 });
         return response()->json(['message' => 'Competencias creadas con éxito'], 201);
     }
+
+    // === EDITAR COMPETENCIA ===
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nombre' => 'required|string',
+            'fecha_competencia' => 'required|date',
+            'fecha_fin_inscripcion' => 'required|date',
+            'max_competidores' => 'required|integer|min:1',
+            'monto' => 'required|numeric|min:1',
+        ]);
+        $competencia = Competencia::findOrFail($id);
+        $competencia->nombre = $request->nombre;
+        $competencia->fecha_competencia = $request->fecha_competencia;
+        $competencia->fecha_fin_inscripcion = $request->fecha_fin_inscripcion;
+        $competencia->max_competidores = $request->max_competidores;
+        $competencia->monto = $request->monto;
+        $competencia->save();
+        return response()->json(['message' => 'Competencia actualizada con éxito', 'data' => $competencia]);
+    }
+
+    // === ELIMINAR COMPETENCIA ===
+    public function destroy($id)
+    {
+        $competencia = Competencia::findOrFail($id);
+        $competencia->delete();
+        return response()->json(['message' => 'Competencia eliminada con éxito']);
+    }
 }

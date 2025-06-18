@@ -202,7 +202,12 @@ class InscripcionController extends Controller
                 'estudiante' => $estudiante,
                 'competencia' => $competencia,
             ]);
+            $pdf2 = Pdf::loadView('pdf.comprobante_pago', [
+                'inscripcion' => $inscripcion,
+                'estudiante' => $estudiante,
+            ]);
 
+            $pdf2->download("com{$inscripcion->id}.pdf");
             return $pdf->download("orden_pago_{$inscripcion->id}.pdf");
     }
 

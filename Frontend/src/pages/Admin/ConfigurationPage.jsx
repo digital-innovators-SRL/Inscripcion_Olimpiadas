@@ -41,9 +41,21 @@ const ConfigurationPage = () => {
   const [deleteAreaId, setDeleteAreaId] = useState("");
   const [deleteCategoryId, setDeleteCategoryId] = useState("");
   const [deleteGradeId, setDeleteGradeId] = useState("");
+  // Estado para competencias
+  const [competencias, setCompetencias] = useState([]);
+  // Estado para modal de edición de competencia
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editCompetencia, setEditCompetencia] = useState(null);
+  // Estado para loading y confirmación de borrado
+  const [loadingCompetencias, setLoadingCompetencias] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [competenciaToDelete, setCompetenciaToDelete] = useState(null);
+  // Estado para modal de advertencia de borrado de área, categoría o grado
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [warningType, setWarningType] = useState("");
 
   useEffect(() => {
-    fetch("http://dis.tis.cs.umss.edu.bo/api/getCategorias") // Reemplaza con tu endpoint real
+    fetch("http://localhost:8000/api/getCategorias") // Reemplaza con tu endpoint real
       .then((response) => response.json())
       .then((data) => setCategoriesDB(data))
       .catch((error) => console.error("Error al obtener categorías:", error));
@@ -51,15 +63,21 @@ const ConfigurationPage = () => {
 
   useEffect(() => {
     // Cargar áreas, categorías y grados desde el backend
-    axios.get("http://dis.tis.cs.umss.edu.bo/api/areas")
+    axios.get("http://localhost:8000/api/areas")
       .then(res => setAreasDB(res.data))
       .catch(() => setAreasDB([]));
-    axios.get("http://dis.tis.cs.umss.edu.bo/api/categorias")
+    axios.get("http://localhost:8000/api/categorias")
       .then(res => setCategoriesDB(res.data))
       .catch(() => setCategoriesDB([]));
-    axios.get("http://dis.tis.cs.umss.edu.bo/api/grados")
+    axios.get("http://localhost:8000/api/grados")
       .then(res => setGradesDB(res.data))
       .catch(() => setGradesDB([]));
+    // Obtener competencias al cargar
+    setLoadingCompetencias(true);
+    axios.get('http://localhost:8000/api/competencias')
+      .then(res => setCompetencias(res.data))
+      .catch(() => setCompetencias([]))
+      .finally(() => setLoadingCompetencias(false));
   }, []);
 
   const validateArea = () => {
@@ -96,7 +114,7 @@ const ConfigurationPage = () => {
           end_registration: area.end_registration
         })),
       };
-      await axios.post("http://dis.tis.cs.umss.edu.bo/api/crearCompetencia", payload);
+      await axios.post("http://localhost:8000/api/crearCompetencia", payload);
       toast.success("Competencia creada correctamente");
     } catch (error) {
       console.error("Error al enviar las áreas:", error.response?.data || error.message);
@@ -129,29 +147,140 @@ const ConfigurationPage = () => {
   };
 
   const handleInputChange = (field, value) => {
+    // Si el campo es cost o maxStudents, solo permite números positivos estrictamente
+    if (field === "cost" || field === "maxStudents") {
+      let val = value;
+      // Si contiene cualquier guion, o no es un número positivo, poner 1
+      if (/[^0-9]/.test(val) || val === "" || isNaN(Number(val)) || Number(val) <= 0) {
+        val = "1";
+      }
+      setNewArea((prev) => ({ ...prev, [field]: val }));
+      return;
+    }
+    // Permitir números en los campos customArea, customCategory, customGrade
+    if (["customArea", "customCategory", "customGrade"].includes(field)) {
+      setNewArea((prev) => ({ ...prev, [field]: value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "") }));
+      return;
+    }
     setNewArea((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleDeleteArea = async () => {
     if (!deleteAreaId) return;
-    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/areas/${deleteAreaId}`);
+    await axios.delete(`http://localhost:8000/api/areasDelete/${deleteAreaId}`);
     setAreasDB(areasDB.filter(a => a.id !== deleteAreaId));
     setDeleteAreaId("");
     toast.success("Área eliminada");
   };
   const handleDeleteCategory = async () => {
     if (!deleteCategoryId) return;
-    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/categorias/${deleteCategoryId}`);
+    await axios.delete(`http://localhost:8000/api/categoriasDelete/${deleteCategoryId}`);
     setCategoriesDB(categoriesDB.filter(c => c.id !== deleteCategoryId));
     setDeleteCategoryId("");
     toast.success("Categoría eliminada");
   };
   const handleDeleteGrade = async () => {
     if (!deleteGradeId) return;
-    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/grados/${deleteGradeId}`);
+    await axios.delete(`http://localhost:8000/api/gradosDelete/${deleteGradeId}`);
     setGradesDB(gradesDB.filter(g => g.id !== deleteGradeId));
     setDeleteGradeId("");
     toast.success("Grado eliminado");
+  };
+  // Función para eliminar competencia
+  const handleDeleteCompetencia = async () => {
+    if (!competenciaToDelete) return;
+    try {
+      await axios.delete(`http://localhost:8000/api/competencias/${competenciaToDelete.id}`);
+      setCompetencias(prev => prev.filter(c => c.id !== competenciaToDelete.id));
+      toast.success('Competencia eliminada');
+    } catch {
+      toast.error('Error al eliminar competencia');
+    }
+    setShowDeleteModal(false);
+    setCompetenciaToDelete(null);
+  };
+
+  // Función para abrir el modal y cargar datos
+  const handleEditCompetencia = (competencia) => {
+    setEditCompetencia({ ...competencia });
+    setShowEditModal(true);
+  };
+
+  // Función para manejar cambios en el modal
+  const handleEditCompetenciaChange = (field, value) => {
+    // Solo permitir números positivos en max_competidores y monto
+    if (field === 'max_competidores' || field === 'monto') {
+      value = value.replace(/[^0-9]/g, '');
+      if (value === '' || Number(value) <= 0) value = '1';
+    }
+    setEditCompetencia(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Función para guardar cambios
+  const handleSaveEditCompetencia = async () => {
+    try {
+      await axios.put(`http://localhost:8000/api/competencias/${editCompetencia.id}`,
+        {
+          nombre: editCompetencia.nombre,
+          fecha_competencia: editCompetencia.fecha_competencia,
+          fecha_fin_inscripcion: editCompetencia.fecha_fin_inscripcion,
+          max_competidores: Number(editCompetencia.max_competidores),
+          monto: Number(editCompetencia.monto)
+        }
+      );
+      setCompetencias(prev => prev.map(c => c.id === editCompetencia.id ? { ...c, ...editCompetencia } : c));
+      setShowEditModal(false);
+      toast.success('Competencia actualizada');
+    } catch {
+      toast.error('Error al actualizar competencia');
+    }
+  };
+
+  // Asegura que confirmDeleteCompetencia esté definida antes de usarse
+  const confirmDeleteCompetencia = (competencia) => {
+    setCompetenciaToDelete(competencia);
+    setShowDeleteModal(true);
+  };
+
+  // Funciones para mostrar el modal antes de borrar área, categoría o grado
+  const handleDeleteAreaWarning = () => {
+    if (!deleteAreaId) return;
+    setWarningType("área");
+    setShowWarningModal(true);
+  };
+  const handleDeleteCategoryWarning = () => {
+    if (!deleteCategoryId) return;
+    setWarningType("categoría");
+    setShowWarningModal(true);
+  };
+  const handleDeleteGradeWarning = () => {
+    if (!deleteGradeId) return;
+    setWarningType("grado");
+    setShowWarningModal(true);
+  };
+
+  // Función para confirmar borrado
+  const handleConfirmDelete = () => {
+    setShowWarningModal(false);
+    if (warningType === "área") handleDeleteArea();
+    if (warningType === "categoría") handleDeleteCategory();
+    if (warningType === "grado") handleDeleteGrade();
+  };
+
+  // Función utilitaria para obtener datos anidados de forma robusta
+  const getCompetenciaField = (c, field) => {
+    // Soporta areaCategoria, area_categoria, y variantes
+    const ac = c.areaCategoria || c.area_categoria || {};
+    if (field === 'area') {
+      return ac.area?.nombre || ac.area_nombre || ac.area || '-';
+    }
+    if (field === 'categoria') {
+      return ac.categoria?.nombre || ac.categoria_nombre || ac.categoria || '-';
+    }
+    if (field === 'grado') {
+      return ac.grado || ac.grado_nombre || '-';
+    }
+    return '-';
   };
 
   return (
@@ -225,7 +354,11 @@ const ConfigurationPage = () => {
               </label>
               <select
                 value={newArea.name}
-                onChange={e => handleInputChange("name", e.target.value)}
+                onChange={e => {
+                  // Solo letras y espacios
+                  const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                  handleInputChange("name", value);
+                }}
                 className={getErrorClass("name", errors)}
               >
                 <option value="">Seleccione un área</option>
@@ -237,9 +370,9 @@ const ConfigurationPage = () => {
               {newArea.name === "Otro" && (
                 <input
                   type="text"
-                  placeholder="Nueva área"
+                  placeholder="Nueva área (solo letras y espacios)"
                   value={newArea.customArea || ""}
-                  onChange={e => handleInputChange("customArea", e.target.value)}
+                  onChange={e => handleInputChange("customArea", e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""))}
                   className="mt-2 w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
                 />
               )}
@@ -251,7 +384,9 @@ const ConfigurationPage = () => {
               </label>
               <input
                 type="number"
-                placeholder="Costo"
+                placeholder="Costo (1-200)"
+                min="1"
+                max="200"
                 value={newArea.cost}
                 onChange={(e) => handleInputChange("cost", e.target.value)}
                 className={`${getErrorClass("cost", errors)} w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355] text-sm sm:text-base`}
@@ -264,7 +399,9 @@ const ConfigurationPage = () => {
               </label>
               <input
                 type="number"
-                placeholder="Máx. Estudiantes (opcional)"
+                placeholder="Máx. Estudiantes (1-200)"
+                min="1"
+                max="200"
                 value={newArea.maxStudents}
                 onChange={(e) => handleInputChange("maxStudents", e.target.value)}
                 className={`${getErrorClass("maxStudents", errors)} w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-[#E8DDD4] rounded-lg sm:rounded-xl bg-[#FAF7F2] focus:border-[#C8B7A6] hover:border-[#B8A494] transition-all duration-300 text-[#5A4A3A] placeholder-[#8B7355] text-sm sm:text-base`}
@@ -278,7 +415,7 @@ const ConfigurationPage = () => {
               </label>
               <select
                 value={newArea.category}
-                onChange={e => handleInputChange("category", e.target.value)}
+                onChange={e => handleInputChange("category", e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""))}
                 className={getErrorClass("category", errors)}
               >
                 <option value="">Seleccione una categoría</option>
@@ -290,9 +427,9 @@ const ConfigurationPage = () => {
               {newArea.category === "Otro" && (
                 <input
                   type="text"
-                  placeholder="Nueva categoría"
+                  placeholder="Nueva categoría (solo letras y espacios)"
                   value={newArea.customCategory || ""}
-                  onChange={e => handleInputChange("customCategory", e.target.value)}
+                  onChange={e => handleInputChange("customCategory", e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""))}
                   className="mt-2 w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
                 />
               )}
@@ -304,7 +441,7 @@ const ConfigurationPage = () => {
               </label>
               <select
                 value={newArea.gradeLevel}
-                onChange={e => handleInputChange("gradeLevel", e.target.value)}
+                onChange={e => handleInputChange("gradeLevel", e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""))}
                 className={getErrorClass("gradeLevel", errors)}
               >
                 <option value="">Seleccione un grado</option>
@@ -316,9 +453,9 @@ const ConfigurationPage = () => {
               {newArea.gradeLevel === "Otro" && (
                 <input
                   type="text"
-                  placeholder="Nuevo grado"
+                  placeholder="Nuevo grado (solo letras y espacios)"
                   value={newArea.customGrade || ""}
-                  onChange={e => handleInputChange("customGrade", e.target.value)}
+                  onChange={e => handleInputChange("customGrade", e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""))}
                   className="mt-2 w-full px-3 py-2 border border-[#D9D9D9] rounded-md"
                 />
               )}
@@ -438,7 +575,7 @@ const ConfigurationPage = () => {
                 <option value="">Seleccione área</option>
                 {areasDB.map(area => <option key={area.id} value={area.id}>{area.nombre}</option>)}
               </select>
-              <button onClick={handleDeleteArea} className="ml-2 text-red-600">Eliminar</button>
+              <button onClick={handleDeleteAreaWarning} className="ml-2 text-red-600">Eliminar</button>
             </div>
             <div>
               <label>Categoría</label>
@@ -446,7 +583,7 @@ const ConfigurationPage = () => {
                 <option value="">Seleccione categoría</option>
                 {categoriesDB.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
               </select>
-              <button onClick={handleDeleteCategory} className="ml-2 text-red-600">Eliminar</button>
+              <button onClick={handleDeleteCategoryWarning} className="ml-2 text-red-600">Eliminar</button>
             </div>
             <div>
               <label>Grado</label>
@@ -454,10 +591,174 @@ const ConfigurationPage = () => {
                 <option value="">Seleccione grado</option>
                 {gradesDB.map(gr => <option key={gr.id} value={gr.id}>{gr.grado}</option>)}
               </select>
-              <button onClick={handleDeleteGrade} className="ml-2 text-red-600">Eliminar</button>
+              <button onClick={handleDeleteGradeWarning} className="ml-2 text-red-600">Eliminar</button>
             </div>
           </div>
         </div>
+
+        {/* Mostrar todas las competencias debajo de eliminar */}
+        {/* Mostrar loading mientras se cargan competencias */}
+        {loadingCompetencias ? (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#8B7355]"></div>
+            <span className="ml-4 text-[#8B7355] font-semibold">Cargando competencias...</span>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <h2 className="text-lg font-bold mb-2">Competencias existentes</h2>
+            <ul className="divide-y divide-gray-200">
+              {competencias.map((c) => (
+                <li key={c.id} className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white rounded-lg shadow mb-3 px-4 border border-[#E8DDD4] hover:shadow-md transition-all">
+                  <div className="mb-2 sm:mb-0 w-full">
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="font-semibold text-[#5A4A3A]">{c.nombre}</span>
+                      <span className="text-xs bg-[#F2EEE3] px-2 py-1 rounded">ID: {c.id}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-1 text-sm text-[#8B7355]">
+                      <span>Área: {getCompetenciaField(c, 'area')}</span>
+                      <span>Categoría: {getCompetenciaField(c, 'categoria')}</span>
+                      <span>Grado: {getCompetenciaField(c, 'grado')}</span>
+                      <span>Fecha: {c.fecha_competencia}</span>
+                      <span>Fin inscripción: {c.fecha_fin_inscripcion}</span>
+                      <span>Máx. Estudiantes: {c.max_competidores}</span>
+                      <span>Costo: {c.monto}</span>
+                      <span>Tutor ID: {c.tutor_id}</span>
+                      <span>Creado: {c.created_at}</span>
+                      <span>Actualizado: {c.updated_at}</span>
+                    </div>
+                    {c.inscripciones && c.inscripciones.length > 0 && (
+                      <div className="mt-2 text-xs text-[#5A4A3A]">
+                        <span className="font-semibold">Inscripciones:</span>
+                        <ul className="list-disc ml-6">
+                          {c.inscripciones.map(insc => (
+                            <li key={insc.id}>Estudiante ID: {insc.estudiante_id} | Tutor ID: {insc.tutor_id}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex space-x-2 mt-2 sm:mt-0">
+                    <button onClick={() => handleEditCompetencia(c)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded shadow transition-all">Editar</button>
+                    <button onClick={() => confirmDeleteCompetencia(c)} className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded shadow transition-all">Eliminar</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Modal de edición de competencia con todos los campos relacionados */}
+        {showEditModal && editCompetencia && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg relative">
+              <button onClick={() => setShowEditModal(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
+              <h2 className="text-xl font-bold mb-4 text-[#5A4A3A]">Editar Competencia</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-[#5A4A3A] mb-1">Nombre</label>
+                  <input type="text" value={editCompetencia.nombre} onChange={e => setEditCompetencia(prev => ({ ...prev, nombre: e.target.value }))} className="w-full px-3 py-2 border rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#5A4A3A] mb-1">Área</label>
+                  <select value={editCompetencia.areaCategoria?.area?.nombre || ''} onChange={e => setEditCompetencia(prev => ({ ...prev, areaCategoria: { ...prev.areaCategoria, area: { ...prev.areaCategoria?.area, nombre: e.target.value } } }))} className="w-full px-3 py-2 border rounded">
+                    <option value="">Seleccione un área</option>
+                    {areasDB.map(area => (
+                      <option key={area.id} value={area.nombre}>{area.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#5A4A3A] mb-1">Categoría</label>
+                  <select value={editCompetencia.areaCategoria?.categoria?.nombre || ''} onChange={e => setEditCompetencia(prev => ({ ...prev, areaCategoria: { ...prev.areaCategoria, categoria: { ...prev.areaCategoria?.categoria, nombre: e.target.value } } }))} className="w-full px-3 py-2 border rounded">
+                    <option value="">Seleccione una categoría</option>
+                    {categoriesDB.map(cat => (
+                      <option key={cat.id} value={cat.nombre}>{cat.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#5A4A3A] mb-1">Grado</label>
+                  <select value={editCompetencia.areaCategoria?.grado || ''} onChange={e => setEditCompetencia(prev => ({ ...prev, areaCategoria: { ...prev.areaCategoria, grado: e.target.value } }))} className="w-full px-3 py-2 border rounded">
+                    <option value="">Seleccione un grado</option>
+                    {gradesDB.map(gr => (
+                      <option key={gr.id} value={gr.grado}>{gr.grado}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#5A4A3A] mb-1">Fecha competencia</label>
+                  <input type="date" value={editCompetencia.fecha_competencia} onChange={e => setEditCompetencia(prev => ({ ...prev, fecha_competencia: e.target.value }))} className="w-full px-3 py-2 border rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#5A4A3A] mb-1">Fin inscripción</label>
+                  <input type="date" value={editCompetencia.fecha_fin_inscripcion} onChange={e => setEditCompetencia(prev => ({ ...prev, fecha_fin_inscripcion: e.target.value }))} className="w-full px-3 py-2 border rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#5A4A3A] mb-1">Máx. Estudiantes</label>
+                  <input type="number" min="1" value={editCompetencia.max_competidores} onChange={e => setEditCompetencia(prev => ({ ...prev, max_competidores: e.target.value.replace(/[^0-9]/g, '') || '1' }))} className="w-full px-3 py-2 border rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#5A4A3A] mb-1">Costo</label>
+                  <input type="number" min="1" value={editCompetencia.monto} onChange={e => setEditCompetencia(prev => ({ ...prev, monto: e.target.value.replace(/[^0-9]/g, '') || '1' }))} className="w-full px-3 py-2 border rounded" />
+                </div>
+              </div>
+              <div className="flex justify-end mt-6 space-x-2">
+                <button onClick={() => setShowEditModal(false)} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">Cancelar</button>
+                <button onClick={async () => {
+                  try {
+                    await axios.put(`http://localhost:8000/api/competenciasUpdate/${editCompetencia.id}`,
+                      {
+                        nombre: editCompetencia.nombre,
+                        fecha_competencia: editCompetencia.fecha_competencia,
+                        fecha_fin_inscripcion: editCompetencia.fecha_fin_inscripcion,
+                        max_competidores: Number(editCompetencia.max_competidores),
+                        monto: Number(editCompetencia.monto),
+                        area: editCompetencia.areaCategoria?.area?.nombre,
+                        categoria: editCompetencia.areaCategoria?.categoria?.nombre,
+                        grado: editCompetencia.areaCategoria?.grado
+                      }
+                    );
+                    setCompetencias(prev => prev.map(c => c.id === editCompetencia.id ? { ...c, ...editCompetencia } : c));
+                    setShowEditModal(false);
+                    toast.success('Competencia actualizada');
+                  } catch {
+                    toast.error('Error al actualizar competencia');
+                  }
+                }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">Guardar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de confirmación de borrado */}
+        {showDeleteModal && competenciaToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+              <button onClick={() => setShowDeleteModal(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
+              <h2 className="text-xl font-bold mb-4 text-red-700">¿Eliminar competencia?</h2>
+              <p className="mb-4 text-[#5A4A3A]">Se eliminará la competencia <span className="font-semibold">{competenciaToDelete.nombre}</span> y todos los registros asociados. ¿Deseas continuar?</p>
+              <div className="flex justify-end space-x-2">
+                <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">Cancelar</button>
+                <button onClick={handleDeleteCompetencia} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de advertencia de borrado de área, categoría o grado */}
+        {showWarningModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+              <button onClick={() => setShowWarningModal(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
+              <h2 className="text-xl font-bold mb-4 text-red-700">Advertencia</h2>
+              <p className="mb-4 text-[#5A4A3A]">Si eliminas esta {warningType}, es posible que también se eliminen competencias asociadas. ¿Deseas continuar?</p>
+              <div className="flex justify-end space-x-2">
+                <button onClick={() => setShowWarningModal(false)} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">Cancelar</button>
+                <button onClick={handleConfirmDelete} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded">Aceptar</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
