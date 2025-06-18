@@ -2,83 +2,66 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Area;
+use App\Models\AreaCategoria;
+use App\Models\Categoria;
+use App\Models\Competencia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CompetenciaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    // === Para TUTOR ===
     public function index()
     {
-        //
+        // Devuelve todas las competencias con sus inscripciones y relaciones necesarias
+        $competencias = Competencia::with(['areaCategoria.area', 'areaCategoria.categoria', 'inscripciones'])
+            ->get();
+        return response()->json($competencias);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function crearCompetencia(Request $request)
     {
-        //
-    }
+         $request->validate([
+            'areas' => 'required|array',
+            'areas.*.name' => 'required|string',
+            'areas.*.cost' => 'required|numeric',
+            'areas.*.category' => 'required|string',
+            'areas.*.grade_level' => 'required|string',
+            'areas.*.max_students' => 'nullable|integer',
+            //'areas.*.description' => 'nullable|string',
+        ]);
+        DB::transaction(function () use ($request) {
+    foreach ($request->areas as $data) {
+        // 1. Buscar o crear el área
+        $area = Area::firstOrCreate([
+            'nombre' => $data['name'],
+        ]);
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        // 2. Buscar o crear la categoría
+        $categoria = Categoria::firstOrCreate([
+            'nombre' => $data['category'],
+        ]);
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
+        // 3. Buscar o crear el registro en area_categoria
+        $areaCategoria = AreaCategoria::firstOrCreate([
+            'area_id' => $area->id,
+            'categoria_id' => $categoria->id,
+            'grado' => $data['grade_level'],
+        ]);
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
+        // 4. Crear la competencia (si estás registrando también desde acá)
+        $competencia = new Competencia();
+        $competencia->tutor_id = 1; // o como estés obteniendo el tutor
+        $competencia->area_categoria_id = $areaCategoria->id;
+        $competencia->nombre = $data['name']. ' - ' . $data['category'] . ' - ' . $data['grade_level'];
+        $competencia->fecha_competencia = $data['competition_date'] ?? now();
+        $competencia->fecha_fin_inscripcion = $data['end_registration'] ?? now()->addDays(30);
+        $competencia->max_competidores = $data['max_students'];
+        $competencia->monto = $data['cost'];
+        $competencia->save();
     }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+});
+        return response()->json(['message' => 'Competencias creadas con éxito'], 201);
     }
 }

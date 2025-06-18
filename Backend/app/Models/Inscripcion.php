@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inscripcion extends Model
 {
-    public $timestamps = false; // Si solo usas created_at manual
     protected $table = 'inscripciones';
+    public $timestamps = false; // Si solo usas created_at manual
     protected $fillable = [
         'estudiante_id',
         'competencia_id',

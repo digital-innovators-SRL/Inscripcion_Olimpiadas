@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Categoria;
 
 class CategoriaController extends Controller
 {
@@ -13,11 +14,8 @@ class CategoriaController extends Controller
      */
     public function index()
     {
-        try {
-        return response()->json(Categoria::all(), 200);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
+        $categorias = Categoria::all();
+        return response()->json($categorias);
     }
 
     /**
@@ -91,6 +89,8 @@ class CategoriaController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $cat = Categoria::findOrFail($id);
+        $cat->delete();
+        return response()->json(['mensaje' => 'Categoría eliminada con éxito.']);
     }
 }

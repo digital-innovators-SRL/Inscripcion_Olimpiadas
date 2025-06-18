@@ -23,14 +23,8 @@ class Estudiante extends Model
     public function inscripciones()
     {
         return $this->belongsTo(Inscripcion::class);
-    use HasFactory;
-    protected $table = 'estudiantes';
-    protected $fillable = [
-        'nombre',
-        'cedula',
-        'fecha_nacimiento',
-    ];
 
+    }
     public function areas()
     {
         return $this->hasMany(AreaCompetencia::class);

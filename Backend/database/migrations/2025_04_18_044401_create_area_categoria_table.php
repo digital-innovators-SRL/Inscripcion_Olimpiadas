@@ -18,7 +18,6 @@ class CreateAreaCategoriaTable extends Migration
             $table->string('grado', 100)->nullable();
             $table->timestamps();
 
-            $table->unique(['area_id', 'categoria_id']);
             $table->foreign('area_id')->references('id')->on('areas')->onDelete('cascade');
             $table->foreign('categoria_id')->references('id')->on('categorias')->onDelete('cascade');
         });

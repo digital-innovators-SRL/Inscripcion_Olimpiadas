@@ -13,6 +13,7 @@ class Competencia extends Model
         'fecha_competencia',
         'fecha_fin_inscripcion',
         'max_competidores',
+        'monto',
     ];
 
     // Relaciones
@@ -29,6 +30,6 @@ class Competencia extends Model
 
     public function inscripciones()
     {
-        return $this->belongsTo(Inscripcion::class);
+        return $this->hasMany(Inscripcion::class);
     }
 }
