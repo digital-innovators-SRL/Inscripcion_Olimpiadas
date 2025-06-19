@@ -16,14 +16,16 @@ class InscripcionImport implements ToCollection, WithHeadingRow
     protected $contacto_email;
     protected $contacto_celular;
     protected $nombre_tutor;
+    protected $batch_id;
 
-    public function __construct($competencia_id, $tutor_id, $contacto_email, $contacto_celular, $nombre_tutor)
+    public function __construct($competencia_id, $tutor_id, $contacto_email, $contacto_celular, $nombre_tutor, $batch_id)
     {
         $this->competencia_id = $competencia_id;
         $this->tutor_id = $tutor_id;
         $this->contacto_email = $contacto_email;
         $this->contacto_celular = $contacto_celular;
         $this->nombre_tutor = $nombre_tutor;
+        $this->batch_id = $batch_id;
     }
 
     public function collection(Collection $rows)
@@ -77,6 +79,7 @@ class InscripcionImport implements ToCollection, WithHeadingRow
                 'contacto_celular' => $this->contacto_celular,
                 'nombre_tutor' => $this->nombre_tutor,
                 'comprobante_pago' => '',
+                'batch_id' => $this->batch_id,
                 'habilitado' => false,
                 'created_at' => now(),
             ]);
