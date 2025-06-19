@@ -53,7 +53,7 @@ const OrdenDePago = () => {
   useEffect(() => {
     const fetchCompetencia = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/tutor/competencias`, {
+        const res = await axios.get(`http://dis.tis.cs.umss.edu.bo/api/tutor/competencias`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const encontrada = res.data.find(c => c.id === parseInt(id));
@@ -84,7 +84,7 @@ const OrdenDePago = () => {
 
     console.log({...form, competencia_id: id, token})
     try {
-      const res = await axios.post("http://localhost:8000/api/tutor/ordenPago", {
+      const res = await axios.post("http://dis.tis.cs.umss.edu.bo/api/tutor/ordenPago", {
         ...form,
         competencia_id: id,
       }, {
@@ -180,7 +180,7 @@ const OrdenDePago = () => {
               type="button"
               onClick={() => {
                 const link = document.createElement("a");
-                link.href = "http://localhost:8000/assets/planilla.xlsx"; // Asegúrate de que exista
+                link.href = "http://dis.tis.cs.umss.edu.bo/assets/planilla.xlsx"; // Asegúrate de que exista
                 link.setAttribute("download", "planilla_ejemplo.xlsx");
                 document.body.appendChild(link);
                 link.click();
@@ -245,7 +245,7 @@ const OrdenDePago = () => {
 
                               // 1. Enviar archivo Excel
                               const res = await axios.post(
-                                "http://localhost:8000/api/tutor/importar-inscripciones",
+                                "http://dis.tis.cs.umss.edu.bo/api/tutor/importar-inscripciones",
                                 formData,
                                 {
                                   headers: {
@@ -260,7 +260,7 @@ const OrdenDePago = () => {
 
                               // 3. Descargar automáticamente el ZIP
                               const zipRes = await axios.get(
-                                `http://localhost:8000/api/tutor/ordenes-masivas/${id}`,
+                                `http://dis.tis.cs.umss.edu.bo/api/tutor/ordenes-masivas/${id}`,
                                 {
                                   headers: { Authorization: `Bearer ${token}` },
                                   responseType: "blob",

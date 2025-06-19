@@ -25,7 +25,7 @@ const UserManagementPage = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:8000/api/users');
+      const res = await axios.get('http://dis.tis.cs.umss.edu.bo/api/users');
       setUsers(res.data.data || []);
     } catch (e) {
       setError('Error al cargar usuarios');
@@ -47,7 +47,7 @@ const UserManagementPage = () => {
 
   const handleDeleteUser = async (user) => {
     if (!window.confirm('¿Seguro que deseas eliminar este usuario?')) return;
-    await axios.delete(`http://localhost:8000/api/users/${user.id}`);
+    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/users/${user.id}`);
     fetchUsers();
   };
 
@@ -56,9 +56,9 @@ const UserManagementPage = () => {
     setLoading(true);
     try {
       if (selectedUser) {
-        await axios.put(`http://localhost:8000/api/users/${selectedUser.id}`, form);
+        await axios.put(`http://dis.tis.cs.umss.edu.bo/api/users/${selectedUser.id}`, form);
       } else {
-        await axios.post('http://localhost:8000/api/users', form);
+        await axios.post('http://dis.tis.cs.umss.edu.bo/api/users', form);
       }
       setShowModal(false);
       fetchUsers();

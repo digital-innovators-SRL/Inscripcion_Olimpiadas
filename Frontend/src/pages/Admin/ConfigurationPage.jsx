@@ -55,7 +55,7 @@ const ConfigurationPage = () => {
   const [warningType, setWarningType] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/getCategorias") // Reemplaza con tu endpoint real
+    fetch("http://dis.tis.cs.umss.edu.bo/api/getCategorias") // Reemplaza con tu endpoint real
       .then((response) => response.json())
       .then((data) => setCategoriesDB(data))
       .catch((error) => console.error("Error al obtener categorías:", error));
@@ -63,18 +63,18 @@ const ConfigurationPage = () => {
 
   useEffect(() => {
     // Cargar áreas, categorías y grados desde el backend
-    axios.get("http://localhost:8000/api/areas")
+    axios.get("http://dis.tis.cs.umss.edu.bo/api/areas")
       .then(res => setAreasDB(res.data))
       .catch(() => setAreasDB([]));
-    axios.get("http://localhost:8000/api/categorias")
+    axios.get("http://dis.tis.cs.umss.edu.bo/api/categorias")
       .then(res => setCategoriesDB(res.data))
       .catch(() => setCategoriesDB([]));
-    axios.get("http://localhost:8000/api/grados")
+    axios.get("http://dis.tis.cs.umss.edu.bo/api/grados")
       .then(res => setGradesDB(res.data))
       .catch(() => setGradesDB([]));
     // Obtener competencias al cargar
     setLoadingCompetencias(true);
-    axios.get('http://localhost:8000/api/competencias')
+    axios.get('http://dis.tis.cs.umss.edu.bo/api/competencias')
       .then(res => setCompetencias(res.data))
       .catch(() => setCompetencias([]))
       .finally(() => setLoadingCompetencias(false));
@@ -114,7 +114,7 @@ const ConfigurationPage = () => {
           end_registration: area.end_registration
         })),
       };
-      await axios.post("http://localhost:8000/api/crearCompetencia", payload);
+      await axios.post("http://dis.tis.cs.umss.edu.bo/api/crearCompetencia", payload);
       toast.success("Competencia creada correctamente");
     } catch (error) {
       console.error("Error al enviar las áreas:", error.response?.data || error.message);
@@ -167,21 +167,21 @@ const ConfigurationPage = () => {
 
   const handleDeleteArea = async () => {
     if (!deleteAreaId) return;
-    await axios.delete(`http://localhost:8000/api/areasDelete/${deleteAreaId}`);
+    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/areasDelete/${deleteAreaId}`);
     setAreasDB(areasDB.filter(a => a.id !== deleteAreaId));
     setDeleteAreaId("");
     toast.success("Área eliminada");
   };
   const handleDeleteCategory = async () => {
     if (!deleteCategoryId) return;
-    await axios.delete(`http://localhost:8000/api/categoriasDelete/${deleteCategoryId}`);
+    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/categoriasDelete/${deleteCategoryId}`);
     setCategoriesDB(categoriesDB.filter(c => c.id !== deleteCategoryId));
     setDeleteCategoryId("");
     toast.success("Categoría eliminada");
   };
   const handleDeleteGrade = async () => {
     if (!deleteGradeId) return;
-    await axios.delete(`http://localhost:8000/api/gradosDelete/${deleteGradeId}`);
+    await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/gradosDelete/${deleteGradeId}`);
     setGradesDB(gradesDB.filter(g => g.id !== deleteGradeId));
     setDeleteGradeId("");
     toast.success("Grado eliminado");
@@ -190,7 +190,7 @@ const ConfigurationPage = () => {
   const handleDeleteCompetencia = async () => {
     if (!competenciaToDelete) return;
     try {
-      await axios.delete(`http://localhost:8000/api/competencias/${competenciaToDelete.id}`);
+      await axios.delete(`http://dis.tis.cs.umss.edu.bo/api/competencias/${competenciaToDelete.id}`);
       setCompetencias(prev => prev.filter(c => c.id !== competenciaToDelete.id));
       toast.success('Competencia eliminada');
     } catch {
@@ -219,7 +219,7 @@ const ConfigurationPage = () => {
   // Función para guardar cambios
   const handleSaveEditCompetencia = async () => {
     try {
-      await axios.put(`http://localhost:8000/api/competencias/${editCompetencia.id}`,
+      await axios.put(`http://dis.tis.cs.umss.edu.bo/api/competencias/${editCompetencia.id}`,
         {
           nombre: editCompetencia.nombre,
           fecha_competencia: editCompetencia.fecha_competencia,
@@ -706,7 +706,7 @@ const ConfigurationPage = () => {
                 <button onClick={() => setShowEditModal(false)} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">Cancelar</button>
                 <button onClick={async () => {
                   try {
-                    await axios.put(`http://localhost:8000/api/competenciasUpdate/${editCompetencia.id}`,
+                    await axios.put(`http://dis.tis.cs.umss.edu.bo/api/competenciasUpdate/${editCompetencia.id}`,
                       {
                         nombre: editCompetencia.nombre,
                         fecha_competencia: editCompetencia.fecha_competencia,
