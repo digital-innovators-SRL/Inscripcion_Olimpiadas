@@ -253,7 +253,7 @@ const OrdenDePago = () => {
 
                             try {
                               setLoading(true);
-
+                              let batch_id = null;
                               // 1. Enviar archivo Excel
                               const res = await axios.post(
                                 "http://localhost:8000/api/tutor/importar-inscripciones",
@@ -265,15 +265,16 @@ const OrdenDePago = () => {
                                   },
                                 }
                               );
-
+                              
                               // 2. Mostrar notificación
                               setNotificacion({ tipo: "success", mensaje: res.data.message });
-
+                              batch_id = res.data['batch-id'];
+                              console.log(batch_id);
                               // 3. Descargar automáticamente el ZIP
                               const zipRes = await axios.get(
                                 `http://localhost:8000/api/tutor/ordenes-masivas/${id}`,
                                 {
-                                  headers: { Authorization: `Bearer ${token}` },
+                                  headers: { Authorization: `Bearer ${token}`, "X-Batch-Id": batch_id },
                                   responseType: "blob",
                                 }
                               );
@@ -294,7 +295,13 @@ const OrdenDePago = () => {
                                 tipo: "error",
                                 mensaje: err.response?.data?.message || "Algunos estudiantes ya están inscritos en otra competencia ese día.",
                               });
-                            } else {
+                            } else if (err.response?.status === 404) {
+                              setNotificacion({
+                                tipo: "error",
+                                mensaje: err.response?.data?.message || "No hay inscripciones para importar.",
+                              });
+                            }
+                            else {
                               setNotificacion({
                                 tipo: "error",
                                 mensaje: err.response?.data?.error || "Error al importar archivo o generar ZIP",

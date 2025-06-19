@@ -12,6 +12,7 @@ use App\Models\Tutor;
 use App\Models\Inscripcion;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str; 
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -42,6 +43,8 @@ class InscripcionController extends Controller
             'competencia_id' => 'required|exists:competencias,id',
         ]);
 
+        $batch_id = (string) Str::uuid();
+
         try {
             Excel::import(
                 new InscripcionImport(
@@ -49,12 +52,13 @@ class InscripcionController extends Controller
                     auth()->id(),
                     $request->user()->email,
                     $request->user()->celular,
-                    $request->user()->name
+                    $request->user()->name,
+                    $batch_id
                 ),
                 $request->file('archivo')
             );
 
-            return response()->json(['message' => 'Importación completada exitosamente.']);
+            return response()->json(['message' => 'Importación completada exitosamente.', 'batch-id' => $batch_id]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error durante la importación',
@@ -63,33 +67,33 @@ class InscripcionController extends Controller
         }
     }
 
-    public function generarPDFMasivo($competencia_id)
+    public function generarPDFMasivo(Request $request, $competencia_id)
     {
         $tutor_id = auth()->id();
+        $batch_id = $request->header('X-Batch-Id');
+        if (!$batch_id) {
+            return response()->json(['message' => 'Falta el batch_id en el header.'], 400);
+        }
 
         // Buscar inscripciones del tutor para esa competencia
         $inscripciones = Inscripcion::with(['estudiante', 'competencia.areaCategoria.area', 'competencia.areaCategoria.categoria'])
             ->where('tutor_id', $tutor_id)
             ->where('competencia_id', $competencia_id)
+            ->where('batch_id', $batch_id)
             ->get();
 
         if ($inscripciones->isEmpty()) {
+            $yaInscritos = Inscripcion::where('tutor_id', $tutor_id)
+                ->where('competencia_id', $competencia_id)
+                ->exists();
+
+            if ($yaInscritos) {
+                return response()->json([
+                    'message' => 'Los estudiantes ya están inscritos en esta competencia o fueron subidos previamente.'
+                ], 409);
+            }
+
             return response()->json(['message' => 'No hay inscripciones registradas.'], 404);
-        }
-
-        $inscripciones = $inscripciones->filter(function ($inscripcion) {
-            $estudianteId = $inscripcion->estudiante_id;
-            $fecha = $inscripcion->competencia->fecha_competencia;
-
-            return !Inscripcion::where('estudiante_id', $estudianteId)
-                ->where('competencia_id', '!=', $inscripcion->competencia_id)
-                ->whereHas('competencia', function ($query) use ($fecha) {
-                    $query->where('fecha_competencia', $fecha);
-                })->exists();
-        });
-
-        if ($inscripciones->isEmpty()) {
-            return response()->json(['message' => 'Todos los estudiantes ya están inscritos en otra competencia en esa fecha.'], 409);
         }
 
         // Crear carpeta temporal
@@ -101,7 +105,7 @@ class InscripcionController extends Controller
             mkdir($tmpDir, 0777, true);
         }
 
-        if (file_exists($tmpDir)) {
+        if (is_dir($tmpDir)) {
             foreach (glob("$tmpDir/*.pdf") as $file) {
                 unlink($file);
             }
@@ -203,7 +207,7 @@ class InscripcionController extends Controller
             'nombre_tutor' => 'required|string',
             'competencia_id' => 'required|exists:competencias,id',
         ]);
-
+        
         // Buscar o crear estudiante
         $est = $request->estudiante;
         $estudiante = Estudiante::where('nombres', $est['nombres'])
@@ -232,6 +236,8 @@ class InscripcionController extends Controller
         }
 
         // Crear inscripción (sin comprobante y deshabilitado)
+        $batch_id = (string) Str::uuid();
+
         $inscripcion = Inscripcion::create([
             'estudiante_id' => $estudiante->id,
             'competencia_id' => $request->competencia_id,
@@ -239,6 +245,7 @@ class InscripcionController extends Controller
             'contacto_email' => $request->contacto_email,
             'contacto_celular' => $request->contacto_celular,
             'nombre_tutor' => $request->nombre_tutor,
+            'batch_id' => $batch_id,
             'comprobante_pago' => '',
             'habilitado' => false,
             'created_at' => now(),
