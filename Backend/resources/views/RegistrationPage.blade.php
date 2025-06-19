@@ -100,7 +100,7 @@
                 password: document.getElementById('password').value
             };
 
-            fetch('http://localhost:8000/api/register', {
+            fetch('http://dis.tis.cs.umss.edu.bo/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

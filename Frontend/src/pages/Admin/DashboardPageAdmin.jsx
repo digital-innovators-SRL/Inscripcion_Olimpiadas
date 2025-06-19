@@ -10,14 +10,14 @@ const DashboardPage = () => {
   const isLoginPage = location.pathname === '/login'; // Detección de página de login
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/competencias")
+    fetch("http://dis.tis.cs.umss.edu.bo/api/competencias")
       .then(res => res.json())
       .then(data => setCompetencias(data.filter(c => c.inscripciones && c.inscripciones.length > 0)))
       .catch(() => setCompetencias([]));
   }, []);
 
   const handleExport = (competenciaId) => {
-    window.open(`http://localhost:8000/api/exportar-inscritos/${competenciaId}`, '_blank');
+    window.open(`http://dis.tis.cs.umss.edu.bo/api/exportar-inscritos/${competenciaId}`, '_blank');
   };
 
   return (
@@ -73,7 +73,7 @@ const DashboardPage = () => {
             Recuerda revisar regularmente las diferentes secciones del sistema para mantener 
             todo actualizado y funcionando sin problemas. ¡Tu trabajo es muy importante!
           </p>
-         {/* <div><button className="bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] text-white font-semibold px-4 py-2 rounded-lg shadow hover:scale-105 transition-all"> <a href="http://localhost:8000/registro">Registrar tutor</a></button></div> */}
+         {/* <div><button className="bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] text-white font-semibold px-4 py-2 rounded-lg shadow hover:scale-105 transition-all"> <a href="http://dis.tis.cs.umss.edu.bo/registro">Registrar tutor</a></button></div> */}
         </div>
       </div>
 

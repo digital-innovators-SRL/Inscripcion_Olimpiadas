@@ -49,7 +49,7 @@ const ProfilePage = () => {
     const fetchProfile = async () => {
       setIsLoadingProfile(true)
       try {
-        const res = await axios.get('http://localhost:8000/api/profile', {
+        const res = await axios.get('http://dis.tis.cs.umss.edu.bo/api/profile', {
           headers: { Authorization: `Bearer ${token}` }
         })
         const data = res.data
@@ -78,7 +78,7 @@ const ProfilePage = () => {
     setIsSaving(true)
     try {
       const res = await axios.put(
-        'http://localhost:8000/api/profile',
+        'http://dis.tis.cs.umss.edu.bo/api/profile',
         {
           name: profile.name,
           email: profile.email,
@@ -110,7 +110,7 @@ const ProfilePage = () => {
     }
     try {
       await axios.put(
-        'http://localhost:8000/api/profile',
+        'http://dis.tis.cs.umss.edu.bo/api/profile',
         {
           password: passwordData.newPassword
         },

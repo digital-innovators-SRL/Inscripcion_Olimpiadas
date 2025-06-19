@@ -68,7 +68,7 @@ const DashboardPageTutor = () => {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:8000/api/tutor/getDashboardData', {
+        const response = await fetch('http://dis.tis.cs.umss.edu.bo/api/tutor/getDashboardData', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
