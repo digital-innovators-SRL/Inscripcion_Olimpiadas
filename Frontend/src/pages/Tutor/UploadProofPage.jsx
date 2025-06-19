@@ -61,10 +61,9 @@ const UploadProofPage = () => {
 
     for (let i = 0; i < lineas.length; i++) {
       const linea = lineas[i];
-
-      if (!numero && /N[úu]mero de transacci[oó]n/i.test(linea)) {
-        const inline = linea.match(/(\d{4,})/);
-        const nextline = lineas[i + 1]?.match(/^\d{4,}$/);
+      if (!numero && /N[uú]mero de transacci[oó]n/i.test(linea)) {
+        const inline = linea.match(/transacci[oó]n[:\s]*([0-9]+)/i);
+        const nextline = lineas[i + 1]?.match(/^\d+$/);
         numero = inline?.[1] || nextline?.[0] || null;
       }
 
@@ -74,18 +73,23 @@ const UploadProofPage = () => {
         inscripcionId = inline?.[1] || nextline?.[0] || null;
       }
 
-      if (!tutor) {
-        if (linea.match(/^Tutor[:]?$/i)) {
-          tutor = lineas[i + 1]?.trim();
-        } else {
-          const match = linea.match(/Tutor[:\s]*([A-ZÁÉÍÓÚÑ\s]+)/i);
-          if (match) tutor = match[1].trim();
+      if (!tutor && /^TUTOR$/i.test(linea)) {
+        const next = lineas[i + 1]?.trim();
+        if (next) {
+          tutor = next;
         }
       }
 
       if (!monto) {
-        const match = linea.match(/Bs\.?\s*([\d,.]+)/i) || linea.match(/MONTO\s+PAGADO\s+([\d,.]+)/i);
-        if (match) monto = match[1].replace(",", ".").trim();
+        if (/MONTO\s+PAGADO/i.test(linea)) {
+          const next = lineas[i + 1]?.trim();
+          if (next?.match(/^[\d.,]+$/)) {
+            monto = next.replace(",", ".").trim();
+          }
+        } else {
+          const match = linea.match(/Bs\.?\s*([\d,.]+)/i);
+          if (match) monto = match[1].replace(",", ".").trim();
+        }
       }
     }
 
@@ -136,7 +140,7 @@ const UploadProofPage = () => {
       setTextoOCR(texto);
 
       const datos = procesarTexto(texto);
-      enviarAlBackend(datos);
+      await enviarAlBackend(datos);
     } catch (err) {
       console.error("Error en OCR:", err);
     } finally {
@@ -145,6 +149,7 @@ const UploadProofPage = () => {
   };
 
   const enviarAlBackend = async (datos) => {
+    console.log(datos);
     setProcessing(true);
     try {
       await axios.post(

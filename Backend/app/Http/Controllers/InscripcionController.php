@@ -88,22 +88,29 @@ class InscripcionController extends Controller
 
         // Generar PDFs
         foreach ($inscripciones as $inscripcion) {
-            $pdf = Pdf::loadView('pdf.orden_pago', [
-                'inscripcion' => $inscripcion,
-                'estudiante' => $inscripcion->estudiante,
-                'competencia' => $inscripcion->competencia,
-            ]);
+            $estudiante = $inscripcion->estudiante;
+            $competencia = $inscripcion->competencia;
 
-            $pdf->save("$tmpDir/orden_pago_{$inscripcion->id}.pdf");
+            // Orden de pago
+            $ordenPdf = Pdf::loadView('pdf.orden_pago', compact('inscripcion', 'estudiante', 'competencia'));
+            $ordenPath = "$tmpDir/orden_pago_{$inscripcion->id}.pdf";
+            $ordenPdf->save($ordenPath);
+
+            // Comprobante de pago
+            $comprobantePdf = Pdf::loadView('pdf.comprobante_pago', compact('inscripcion', 'competencia'));
+            $comprobantePath = "$tmpDir/comprobante_pago_{$inscripcion->id}.pdf";
+            $comprobantePdf->save($comprobantePath);
         }
 
         // Crear ZIP
         $zip = new ZipArchive;
-        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
             foreach (glob("$tmpDir/*.pdf") as $file) {
                 $zip->addFile($file, basename($file));
             }
             $zip->close();
+        } else {
+            return response()->json(['error' => 'No se pudo crear el archivo ZIP'], 500);
         }
 
         // Descargar ZIP
@@ -197,19 +204,44 @@ class InscripcionController extends Controller
             $competencia = Competencia::with('areaCategoria.area', 'areaCategoria.categoria')->find($request->competencia_id);
 
             // Generar PDF
-            $pdf = Pdf::loadView('pdf.orden_pago', [
+            $ordenPdf = Pdf::loadView('pdf.orden_pago', [
                 'inscripcion' => $inscripcion,
                 'estudiante' => $estudiante,
                 'competencia' => $competencia,
-            ]);
-            $pdf2 = Pdf::loadView('pdf.comprobante_pago', [
+            ])->output();
+            $comprobantePdf = Pdf::loadView('pdf.comprobante_pago', [
                 'inscripcion' => $inscripcion,
-                'estudiante' => $estudiante,
-            ]);
+                'competencia' => $competencia,
+            ])->output();
 
-            $pdf2->download("com{$inscripcion->id}.pdf");
-            return $pdf->download("orden_pago_{$inscripcion->id}.pdf");
-    }
+            $tempDir = storage_path("app/public/tmp/orden_pago_{$inscripcion->id}");
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
+
+            $ordenPath = $tempDir . "/orden_pago_{$inscripcion->id}.pdf";
+            $comprobantePath = $tempDir . "/comprobante_pago_{$inscripcion->id}.pdf";
+
+            file_put_contents($ordenPath, $ordenPdf);
+            file_put_contents($comprobantePath, $comprobantePdf);
+
+            $zipFileName = "documentos_inscripcion_{$inscripcion->id}.zip";
+            $zipPath = storage_path("app/$zipFileName");
+
+            $zip = new ZipArchive;
+            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
+                $zip->addFile($ordenPath, basename($ordenPath));
+                $zip->addFile($comprobantePath, basename($comprobantePath));
+                $zip->close();
+            }
+
+            unlink($ordenPath);
+            unlink($comprobantePath);
+            rmdir($tempDir);
+
+            //return $pdf->download("orden_pago_{$inscripcion->id}.pdf");
+            return response()->download($zipPath)->deleteFileAfterSend(true);
+        }
 
     public function inscribir(Request $request)
 {
@@ -300,4 +332,3 @@ class InscripcionController extends Controller
         return Excel::download(new InscritosCompetenciaExport($competencia_id), $filename);
     }
 }
-

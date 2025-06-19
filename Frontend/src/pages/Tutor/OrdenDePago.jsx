@@ -82,6 +82,7 @@ const OrdenDePago = () => {
     setNotificacion({ tipo: "", mensaje: "" });
 
 
+    console.log({...form, competencia_id: id, token})
     try {
       const res = await axios.post("http://localhost:8000/api/tutor/ordenPago", {
         ...form,
@@ -91,15 +92,15 @@ const OrdenDePago = () => {
         responseType: "blob"
       });
 
-
-      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const blob = new Blob([res.data], { type: 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "orden_pago.pdf");
+      link.setAttribute("download", "documentos_inscripcion.zip");
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
 
 
       setNotificacion({ tipo: "success", mensaje: "Orden de pago generada exitosamente." });

@@ -3,6 +3,7 @@
 use App\Http\Controllers\InscripcionController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,4 +66,3 @@ Route::get('/link-storage', function () {
         return '❌ Error al crear el enlace simbólico: ' . $e->getMessage();
     }
 });
-

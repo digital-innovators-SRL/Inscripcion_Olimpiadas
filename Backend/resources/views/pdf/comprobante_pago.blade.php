@@ -33,6 +33,7 @@
             margin: 5px 0;
             font-size: 13px;
             color: #888;
+            text-align: end;
         }
 
         .section {
@@ -52,11 +53,6 @@
             margin: 6px 0;
         }
 
-        .label {
-            font-weight: bold;
-            color: #444;
-        }
-
         .footer {
             text-align: center;
             font-size: 12px;
@@ -65,33 +61,24 @@
             border-top: 1px solid #ddd;
             padding-top: 10px;
         }
-
-        .icon {
-            margin-right: 5px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h2> Orden de Pago</h2>
-            <p>ID de inscripción: <strong>{{ $inscripcion->id }}</strong></p>
+            <h2> UNIVERSIDAD MAYOR DE SAN SIMÓN </h2>
+            <p>Número de transacción: {{ $inscripcion->id }}</p>
         </div>
 
         <div class="section">
-            <div class="section-title"> Información del Competidor</div>
-            <p class="info-line"><span class="label">Nombre:</span> {{ $estudiante->nombres }} {{ $estudiante->apellidos }}</p>
-            <p class="info-line"><span class="label">CI:</span> {{ $estudiante->ci }}</p>
-            <p class="info-line"><span class="label">Correo electrónico:</span> {{ $estudiante->email }}</p>
+            <h2 class="info-line">COMPROBANTE DE PAGO</h2>
+            <h3>ID DE INSCRIPCIÓN</h3>
+            <p>{{ $inscripcion->id }}</p>
+            <h3>TUTOR</h3>
+            <p>{{ $inscripcion->nombre_tutor }}</p>
+            <h3>MONTO PAGADO</h3>
+            <p>{{ number_format($competencia->monto, 2) }}</p>
         </div>
-
-        <div class="section">
-            <div class="section-title"> Información del Tutor</div>
-            <p class="info-line"><span class="label">Nombre del tutor:</span> {{ $inscripcion->nombre_tutor }}</p>
-            <p class="info-line"><span class="label">Email de contacto:</span> {{ $inscripcion->contacto_email }}</p>
-            <p class="info-line"><span class="label">Celular de contacto:</span> {{ $inscripcion->contacto_celular ?? '—' }}</p>
-        </div>
-
         <div class="footer">
             © {{ now()->year }} Sistema de Inscripciones - Universidad Mayor de San Simón
         </div>
