@@ -52,6 +52,4 @@ $app->singleton(
 |
 */
 
-//$app->register(\Barryvdh\DomPDF\ServiceProvider::class);
-
 return $app;
