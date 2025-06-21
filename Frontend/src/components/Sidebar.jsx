@@ -81,9 +81,9 @@ const Sidebar = ({ isOpen, onToggle }) => {
     roleItems = tutorItems;
   } else if (user?.role === "Organizador") {
     roleItems = organizadorItems;
-  }
+  } 
 
-  const menuItems = [...baseItems, ...roleItems, profileItem];
+  const menuItems = user?.role === 'estudiante' ? [...baseItems] : [...baseItems, ...roleItems, profileItem];
 
   const handleLogout = () => {
     logout();

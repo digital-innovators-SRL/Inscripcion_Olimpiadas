@@ -23,10 +23,9 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => {
-          console.log(res.data);
           role === 'estudiante' ? setUser({...res.data, role}) : setUser(res.data)})
         .catch(() => logout())
-        .finally(() => {setIsLoading(false); console.log(user)})
+        .finally(() => setIsLoading(false))
     } else {
       setIsLoading(false)
     }
@@ -39,7 +38,6 @@ export const AuthProvider = ({ children }) => {
         email,
         password
       })
-      console.log(res.data);
       const { access_token, user } = res.data
       localStorage.setItem('token', access_token)
       localStorage.setItem('role', res.data.role || 'user')

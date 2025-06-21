@@ -20,6 +20,7 @@ const DashboardPageEstudiante = () => {
   const [tutores, setTutores] = useState([]);
   const [tutoresSeleccionados, setTutoresSeleccionados] = useState({});
   const [notificacion, setNotificacion] = useState({ tipo: "", mensaje: "" });
+  const [inscribiendo, setInscribiendo] = useState(false);
   const { user, token } = useAuth();
 
   useEffect(() => {
@@ -28,8 +29,6 @@ const DashboardPageEstudiante = () => {
         const headers = { Authorization: `Bearer ${token}` };
         const compRes = await axios.get("http://localhost:8000/api/competencias-estudiante", { headers });
         const tutoRes = await axios.get("http://localhost:8000/api/tutores", { headers });
-        console.log(compRes.data)
-        console.log('Tutores: ', tutoRes.data)
         setCompetencias(compRes.data);
         setTutores(tutoRes.data.data);
       } catch (error) {
@@ -45,6 +44,7 @@ const DashboardPageEstudiante = () => {
   const handleInscripcion = async (idCompetencia) => {
     const tutorId = tutoresSeleccionados[idCompetencia];
     setNotificacion({ tipo: "", mensaje: "" });
+    setInscribiendo(true);
     if (!tutorId) {
       alert("Por favor selecciona un tutor.");
       return;
@@ -104,6 +104,8 @@ const DashboardPageEstudiante = () => {
     } catch (error) {
       console.error("Error al inscribirse:", error);
       alert("Error durante la inscripción.");
+    } finally {
+      setInscribiendo(false);
     }
   };
 
@@ -273,7 +275,7 @@ const DashboardPageEstudiante = () => {
                   <button
                     onClick={() => handleInscripcion(comp.id)}
                     className="w-full flex items-center justify-center px-6 py-3 text-white rounded-lg sm:rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-                    disabled={comp.ya_inscrito || !tutoresSeleccionados[comp.id]}
+                    disabled={comp.ya_inscrito || !tutoresSeleccionados[comp.id] || inscribiendo}
                     style={{background: 'linear-gradient(135deg, #C8B7A6, #B8A494)'}}
                   >
                     <UserPlus className="w-4 h-4 mr-2" />

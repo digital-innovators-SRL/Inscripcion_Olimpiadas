@@ -122,5 +122,9 @@ Route::middleware(['jwt.exceptions', 'auth:api'])->get('/profile', function (Req
     return response()->json($request->user());
 });
 
+Route::middleware(['jwt.exceptions', 'auth:estudiante'])->get('/profile-estudiante', function (Request $request) {
+    return response()->json(Auth::guard('estudiante')->user());
+});
+
 // Actualizar perfil del usuario autenticado
 Route::middleware(['jwt.exceptions', 'auth:api'])->put('/profile', [UserController::class, 'updateProfile']);
