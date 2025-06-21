@@ -163,6 +163,11 @@ useEffect(() => {
                 <a href="#tutores" className="text-sm font-medium hover:opacity-80 transition-colors" style={{color: '#8B7355'}}>
                   Tutores
                 </a>
+                <button onClick={() => {
+                  navigate('/register');
+                }} className="text-sm font-medium hover:opacity-80 transition-colors" style={{color: '#8B7355'}}>
+                  Registrar estudiante
+                </button>
               </nav>
               
               <button

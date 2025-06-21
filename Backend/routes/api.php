@@ -31,11 +31,19 @@ use App\Models\Categoria;
 
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login-estudiante', [AuthController::class, 'loginEstudiante']);
+Route::post('/register-estudiante', [AuthController::class, 'registerEstudiante']);
 
 Route::middleware(['jwt.exceptions', 'auth:api'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
+});
+
+Route::middleware(['jwt.exceptions', 'auth:estudiante'])->group(function () {
+    Route::get('/me-estudiante', [AuthController::class, 'meEstudiante']);
+    Route::get('/competencias-estudiante', [CompetenciaController::class, 'competenciasEstudiante']);
+    Route::post('/inscribirse', [InscripcionController::class, 'inscribirEstudiante']);
 });
 
 Route::middleware(['auth:api', 'role:Administrador'])->get('/admin/dashboard', [AdminDashboardController::class, 'index']);

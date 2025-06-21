@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import adminRoutes from '../src/routes/adminRoutes'
 import tutorRoutes from '../src/routes/tutorRoutes'
 import organizadorRoutes from '../src/routes/organizadorRoutes'
+import estudianteRoutes from './routes/estudianteRoutes'
 
 import { Toaster } from 'react-hot-toast' // 🟢 Importamos el Toaster
 
@@ -26,6 +27,8 @@ const App = () => {
         return tutorRoutes
       case 'Organizador':
         return organizadorRoutes
+      case 'estudiante':
+        return estudianteRoutes
       default:
         return []
     }

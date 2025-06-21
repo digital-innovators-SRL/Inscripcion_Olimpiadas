@@ -24,6 +24,8 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [showUserTypes, setShowUserTypes] = useState(false)
 
+  const [isStudent, setIsStudent] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setShowError(false)
@@ -42,7 +44,11 @@ const LoginPage = () => {
 
     // Aquí iría la lógica real de autenticación
      try {
-      await login(formData.email, formData.password)
+      if (isStudent) {
+        await login(formData.email, formData.password, true)
+      } else {
+        await login(formData.email, formData.password)
+      }
       navigate('/dashboard')
     } catch (err) {
       setShowError(true)
@@ -198,6 +204,13 @@ const userTypes = [
                         {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
                       </button>
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-start gap-4">
+                    <label htmlFor="estudiante" className="text-sm font-medium" style={{color: '#5A4A3A'}}>
+                      ¿Eres estudiante?
+                    </label>
+                    <input type="checkbox" name="estudiante" id="estudiante" onChange={() => setIsStudent(!isStudent)} className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/40 border-t-white rounded-full" />
                   </div>
 
 

@@ -92,4 +92,38 @@ class CompetenciaController extends Controller
         $competencia->delete();
         return response()->json(['message' => 'Competencia eliminada con éxito']);
     }
+
+    // === OBTENER COMPETENCIAS PARA ESTUDIANTE ===
+    public function competenciasEstudiante(Request $request)
+    {
+        $estudiante = auth()->user();
+
+        $competencias = Competencia::with('areaCategoria.area', 'areaCategoria.categoria', 'inscripciones', 'tutor')
+            ->get()
+            ->map(function ($competencia) use ($estudiante) {
+                $inscrito = $competencia->inscripciones()
+                    ->where('estudiante_id', $estudiante->id)
+                    ->exists();
+
+                return [
+                    'id' => $competencia->id,
+                    'nombre' => $competencia->nombre,
+                    'fecha_competencia' => $competencia->fecha_competencia,
+                    'fecha_fin_inscripcion' => $competencia->fecha_fin_inscripcion,
+                    'monto' => $competencia->monto,
+                    'area_categoria' => [
+                        'area' => ['nombre' => $competencia->areaCategoria->area->nombre],
+                        'categoria' => ['nombre' => $competencia->areaCategoria->categoria->nombre],
+                    ],
+                    'tutor' => [
+                        'id' => $competencia->tutor->id,
+                        'nombre' => $competencia->tutor->name ?? '',
+                        'email' => $competencia->tutor->email ?? '',
+                    ],
+                    'ya_inscrito' => $inscrito,
+                ];
+            });
+
+        return response()->json($competencias);
+    }
 }

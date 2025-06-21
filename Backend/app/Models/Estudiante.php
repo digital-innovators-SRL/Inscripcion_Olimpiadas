@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class Estudiante extends Model
+class Estudiante extends Authenticatable implements JWTSubject
 {
+    use Notifiable;
+
     protected $fillable = [
         'email',
         'apellidos',
@@ -16,8 +20,19 @@ class Estudiante extends Model
         'curso',
         'departamento',
         'provincia',
+        'password',
     ];
+    protected $hidden = ['password'];
 
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
     // Relaciones
 
     public function inscripciones()

@@ -17,30 +17,41 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.get('http://localhost:8000/api/me', {
+      const role = localStorage.getItem('role');
+      const meUrl = role === 'estudiante' ? 'me-estudiante' : 'me'
+      axios.get(`http://localhost:8000/api/${meUrl}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then((res) => setUser(res.data))
+        .then((res) => {
+          console.log(res.data);
+          role === 'estudiante' ? setUser({...res.data, role}) : setUser(res.data)})
         .catch(() => logout())
-        .finally(() => setIsLoading(false))
+        .finally(() => {setIsLoading(false); console.log(user)})
     } else {
       setIsLoading(false)
     }
   }, [token])
 
-  const login = async (email, password) => {
+  const login = async (email, password, student = false) => {
+    const url = student ? 'http://localhost:8000/api/login-estudiante' : 'http://localhost:8000/api/login'
     try {
-      const res = await axios.post('http://localhost:8000/api/login', {
+      const res = await axios.post(url, {
         email,
         password
       })
-
+      console.log(res.data);
       const { access_token, user } = res.data
       localStorage.setItem('token', access_token)
+      localStorage.setItem('role', res.data.role || 'user')
       setToken(access_token)
-      setUser(user)
+      if (student) {
+        setUser({...user, role: 'estudiante'})
+      } else {
+        setUser(user)
+      }
       setLoginError(null)
     } catch (err) {
+      console.log(err);
       setLoginError('Credenciales inválidas')
       throw err
     }
@@ -55,6 +66,7 @@ export const AuthProvider = ({ children }) => {
       console.warn('Error al cerrar sesión en el backend:', err)
     } finally {
       localStorage.removeItem('token')
+      localStorage.removeItem('role')
       setToken('')
       setUser(null)
     }
