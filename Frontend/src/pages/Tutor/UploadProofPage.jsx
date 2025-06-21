@@ -126,7 +126,7 @@ const UploadProofPage = () => {
 
       const res = await fetch("https://api.ocr.space/parse/image", {
         method: "POST",
-        headers: { apikey: "K83603773288957" },
+        headers: { apikey: "K89609091888957" },
         body: formData,
       });
 

@@ -73,11 +73,11 @@
         <div class="section">
             <h2 class="info-line">COMPROBANTE DE PAGO</h2>
             <h3>ID DE INSCRIPCIÓN</h3>
-            <p>{{ $inscripcion->id }}</p>
+            <h1>{{ $inscripcion->id }}</h1>
             <h3>TUTOR</h3>
-            <p>{{ $inscripcion->nombre_tutor }}</p>
+            <h1>{{ $inscripcion->nombre_tutor }}</h1>
             <h3>MONTO PAGADO</h3>
-            <p>{{ number_format($competencia->monto, 2) }}</p>
+            <h1>{{ number_format($competencia->monto, 2) }}</h1>
         </div>
         <div class="footer">
             © {{ now()->year }} Sistema de Inscripciones - Universidad Mayor de San Simón

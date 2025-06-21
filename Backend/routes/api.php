@@ -16,6 +16,7 @@ use App\Http\Controllers\AreaCategoriaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InscripcionController;
 use App\Models\Categoria;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -84,7 +85,7 @@ Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function 
 });
 
 Route::get('/tutores', [UserController::class, 'indexTutores']);
-Route::get('/competencias', [CompetenciaController::class, 'index']);
+Route::get('/competenciaslist', [CompetenciaController::class, 'index']);
 
 Route::get('/getCategorias', [CategoriaController::class, 'index']);
 Route::post('/crearCompetencia', [CompetenciaController::class, 'crearCompetencia']);
@@ -116,3 +117,16 @@ Route::middleware(['jwt.exceptions', 'auth:api'])->get('/profile', function (Req
 
 // Actualizar perfil del usuario autenticado
 Route::middleware(['jwt.exceptions', 'auth:api'])->put('/profile', [UserController::class, 'updateProfile']);
+
+
+Route::get('/clear-cache-secret-123', function () {
+    try {
+        Artisan::call('config:clear');
+        Artisan::call('cache:clear');
+        Artisan::call('route:clear');
+        Artisan::call('view:clear');
+        return "Cache limpio, todo fresh. ✅";
+    } catch (\Exception $e) {
+        return "Error limpiando cache: " . $e->getMessage();
+    }
+});
