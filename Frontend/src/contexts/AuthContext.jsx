@@ -17,10 +17,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.get('http://dis.tis.cs.umss.edu.bo/api/me', {
+      const role = localStorage.getItem('role');
+      const meUrl = role === 'estudiante' ? 'me-estudiante' : 'me'
+      axios.get(`http://dis.tis.cs.umss.edu.bo/api/${meUrl}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then((res) => setUser(res.data))
+        .then((res) => {
+          role === 'estudiante' ? setUser({...res.data, role}) : setUser(res.data)})
         .catch(() => logout())
         .finally(() => setIsLoading(false))
     } else {
@@ -28,19 +31,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token])
 
-  const login = async (email, password) => {
+  const login = async (email, password, student = false) => {
+    const url = student ? '/login-estudiante' : '/login'
     try {
-      const res = await axios.post('http://dis.tis.cs.umss.edu.bo/api/login', {
+      const res = await axios.post(`http://dis.tis.cs.umss.edu.bo/api/${url}`, {
         email,
         password
       })
-
       const { access_token, user } = res.data
       localStorage.setItem('token', access_token)
+      localStorage.setItem('role', res.data.role || 'user')
       setToken(access_token)
-      setUser(user)
+      if (student) {
+        setUser({...user, role: 'estudiante'})
+      } else {
+        setUser(user)
+      }
       setLoginError(null)
     } catch (err) {
+      console.log(err);
       setLoginError('Credenciales inválidas')
       throw err
     }
@@ -55,6 +64,7 @@ export const AuthProvider = ({ children }) => {
       console.warn('Error al cerrar sesión en el backend:', err)
     } finally {
       localStorage.removeItem('token')
+      localStorage.removeItem('role')
       setToken('')
       setUser(null)
     }

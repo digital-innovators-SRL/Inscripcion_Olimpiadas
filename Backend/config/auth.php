@@ -45,6 +45,11 @@ return [
             'driver' => 'jwt', // ✅ CAMBIADO A JWT
             'provider' => 'users',
         ],
+
+        'estudiante' => [
+            'driver' => 'jwt',
+            'provider' => 'estudiantes',
+        ],
     ],
 
     /*
@@ -74,6 +79,10 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+        'estudiantes' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Estudiante::class,
+        ],
     ],
 
     /*

@@ -21,6 +21,7 @@ use App\Models\Competencia;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use ZipArchive;
+use Illuminate\Support\Facades\Log;
 
 
 class InscripcionController extends Controller
@@ -195,6 +196,7 @@ class InscripcionController extends Controller
 
     public function obtenerOrdenPago(Request $request)
     {
+        Log::info($request->all());
         $request->validate([
             'estudiante' => 'required|array',
             'estudiante.nombres' => 'required|string',
@@ -383,5 +385,107 @@ class InscripcionController extends Controller
         $competencia = \App\Models\Competencia::findOrFail($competencia_id);
         $filename = 'inscritos_' . $competencia->nombre . '.xlsx';
         return Excel::download(new InscritosCompetenciaExport($competencia_id), $filename);
+    }
+
+    public function inscribirEstudiante(Request $request)
+    {
+        Log::info($request->all());
+        $request->validate([
+            'estudiante' => 'required|array',
+            'estudiante.nombres' => 'required|string',
+            'estudiante.apellidos' => 'required|string',
+            'estudiante.ci' => 'required|regex:/^\d{5,8}$/',
+            'estudiante.fecha_nacimiento' => 'required|date',
+            'estudiante.email' => 'required|email',
+            'contacto_email' => 'required|email',
+            'contacto_celular' => 'nullable|string',
+            'tutor_id' => 'required|exists:users,id',
+            'nombre_tutor' => 'required|string',
+            'competencia_id' => 'required|exists:competencias,id',
+        ]);
+        
+        // Buscar o crear estudiante
+        $est = $request->estudiante;
+        $estudiante = Estudiante::where('nombres', $est['nombres'])
+            ->where('apellidos', $est['apellidos'])
+            ->where('ci', $est['ci'])
+            ->first();
+
+        if (!$estudiante) {
+            $estudiante = Estudiante::create($est);
+        }
+
+        $competenciaNueva = Competencia::find($request->competencia_id);
+        if (!$competenciaNueva) {
+            return response()->json(['message' => 'Competencia no encontrada.'], 404);
+        }
+
+        $yaInscrito = Inscripcion::where('estudiante_id', $estudiante->id)
+            ->whereHas('competencia', function ($q) use ($competenciaNueva) {
+                $q->where('fecha_competencia', $competenciaNueva->fecha_competencia);
+            })->exists();
+
+        if ($yaInscrito) {
+            return response()->json([
+                'message' => 'El estudiante ya está inscrito en otra competencia para la fecha ' . $competenciaNueva->fecha_competencia
+            ], 409);
+        }
+
+        // Crear inscripción (sin comprobante y deshabilitado)
+        $batch_id = (string) Str::uuid();
+
+        $inscripcion = Inscripcion::create([
+            'estudiante_id' => $estudiante->id,
+            'competencia_id' => $request->competencia_id,
+            'tutor_id' => $request->tutor_id,
+            'contacto_email' => $request->contacto_email,
+            'contacto_celular' => $request->contacto_celular,
+            'nombre_tutor' => $request->nombre_tutor,
+            'batch_id' => $batch_id,
+            'comprobante_pago' => '',
+            'habilitado' => false,
+            'created_at' => now(),
+        ]);
+
+        $competencia = Competencia::with('areaCategoria.area', 'areaCategoria.categoria')->find($request->competencia_id);
+
+        // Generar PDF
+        $ordenPdf = Pdf::loadView('pdf.orden_pago', [
+            'inscripcion' => $inscripcion,
+            'estudiante' => $estudiante,
+            'competencia' => $competencia,
+        ])->output();
+
+        $comprobantePdf = Pdf::loadView('pdf.comprobante_pago', [
+            'inscripcion' => $inscripcion,
+            'competencia' => $competencia,
+        ])->output();
+
+        $tempDir = storage_path("app/public/tmp/orden_pago_{$inscripcion->id}");
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        $ordenPath = $tempDir . "/orden_pago_{$inscripcion->id}.pdf";
+        $comprobantePath = $tempDir . "/comprobante_pago_{$inscripcion->id}.pdf";
+
+        file_put_contents($ordenPath, $ordenPdf);
+        file_put_contents($comprobantePath, $comprobantePdf);
+
+        $zipFileName = "documentos_inscripcion_{$inscripcion->id}.zip";
+        $zipPath = storage_path("app/$zipFileName");
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
+            $zip->addFile($ordenPath, basename($ordenPath));
+            $zip->addFile($comprobantePath, basename($comprobantePath));
+            $zip->close();
+        }
+
+        unlink($ordenPath);
+        unlink($comprobantePath);
+        rmdir($tempDir);
+
+        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 }
