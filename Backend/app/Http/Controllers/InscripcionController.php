@@ -501,8 +501,8 @@ class InscripcionController extends Controller
         if ($inscripciones->isEmpty()) {
             return response()->json(['message' => 'No hay inscripciones para esta competencia.'], 404);
         }
-
-        $tmpDir = storage_path("app/public/tmp/comprobantes_$competencia_id");
+        $nombreCompetencia = Competencia::find($competencia_id)->nombre;
+        $tmpDir = storage_path("app/public/tmp/comprobantes_$nombreCompetencia");
         if (!file_exists($tmpDir)) {
             mkdir($tmpDir, 0777, true);
         }
@@ -521,7 +521,7 @@ class InscripcionController extends Controller
             file_put_contents($comprobantePath, $comprobantePdf);
         }
 
-        $zipFileName = "comprobantes_competencia_$competencia_id.zip";
+        $zipFileName = "comprobantes_competencia_$nombreCompetencia.zip";
         $zipPath = storage_path("app/public/tmp/$zipFileName");
         if (file_exists($zipPath)) {
             unlink($zipPath);
