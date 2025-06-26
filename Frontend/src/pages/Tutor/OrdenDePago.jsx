@@ -53,7 +53,7 @@ const OrdenDePago = () => {
   useEffect(() => {
     const fetchCompetencia = async () => {
       try {
-        const res = await axios.get(`http://dis.tis.cs.umss.edu.bo/api/tutor/competencias`, {
+        const res = await axios.get(`http://localhost:8000/api/tutor/competencias`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const encontrada = res.data.find(c => c.id === parseInt(id));
@@ -82,7 +82,7 @@ const OrdenDePago = () => {
     setNotificacion({ tipo: "", mensaje: "" });
 
     try {
-      const res = await axios.post("http://dis.tis.cs.umss.edu.bo/api/tutor/ordenPago", {
+      const res = await axios.post("http://localhost:8000/api/tutor/ordenPago", {
         ...form,
         competencia_id: id,
       }, {
@@ -101,7 +101,7 @@ const OrdenDePago = () => {
 
 
       setNotificacion({ tipo: "success", mensaje: "Orden de pago generada exitosamente." });
-      setTimeout(() => navigate("/payment-slip"), 1800);
+      setTimeout(() => navigate("/registration2"), 1800);
     } catch (err) {
       console.error("Error al generar orden:", err);
       let mensaje = "No se pudo generar la orden de pago.";
@@ -190,7 +190,7 @@ const OrdenDePago = () => {
               type="button"
               onClick={() => {
                 const link = document.createElement("a");
-                link.href = "http://dis.tis.cs.umss.edu.bo/assets/planilla.xlsx"; // Asegúrate de que exista
+                link.href = "http://localhost:8000/assets/planilla.xlsx"; // Asegúrate de que exista
                 link.setAttribute("download", "planilla_ejemplo.xlsx");
                 document.body.appendChild(link);
                 link.click();
@@ -256,7 +256,7 @@ const OrdenDePago = () => {
                               let batch_id = null;
                               // 1. Enviar archivo Excel
                               const res = await axios.post(
-                                "http://dis.tis.cs.umss.edu.bo/api/tutor/importar-inscripciones",
+                                "http://localhost:8000/api/tutor/importar-inscripciones",
                                 formData,
                                 {
                                   headers: {
@@ -272,7 +272,7 @@ const OrdenDePago = () => {
                               console.log(batch_id);
                               // 3. Descargar automáticamente el ZIP
                               const zipRes = await axios.get(
-                                `http://dis.tis.cs.umss.edu.bo/api/tutor/ordenes-masivas/${id}`,
+                                `http://localhost:8000/api/tutor/ordenes-masivas/${id}`,
                                 {
                                   headers: { Authorization: `Bearer ${token}`, "X-Batch-Id": batch_id },
                                   responseType: "blob",

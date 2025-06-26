@@ -39,6 +39,11 @@ const Sidebar = ({ isOpen, onToggle }) => {
       icon: <UsersIcon size={20} />,
       label: "Usuarios",
     },
+    {
+      path: "/admin/competencias",
+      icon: <BarChartIcon size={20} />,
+      label: "Competencias",
+    },
   ];
 
   const tutorItems = [

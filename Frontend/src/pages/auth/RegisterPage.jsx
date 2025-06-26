@@ -38,7 +38,7 @@ const RegisterPage = () => {
     console.log(formData)
     delete formData.role;
     try {
-      const res = await axios.post('http://dis.tis.cs.umss.edu.bo/api/register-estudiante', {
+      const res = await axios.post('http://localhost:8000/api/register-estudiante', {
         nombres: formData.nombres.trim(),
         apellidos: formData.apellidos.trim(),
         email: formData.email.trim(),

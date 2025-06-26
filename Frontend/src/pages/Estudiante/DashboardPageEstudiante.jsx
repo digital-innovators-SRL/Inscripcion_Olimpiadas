@@ -22,7 +22,7 @@ const DashboardPageEstudiante = () => {
   const [notificacion, setNotificacion] = useState({ tipo: "", mensaje: "" });
   const [inscribiendo, setInscribiendo] = useState(false);
   const { user, token } = useAuth();
-  const baseUrl = 'http://dis.tis.cs.umss.edu.bo/api/'
+  const baseUrl = 'http://localhost:8000/api/'
   useEffect(() => {
     const fetchData = async () => {
       try {
