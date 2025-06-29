@@ -16,7 +16,7 @@ const extractReceiptData = (text: string) => {
   };
 };
 
-export default function ConfirmarComprobante() {
+export default function IndexPage() {
   const [isClient, setIsClient] = useState(false);
 
   // Estados generales
@@ -37,24 +37,43 @@ export default function ConfirmarComprobante() {
   const [pdfAmountPaid, setPdfAmountPaid] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  const workerRef = useRef<Tesseract.Worker | null>(null);
+  const workerRef = useRef<ReturnType<typeof createWorker> | null>(null);
 
   useEffect(() => {
     setIsClient(true); // Marcamos que ya estamos en el cliente
 
-    const worker = createWorker({
-      logger: (m) => {
-        if ('progress' in m) {
-          setProgress(m.progress);
-          setProgressLabel(m.progress === 1 ? 'Done' : m.status);
-        }
-      },
-    });
-    workerRef.current = worker;
+    const initWorker = async () => {
+      const worker = createWorker({
+        logger: (m) => {
+          // Solo actualiza estados si es progreso
+          if ('progress' in m) {
+            setProgress(m.progress);
+            setProgressLabel(m.progress === 1 ? 'Done' : m.status);
+          }
+        },
+      });
+      workerRef.current = worker;
+
+      await worker.load();
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+    };
+
+    initWorker();
 
     return () => {
-      workerRef.current?.terminate();
-      workerRef.current = null;
+      // cleanup async en useEffect
+      const cleanup = async () => {
+        if (workerRef.current) {
+          try {
+            await workerRef.current.terminate();
+          } catch (e) {
+            console.error('Error terminating worker:', e);
+          }
+          workerRef.current = null;
+        }
+      };
+      cleanup();
     };
   }, []);
 
@@ -68,10 +87,6 @@ export default function ConfirmarComprobante() {
     if (!imageData || !workerRef.current) return;
 
     const worker = workerRef.current;
-    await worker.load();
-    await worker.loadLanguage('eng');
-    await worker.initialize('eng');
-
     const { data } = await worker.recognize(imageData);
     setOcrResult(data.text);
 
@@ -94,8 +109,8 @@ export default function ConfirmarComprobante() {
 
     try {
       const pdfjsLib = await import('pdfjs-dist');
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.3.31/build/pdf.worker.mjs';
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.3.31/build/pdf.worker.mjs';
 
       const file = files[0];
       const arrayBuffer = await file.arrayBuffer();
@@ -114,12 +129,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
       const dataUrl = canvas.toDataURL('image/png');
 
-      const worker = workerRef.current!;
-      await worker.load();
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
+      if (!workerRef.current) throw new Error('Worker no inicializado');
 
-      const { data } = await worker.recognize(dataUrl);
+      const { data } = await workerRef.current.recognize(dataUrl);
       setPdfOcrResult(data.text);
 
       const extracted = extractReceiptData(data.text);
@@ -203,5 +215,3 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
     </Group>
   );
 }
-
-//}

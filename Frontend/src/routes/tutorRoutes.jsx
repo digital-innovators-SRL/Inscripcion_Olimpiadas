@@ -7,7 +7,7 @@ import Pago from '../pages/Tutor/Pago';
 import Boleta from '../pages/Tutor/Boleta';
 import CompetenciasTutor from '../pages/Tutor/CompetenciasTutor';
 import OrdenDePago from '../pages/Tutor/OrdenDePago';
-import ConfirmarComprobante from '../pages/Tutor/ConfirmarComprobante';
+import ConfirmarComprobante from '../pages/Tutor/IndexPage';
 
 export default [
   { path: '/dashboard', element: <DashboardPageTutor />, allowedRoles: ['Tutor'] },
