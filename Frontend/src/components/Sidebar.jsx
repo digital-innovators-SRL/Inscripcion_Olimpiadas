@@ -42,7 +42,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
     {
       path: "/admin/competencias",
       icon: <BarChartIcon size={20} />,
-      label: "Competencias",
+      label: "Comprobantes",
     },
   ];
 

@@ -126,7 +126,7 @@ const UploadProofPage = () => {
 
       const res = await fetch("https://api.ocr.space/parse/image", {
         method: "POST",
-        headers: { apikey: "K89609091888957" },
+        headers: { apikey: "K83006776488957" },
         body: formData,
       });
 
@@ -200,7 +200,7 @@ const UploadProofPage = () => {
               Comprobante de Pago
             </h1>
             <p className="text-base" style={{ color: '#8B7355' }}>
-              Sube tu comprobante para validación automática con IA
+              Sube tu comprobante para validación automática 
             </p>
           </div>
         </div>
@@ -312,7 +312,7 @@ const UploadProofPage = () => {
               ) : (
                 <div className="flex items-center justify-center space-x-3">
                   <Scan className="w-6 h-6" />
-                  <span>Procesar Comprobante con IA</span>
+                  <span>Procesar Comprobante</span>
                 </div>
               )}
             </button>
@@ -331,7 +331,7 @@ const UploadProofPage = () => {
                 style={{ background: 'linear-gradient(135deg, #C8B7A6, #B8A494)' }}>
                 <Eye className="w-4 h-4 text-white" />
               </div>
-              <span>Texto Detectado por IA</span>
+              <span>Texto Detectado</span>
             </h3>
             <button
               onClick={() => setShowOCRText(!showOCRText)}

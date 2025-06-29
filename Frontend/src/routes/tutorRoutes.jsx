@@ -7,6 +7,7 @@ import Pago from '../pages/Tutor/Pago';
 import Boleta from '../pages/Tutor/Boleta';
 import CompetenciasTutor from '../pages/Tutor/CompetenciasTutor';
 import OrdenDePago from '../pages/Tutor/OrdenDePago';
+import ConfirmarComprobante from '../pages/Tutor/ConfirmarComprobante';
 
 export default [
   { path: '/dashboard', element: <DashboardPageTutor />, allowedRoles: ['Tutor'] },
@@ -15,5 +16,6 @@ export default [
   { path: '/registration2', element: <UploadProofPage />, allowedRoles: ['Tutor'] },
   { path: '/profile', element: <ProfilePage />, allowedRoles: ['Tutor'] },
   { path: '/boleta/:id', element: <Boleta />, allowedRoles: ['Tutor'] },
-  { path: '/registration/:id', element: <OrdenDePago />, allowedRoles: ['Tutor'] }
+  { path: '/registration/:id', element: <OrdenDePago />, allowedRoles: ['Tutor'] },
+  { path: '/confirmar-comprobante', element: <ConfirmarComprobante />, allowedRoles: ['Tutor'] },
 ]

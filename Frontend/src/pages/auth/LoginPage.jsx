@@ -93,8 +93,11 @@ const userTypes = [
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative" style={{background: 'linear-gradient(135deg, #FAF7F2 0%, #F2EEE3 50%, #E8DDD4 100%)'}}>
       {/* Floating Users Panel */}
-  
 
+      <button onClick={() => navigate('/')} className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md flex items-center gap-2 hover:bg-[#F2EEE3] transition-colors">
+        <ChevronDown className="w-5 h-5 text-gray-600" />
+        ATRÁS
+      </button>
 
       {/* Main Content */}
       <div className="w-full max-w-6xl">
