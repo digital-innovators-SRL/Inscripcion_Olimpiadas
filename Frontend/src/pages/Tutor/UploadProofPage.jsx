@@ -12,6 +12,9 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
 import imageCompression from "browser-image-compression";
+import Tesseract from "tesseract.js";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.mjs";
 
 const UploadProofPage = () => {
   const { token } = useAuth();
@@ -52,7 +55,7 @@ const UploadProofPage = () => {
     }
   };
 
-  const procesarTexto = (text) => {
+  /*const procesarTexto = (text) => {
     const lineas = text.split('\n').map(l => l.trim()).filter(Boolean);
     let numero = null;
     let inscripcionId = null;
@@ -94,9 +97,64 @@ const UploadProofPage = () => {
     }
 
     return { numero, inscripcion_id: inscripcionId, tutor, monto };
+  };   */
+  const procesarTexto = (text) => {
+    const lineas = text.split('\n').map(l => l.trim()).filter(Boolean);
+    let numero = null;
+    let inscripcionId = null;
+    let tutor = null;
+    let monto = null;
+
+    for (let i = 0; i < lineas.length; i++) {
+      const linea = lineas[i];
+      if (!numero && /n[\u00faúu]mero\s+de\s+transacci[oó0]/i.test(linea)) {
+        const inline = linea.match(/transacci[oó0]n[:\s]*([0-9]+)/i);
+        const nextline = lineas[i + 1]?.match(/^\d+$/);
+        numero = inline?.[1] || nextline?.[0] || null;
+      }
+      console.log(`Línea ${i}:`, JSON.stringify(linea));
+      if (!inscripcionId && esLineaInscripcion(linea)) {
+        const inline = linea.match(/[1I][D]\s+DE\s+INSCRIPC[IÍ1]ON[\s:]*([\d]+)/i);
+        const nextline = lineas[i + 1]?.match(/^\d+$/);
+        inscripcionId = inline?.[1] || nextline?.[0] || null;
+      }
+
+      if (!tutor && /T[UÜ]T[O0QR]R/i.test(linea)) {
+        const next = lineas[i + 1]?.trim();
+        if (next) {
+          tutor = next;
+        }
+      }
+
+      if (!monto) {
+        if (/MONTO\s+PAGADO/i.test(linea)) {
+          const next = lineas[i + 1]?.trim();
+          if (next?.match(/^[\d.,]+$/)) {
+            monto = next.replace(",", ".").trim();
+          }
+        } else {
+          const match = linea.match(/Bs\.?\s*([\d,.]+)/i);
+          if (match) monto = match[1].replace(",", ".").trim();
+        }
+      }
+    }
+
+    return { numero, inscripcion_id: inscripcionId, tutor, monto };
   };
 
-  const handleUpload = async () => {
+  function esLineaInscripcion(linea) {
+    const normalizada = linea
+      .toUpperCase()
+      .replace(/1/g, "I")
+      .replace(/[ÍÌ]/g, "I")
+      .replace(/[ÓÒ]/g, "O")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return normalizada.includes("ID DE INSCRIPCION");
+  }
+
+/*  const handleUpload = async () => {
     if (!imagen) return;
     setUploading(true);
     setProcessing(false);
@@ -145,6 +203,57 @@ const UploadProofPage = () => {
       console.error("Error en OCR:", err);
     } finally {
       setUploading(false);
+    }
+  };*/
+  const handleUpload = async () => {
+    if (!imagen) return;
+    setUploading(true);
+    setProcessing(false);
+    setTextoOCR("");
+
+    try {
+      let imageSrc = null;
+
+      if (imagen.type === "application/pdf") {
+        const arrayBuffer = await imagen.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const page = await pdf.getPage(1);
+
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+        imageSrc = canvas.toDataURL("image/png");
+      } else if (imagen.type.startsWith("image/")) {
+        imageSrc = URL.createObjectURL(imagen);
+      } else {
+        throw new Error("Tipo de archivo no soportado.");
+      }
+
+      const { data: { text } } = await Tesseract.recognize(imageSrc, "spa", {
+        logger: m => {
+          if (m.status === "recognizing text") {
+            console.log("Progreso del OCR:", Math.round(m.progress * 100));
+          }
+        }
+      });
+
+      console.log("Texto OCR:", text);
+      setTextoOCR(text);
+
+      const datos = procesarTexto(text);
+      console.log("Datos procesados:", datos);
+      // enviarAlBackend(datos);
+
+      setProcessing(true);
+    } catch (err) {
+      console.error("Error en OCR:", err);
+    } finally {
+      setUploading(false);
+      setProcessing(false);
     }
   };
 
