@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       const role = localStorage.getItem('role');
       const meUrl = role === 'estudiante' ? 'me-estudiante' : 'me'
-      axios.get(`http://dis.tis.cs.umss.edu.bo/api/${meUrl}`, {
+      axios.get(`http://localhost:8000/api/${meUrl}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => {
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, student = false) => {
     const url = student ? 'login-estudiante' : 'login'
     try {
-      const res = await axios.post(`http://dis.tis.cs.umss.edu.bo/api/${url}`, {
+      const res = await axios.post(`http://localhost:8000/api/${url}`, {
         email,
         password
       })
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('http://dis.tis.cs.umss.edu.bo/api/logout', null, {
+      await axios.post('http://localhost:8000/api/logout', null, {
         headers: { Authorization: `Bearer ${token}` }
       })
     } catch (err) {

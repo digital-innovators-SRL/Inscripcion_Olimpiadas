@@ -17,6 +17,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\InscripcionController;
 use App\Models\Categoria;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,7 +94,7 @@ Route::middleware(['jwt.exceptions', 'auth:api', 'role:Tutor'])->group(function 
 });
 
 Route::get('/tutores', [UserController::class, 'indexTutores']);
-Route::get('/competenciaslist', [CompetenciaController::class, 'index']);
+Route::get('/competencias', [CompetenciaController::class, 'index']);
 
 Route::get('/getCategorias', [CategoriaController::class, 'index']);
 Route::post('/crearCompetencia', [CompetenciaController::class, 'crearCompetencia']);
@@ -142,3 +143,6 @@ Route::get('/clear-cache-secret-123', function () {
         return "Error limpiando cache: " . $e->getMessage();
     }
 });
+
+// Descargar comprobantes de pago de una competencia (solo comprobantes, no órdenes)
+Route::get('/competencias/{id}/comprobantes', [InscripcionController::class, 'descargarComprobantesPorCompetencia']);
