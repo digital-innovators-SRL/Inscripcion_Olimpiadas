@@ -55,49 +55,6 @@ const UploadProofPage = () => {
     }
   };
 
-  /*const procesarTexto = (text) => {
-    const lineas = text.split('\n').map(l => l.trim()).filter(Boolean);
-    let numero = null;
-    let inscripcionId = null;
-    let tutor = null;
-    let monto = null;
-
-    for (let i = 0; i < lineas.length; i++) {
-      const linea = lineas[i];
-      if (!numero && /N[uú]mero de transacci[oó]n/i.test(linea)) {
-        const inline = linea.match(/transacci[oó]n[:\s]*([0-9]+)/i);
-        const nextline = lineas[i + 1]?.match(/^\d+$/);
-        numero = inline?.[1] || nextline?.[0] || null;
-      }
-
-      if (!inscripcionId && /ID\s+DE\s+INSCRIPC[IÍ][OÓ]N/i.test(linea)) {
-        const inline = linea.match(/ID\s+DE\s+INSCRIPC[IÍ]ON[\s:]*([\d]+)/i);
-        const nextline = lineas[i + 1]?.match(/^\d+$/);
-        inscripcionId = inline?.[1] || nextline?.[0] || null;
-      }
-
-      if (!tutor && /^TUTOR$/i.test(linea)) {
-        const next = lineas[i + 1]?.trim();
-        if (next) {
-          tutor = next;
-        }
-      }
-
-      if (!monto) {
-        if (/MONTO\s+PAGADO/i.test(linea)) {
-          const next = lineas[i + 1]?.trim();
-          if (next?.match(/^[\d.,]+$/)) {
-            monto = next.replace(",", ".").trim();
-          }
-        } else {
-          const match = linea.match(/Bs\.?\s*([\d,.]+)/i);
-          if (match) monto = match[1].replace(",", ".").trim();
-        }
-      }
-    }
-
-    return { numero, inscripcion_id: inscripcionId, tutor, monto };
-  };   */
   const procesarTexto = (text) => {
     const lineas = text.split('\n').map(l => l.trim()).filter(Boolean);
     let numero = null;
@@ -154,57 +111,6 @@ const UploadProofPage = () => {
     return normalizada.includes("ID DE INSCRIPCION");
   }
 
-/*  const handleUpload = async () => {
-    if (!imagen) return;
-    setUploading(true);
-    setProcessing(false);
-
-    const formData = new FormData();
-    let filetype = "";
-
-    try {
-      if (imagen.type === "application/pdf") {
-        formData.append("file", imagen, "comprobante.pdf");
-        filetype = "pdf";
-      } else if (imagen.type.startsWith("image/")) {
-        const compressedFile = await imageCompression(imagen, {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1000,
-          useWebWorker: true,
-        });
-        formData.append("file", compressedFile, "comprobante.png");
-        filetype = "png";
-      } else {
-        throw new Error("Tipo de archivo no soportado.");
-      }
-
-      formData.append("language", "spa");
-      formData.append("isOverlayRequired", "false");
-      formData.append("filetype", filetype);
-
-      const res = await fetch("https://api.ocr.space/parse/image", {
-        method: "POST",
-        headers: { apikey: "K89609091888957" },
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (data.IsErroredOnProcessing || !data.ParsedResults) {
-        throw new Error(data.ErrorMessage || "Error en el OCR.");
-      }
-
-      const texto = data.ParsedResults[0].ParsedText;
-      setTextoOCR(texto);
-
-      const datos = procesarTexto(texto);
-      await enviarAlBackend(datos);
-    } catch (err) {
-      console.error("Error en OCR:", err);
-    } finally {
-      setUploading(false);
-    }
-  };*/
   const handleUpload = async () => {
     if (!imagen) return;
     setUploading(true);
@@ -246,7 +152,7 @@ const UploadProofPage = () => {
 
       const datos = procesarTexto(text);
       console.log("Datos procesados:", datos);
-      // enviarAlBackend(datos);
+      enviarAlBackend(datos);
 
       setProcessing(true);
     } catch (err) {

@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
   }, [token])
 
   const login = async (email, password, student = false) => {
-    const url = student ? '/login-estudiante' : '/login'
+    const url = student ? 'login-estudiante' : 'login'
     try {
       const res = await axios.post(`http://dis.tis.cs.umss.edu.bo/api/${url}`, {
         email,
