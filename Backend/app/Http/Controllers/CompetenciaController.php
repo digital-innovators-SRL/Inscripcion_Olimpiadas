@@ -51,8 +51,11 @@ class CompetenciaController extends Controller
         ]);
 
         // 4. Crear la competencia (si estás registrando también desde acá)
+        // Buscar el primer usuario con rol Administrador
+        $admin = \App\Models\User::where('role', 'Administrador')->first();
+
         $competencia = new Competencia();
-        $competencia->tutor_id = 1; // o como estés obteniendo el tutor
+        $competencia->tutor_id = $admin ? $admin->id : 1; // Usa el primer admin o 1 por defecto
         $competencia->area_categoria_id = $areaCategoria->id;
         $competencia->nombre = $data['name']. ' - ' . $data['category'] . ' - ' . $data['grade_level'];
         $competencia->fecha_competencia = $data['competition_date'] ?? now();
@@ -63,5 +66,67 @@ class CompetenciaController extends Controller
     }
 });
         return response()->json(['message' => 'Competencias creadas con éxito'], 201);
+    }
+
+    // === EDITAR COMPETENCIA ===
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nombre' => 'required|string',
+            'fecha_competencia' => 'required|date',
+            'fecha_fin_inscripcion' => 'required|date',
+            'max_competidores' => 'required|integer|min:1',
+            'monto' => 'required|numeric|min:1',
+        ]);
+        $competencia = Competencia::findOrFail($id);
+        $competencia->nombre = $request->nombre;
+        $competencia->fecha_competencia = $request->fecha_competencia;
+        $competencia->fecha_fin_inscripcion = $request->fecha_fin_inscripcion;
+        $competencia->max_competidores = $request->max_competidores;
+        $competencia->monto = $request->monto;
+        $competencia->save();
+        return response()->json(['message' => 'Competencia actualizada con éxito', 'data' => $competencia]);
+    }
+
+    // === ELIMINAR COMPETENCIA ===
+    public function destroy($id)
+    {
+        $competencia = Competencia::findOrFail($id);
+        $competencia->delete();
+        return response()->json(['message' => 'Competencia eliminada con éxito']);
+    }
+
+    // === OBTENER COMPETENCIAS PARA ESTUDIANTE ===
+    public function competenciasEstudiante(Request $request)
+    {
+        $estudiante = auth()->user();
+
+        $competencias = Competencia::with('areaCategoria.area', 'areaCategoria.categoria', 'inscripciones', 'tutor')
+            ->get()
+            ->map(function ($competencia) use ($estudiante) {
+                $inscrito = $competencia->inscripciones()
+                    ->where('estudiante_id', $estudiante->id)
+                    ->exists();
+
+                return [
+                    'id' => $competencia->id,
+                    'nombre' => $competencia->nombre,
+                    'fecha_competencia' => $competencia->fecha_competencia,
+                    'fecha_fin_inscripcion' => $competencia->fecha_fin_inscripcion,
+                    'monto' => $competencia->monto,
+                    'area_categoria' => [
+                        'area' => ['nombre' => $competencia->areaCategoria->area->nombre],
+                        'categoria' => ['nombre' => $competencia->areaCategoria->categoria->nombre],
+                    ],
+                    'tutor' => [
+                        'id' => $competencia->tutor->id,
+                        'nombre' => $competencia->tutor->name ?? '',
+                        'email' => $competencia->tutor->email ?? '',
+                    ],
+                    'ya_inscrito' => $inscrito,
+                ];
+            });
+
+        return response()->json($competencias);
     }
 }

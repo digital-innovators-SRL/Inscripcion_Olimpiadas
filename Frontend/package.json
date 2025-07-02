@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "axios": "^1.8.4",
+    "@mantine/core": "^8.1.2",
+    "@mantine/dropzone": "^8.1.2",
+    "axios": "^1.10.0",
     "browser-image-compression": "^2.0.2",
     "lucide-react": "^0.441.0",
-    "pdfjs-dist": "^5.2.133",
+    "pdfjs-dist": "^5.3.31",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",

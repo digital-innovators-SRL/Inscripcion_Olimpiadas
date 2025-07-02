@@ -12,6 +12,9 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
 import imageCompression from "browser-image-compression";
+import Tesseract from "tesseract.js";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.mjs";
 
 const UploadProofPage = () => {
   const { token } = useAuth();
@@ -61,94 +64,111 @@ const UploadProofPage = () => {
 
     for (let i = 0; i < lineas.length; i++) {
       const linea = lineas[i];
-
-      if (!numero && /N[úu]mero de transacci[oó]n/i.test(linea)) {
-        const inline = linea.match(/(\d{4,})/);
-        const nextline = lineas[i + 1]?.match(/^\d{4,}$/);
+      if (!numero && /n[\u00faúu]mero\s+de\s+transacci[oó0]/i.test(linea)) {
+        const inline = linea.match(/transacci[oó0]n[:\s]*([0-9]+)/i);
+        const nextline = lineas[i + 1]?.match(/^\d+$/);
         numero = inline?.[1] || nextline?.[0] || null;
       }
-
-      if (!inscripcionId && /ID\s+DE\s+INSCRIPC[IÍ][OÓ]N/i.test(linea)) {
-        const inline = linea.match(/ID\s+DE\s+INSCRIPC[IÍ]ON[\s:]*([\d]+)/i);
+      console.log(`Línea ${i}:`, JSON.stringify(linea));
+      if (!inscripcionId && esLineaInscripcion(linea)) {
+        const inline = linea.match(/[1I][D]\s+DE\s+INSCRIPC[IÍ1]ON[\s:]*([\d]+)/i);
         const nextline = lineas[i + 1]?.match(/^\d+$/);
         inscripcionId = inline?.[1] || nextline?.[0] || null;
       }
 
-      if (!tutor) {
-        if (linea.match(/^Tutor[:]?$/i)) {
-          tutor = lineas[i + 1]?.trim();
-        } else {
-          const match = linea.match(/Tutor[:\s]*([A-ZÁÉÍÓÚÑ\s]+)/i);
-          if (match) tutor = match[1].trim();
+      if (!tutor && /T[UÜ]T[O0QR]R/i.test(linea)) {
+        const next = lineas[i + 1]?.trim();
+        if (next) {
+          tutor = next;
         }
       }
 
       if (!monto) {
-        const match = linea.match(/Bs\.?\s*([\d,.]+)/i) || linea.match(/MONTO\s+PAGADO\s+([\d,.]+)/i);
-        if (match) monto = match[1].replace(",", ".").trim();
+        if (/MONTO\s+PAGADO/i.test(linea)) {
+          const next = lineas[i + 1]?.trim();
+          if (next?.match(/^[\d.,]+$/)) {
+            monto = next.replace(",", ".").trim();
+          }
+        } else {
+          const match = linea.match(/Bs\.?\s*([\d,.]+)/i);
+          if (match) monto = match[1].replace(",", ".").trim();
+        }
       }
     }
 
     return { numero, inscripcion_id: inscripcionId, tutor, monto };
   };
 
+  function esLineaInscripcion(linea) {
+    const normalizada = linea
+      .toUpperCase()
+      .replace(/1/g, "I")
+      .replace(/[ÍÌ]/g, "I")
+      .replace(/[ÓÒ]/g, "O")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return normalizada.includes("ID DE INSCRIPCION");
+  }
+
   const handleUpload = async () => {
     if (!imagen) return;
     setUploading(true);
     setProcessing(false);
-
-    const formData = new FormData();
-    let filetype = "";
+    setTextoOCR("");
 
     try {
+      let imageSrc = null;
+
       if (imagen.type === "application/pdf") {
-        formData.append("file", imagen, "comprobante.pdf");
-        filetype = "pdf";
+        const arrayBuffer = await imagen.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const page = await pdf.getPage(1);
+
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+        imageSrc = canvas.toDataURL("image/png");
       } else if (imagen.type.startsWith("image/")) {
-        const compressedFile = await imageCompression(imagen, {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1000,
-          useWebWorker: true,
-        });
-        formData.append("file", compressedFile, "comprobante.png");
-        filetype = "png";
+        imageSrc = URL.createObjectURL(imagen);
       } else {
         throw new Error("Tipo de archivo no soportado.");
       }
 
-      formData.append("language", "spa");
-      formData.append("isOverlayRequired", "false");
-      formData.append("filetype", filetype);
-
-      const res = await fetch("https://api.ocr.space/parse/image", {
-        method: "POST",
-        headers: { apikey: "K83603773288957" },
-        body: formData,
+      const { data: { text } } = await Tesseract.recognize(imageSrc, "spa", {
+        logger: m => {
+          if (m.status === "recognizing text") {
+            console.log("Progreso del OCR:", Math.round(m.progress * 100));
+          }
+        }
       });
 
-      const data = await res.json();
+      console.log("Texto OCR:", text);
+      setTextoOCR(text);
 
-      if (data.IsErroredOnProcessing || !data.ParsedResults) {
-        throw new Error(data.ErrorMessage || "Error en el OCR.");
-      }
-
-      const texto = data.ParsedResults[0].ParsedText;
-      setTextoOCR(texto);
-
-      const datos = procesarTexto(texto);
+      const datos = procesarTexto(text);
+      console.log("Datos procesados:", datos);
       enviarAlBackend(datos);
+
+      setProcessing(true);
     } catch (err) {
       console.error("Error en OCR:", err);
     } finally {
       setUploading(false);
+      setProcessing(false);
     }
   };
 
   const enviarAlBackend = async (datos) => {
+    console.log(datos);
     setProcessing(true);
     try {
       await axios.post(
-        "http://dis.tis.cs.umss.edu.bo/api/tutor/confirmar-comprobante",
+        "http://localhost:8000/api/tutor/confirmar-comprobante",
         datos,
         {
           headers: {
@@ -195,7 +215,7 @@ const UploadProofPage = () => {
               Comprobante de Pago
             </h1>
             <p className="text-base" style={{ color: '#8B7355' }}>
-              Sube tu comprobante para validación automática con IA
+              Sube tu comprobante para validación automática 
             </p>
           </div>
         </div>
@@ -307,7 +327,7 @@ const UploadProofPage = () => {
               ) : (
                 <div className="flex items-center justify-center space-x-3">
                   <Scan className="w-6 h-6" />
-                  <span>Procesar Comprobante con IA</span>
+                  <span>Procesar Comprobante</span>
                 </div>
               )}
             </button>
@@ -326,7 +346,7 @@ const UploadProofPage = () => {
                 style={{ background: 'linear-gradient(135deg, #C8B7A6, #B8A494)' }}>
                 <Eye className="w-4 h-4 text-white" />
               </div>
-              <span>Texto Detectado por IA</span>
+              <span>Texto Detectado</span>
             </h3>
             <button
               onClick={() => setShowOCRText(!showOCRText)}

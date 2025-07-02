@@ -53,7 +53,7 @@ const OrdenDePago = () => {
   useEffect(() => {
     const fetchCompetencia = async () => {
       try {
-        const res = await axios.get(`http://dis.tis.cs.umss.edu.bo/api/tutor/competencias`, {
+        const res = await axios.get(`http://localhost:8000/api/tutor/competencias`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const encontrada = res.data.find(c => c.id === parseInt(id));
@@ -81,32 +81,43 @@ const OrdenDePago = () => {
     setLoading(true);
     setNotificacion({ tipo: "", mensaje: "" });
 
-
     try {
-      const res = await axios.post("http://dis.tis.cs.umss.edu.bo/api/tutor/ordenPago", {
+      const res = await axios.post("http://localhost:8000/api/tutor/ordenPago", {
         ...form,
         competencia_id: id,
       }, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: "blob"
       });
-
-
-      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const blob = new Blob([res.data], { type: 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "orden_pago.pdf");
+      link.setAttribute("download", "documentos_inscripcion.zip");
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
 
 
       setNotificacion({ tipo: "success", mensaje: "Orden de pago generada exitosamente." });
-      setTimeout(() => navigate("/payment-slip"), 1800);
+      setTimeout(() => navigate("/registration2"), 1800);
     } catch (err) {
       console.error("Error al generar orden:", err);
-      const mensaje = err?.response?.data?.message || "No se pudo generar la orden de pago.";
+      let mensaje = "No se pudo generar la orden de pago.";
+
+      if (err?.response?.data instanceof Blob) {
+        try {
+          const errorText = await err.response.data.text();
+          const jsonError = JSON.parse(errorText);
+          mensaje = jsonError.message || mensaje;
+        } catch (parseErr) {
+          console.warn("No se pudo parsear el mensaje de error:", parseErr);
+        }
+      } else if (err?.response?.data?.message) {
+        mensaje = err.response.data.message;
+      }
+
       setNotificacion({ tipo: "error", mensaje });
     } finally {
       setLoading(false);
@@ -179,7 +190,7 @@ const OrdenDePago = () => {
               type="button"
               onClick={() => {
                 const link = document.createElement("a");
-                link.href = "http://dis.tis.cs.umss.edu.bo/assets/planilla.xlsx"; // Asegúrate de que exista
+                link.href = "http://localhost:8000/assets/planilla.xlsx"; // Asegúrate de que exista
                 link.setAttribute("download", "planilla_ejemplo.xlsx");
                 document.body.appendChild(link);
                 link.click();
@@ -213,7 +224,7 @@ const OrdenDePago = () => {
               <div className="flex items-center space-x-4">
                 <label
                   htmlFor="archivoExcel"
-                  className="cursor-pointer bg-[#C8B7A6] text-white px-6 py-2 rounded-md hover:bg-opacity-90 transition-all duration-300 shadow"
+                  className={`${loading ? 'cursor-wait bg-gray-500' : 'cursor-pointer bg-[#C8B7A6]'} text-white px-6 py-2 rounded-md hover:bg-opacity-90 transition-all duration-300 shadow`}
                 >
                   Elegir archivo
                 </label>
@@ -223,6 +234,7 @@ const OrdenDePago = () => {
               <input
                 id="archivoExcel"
                 type="file"
+                disabled={loading}
                 accept=".xlsx,.xls,.csv"
                 style={{ display: 'none' }}
                 onChange={async (e) => {
@@ -241,10 +253,10 @@ const OrdenDePago = () => {
 
                             try {
                               setLoading(true);
-
+                              let batch_id = null;
                               // 1. Enviar archivo Excel
                               const res = await axios.post(
-                                "http://dis.tis.cs.umss.edu.bo/api/tutor/importar-inscripciones",
+                                "http://localhost:8000/api/tutor/importar-inscripciones",
                                 formData,
                                 {
                                   headers: {
@@ -253,15 +265,16 @@ const OrdenDePago = () => {
                                   },
                                 }
                               );
-
+                              
                               // 2. Mostrar notificación
                               setNotificacion({ tipo: "success", mensaje: res.data.message });
-
+                              batch_id = res.data['batch-id'];
+                              console.log(batch_id);
                               // 3. Descargar automáticamente el ZIP
                               const zipRes = await axios.get(
-                                `http://dis.tis.cs.umss.edu.bo/api/tutor/ordenes-masivas/${id}`,
+                                `http://localhost:8000/api/tutor/ordenes-masivas/${id}`,
                                 {
-                                  headers: { Authorization: `Bearer ${token}` },
+                                  headers: { Authorization: `Bearer ${token}`, "X-Batch-Id": batch_id },
                                   responseType: "blob",
                                 }
                               );
@@ -277,10 +290,23 @@ const OrdenDePago = () => {
 
                             } catch (err) {
                               console.error(err);
+                              if (err.response?.status === 409) {
+                              setNotificacion({
+                                tipo: "error",
+                                mensaje: err.response?.data?.message || "Algunos estudiantes ya están inscritos en otra competencia ese día.",
+                              });
+                            } else if (err.response?.status === 404) {
+                              setNotificacion({
+                                tipo: "error",
+                                mensaje: err.response?.data?.message || "No hay inscripciones para importar.",
+                              });
+                            }
+                            else {
                               setNotificacion({
                                 tipo: "error",
                                 mensaje: err.response?.data?.error || "Error al importar archivo o generar ZIP",
                               });
+                            }
                             } finally {
                               setLoading(false);
                             }
@@ -308,7 +334,7 @@ const OrdenDePago = () => {
                 {[
                   { field: "nombres", label: "Nombres", icon: User, type: "text" },
                   { field: "apellidos", label: "Apellidos", icon: User, type: "text" },
-                  { field: "ci", label: "Cédula de Identidad", icon: FileText, type: "text" },
+                  { field: "ci", label: "Cédula de Identidad", icon: FileText, type: "number" },
                   { field: "fecha_nacimiento", label: "Fecha de Nacimiento", icon: Calendar, type: "date" },
                   { field: "email", label: "Correo Electrónico", icon: Mail, type: "email" },
                   { field: "colegio", label: "Colegio", icon: School, type: "text" },

@@ -16,6 +16,7 @@ class Inscripcion extends Model
         'contacto_celular',
         'nombre_tutor',
         'comprobante_pago',
+        'batch_id',
         'habilitado',
         'created_at',
     ];

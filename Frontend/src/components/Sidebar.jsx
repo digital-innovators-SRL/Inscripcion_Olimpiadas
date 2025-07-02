@@ -12,6 +12,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FileUp,
+  FileSpreadsheet, 
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -33,6 +34,11 @@ const Sidebar = ({ isOpen, onToggle }) => {
       path: "/configuration",
       icon: <SettingsIcon size={20} />,
       label: "Configuración",
+    },
+        {
+      path: "/admin/competencias",
+      icon: <FileSpreadsheet size={20} />,
+      label: "Comprobantes",
     },
     {
       path: "/users",
@@ -81,9 +87,9 @@ const Sidebar = ({ isOpen, onToggle }) => {
     roleItems = tutorItems;
   } else if (user?.role === "Organizador") {
     roleItems = organizadorItems;
-  }
+  } 
 
-  const menuItems = [...baseItems, ...roleItems, profileItem];
+  const menuItems = user?.role === 'estudiante' ? [...baseItems] : [...baseItems, ...roleItems, profileItem];
 
   const handleLogout = () => {
     logout();

@@ -36,7 +36,7 @@ const LandingPage = () => {
   const [errorCompetencias, setErrorCompetencias] = useState(null);
 
   useEffect(() => {
-  axios.get('http://dis.tis.cs.umss.edu.bo/api/tutores')
+  axios.get('http://localhost:8000/api/tutores')
     .then(response => {
       if (response.data.success) {
         setTutors(response.data.data);
@@ -53,7 +53,7 @@ const LandingPage = () => {
 }, []);
 
 useEffect(() => {
-  axios.get('http://dis.tis.cs.umss.edu.bo/api/competencias')
+  axios.get('http://localhost:8000/api/competencias')
     .then(response => {
       setCompetencias(response.data);
     })
@@ -163,6 +163,11 @@ useEffect(() => {
                 <a href="#tutores" className="text-sm font-medium hover:opacity-80 transition-colors" style={{color: '#8B7355'}}>
                   Tutores
                 </a>
+                <button onClick={() => {
+                  navigate('/register');
+                }} className="text-sm font-medium hover:opacity-80 transition-colors" style={{color: '#8B7355'}}>
+                  Registrar estudiante
+                </button>
               </nav>
               
               <button
