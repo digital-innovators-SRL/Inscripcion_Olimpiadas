@@ -10,10 +10,16 @@ const DashboardPage = () => {
   const isLoginPage = location.pathname === '/login'; // Detección de página de login
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/competencias")
-      .then(res => res.json())
-      .then(data => setCompetencias(data.filter(c => c.inscripciones && c.inscripciones.length > 0)))
-      .catch(() => setCompetencias([]));
+    const fetchCompetencias = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/competencias");
+        const data = await res.json();
+        setCompetencias(Array.isArray(data) ? data.filter(c => c.inscripciones && c.inscripciones.length > 0) : []);
+      } catch {
+        setCompetencias([]);
+      }
+    };
+    fetchCompetencias();
   }, []);
 
   const handleExport = (competenciaId) => {
@@ -84,17 +90,23 @@ const DashboardPage = () => {
           Exportar inscritos por competencia
         </h3>
         <div className="flex flex-col sm:flex-row gap-4">
-          {competencias.length === 0 && <span className="text-[#8B7355]">No hay competencias con inscritos.</span>}
-          {competencias.map((comp) => (
-            <button
-              key={comp.id}
-              onClick={() => handleExport(comp.id)}
-              className="flex items-center bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] text-white px-4 py-2 rounded-lg shadow hover:scale-105 transition-all font-semibold"
-            >
-              <Download className="mr-2" size={18} />
-              Exportar {comp.nombre}
-            </button>
-          ))}
+          {competencias.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 w-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#8B7355] border-opacity-30 mb-4"></div>
+              <span className="text-[#8B7355]">No hay competencias con inscritos.</span>
+            </div>
+          ) : (
+            competencias.map((comp) => (
+              <button
+                key={comp.id}
+                onClick={() => handleExport(comp.id)}
+                className="flex items-center bg-gradient-to-r from-[#C8B7A6] to-[#B8A494] text-white px-4 py-2 rounded-lg shadow hover:scale-105 transition-all font-semibold"
+              >
+                <Download className="mr-2" size={18} />
+                Exportar {comp.nombre}
+              </button>
+            ))
+          )}
         </div>
       </div>
     </div>

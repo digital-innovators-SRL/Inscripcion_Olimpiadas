@@ -51,8 +51,11 @@ class CompetenciaController extends Controller
         ]);
 
         // 4. Crear la competencia (si estás registrando también desde acá)
+        // Buscar el primer usuario con rol Administrador
+        $admin = \App\Models\User::where('role', 'Administrador')->first();
+
         $competencia = new Competencia();
-        $competencia->tutor_id = 1; // o como estés obteniendo el tutor
+        $competencia->tutor_id = $admin ? $admin->id : 1; // Usa el primer admin o 1 por defecto
         $competencia->area_categoria_id = $areaCategoria->id;
         $competencia->nombre = $data['name']. ' - ' . $data['category'] . ' - ' . $data['grade_level'];
         $competencia->fecha_competencia = $data['competition_date'] ?? now();

@@ -101,13 +101,13 @@ Route::post('/crearCompetencia', [CompetenciaController::class, 'crearCompetenci
 
 Route::post('/register', [AuthController::class, 'register']);
 
-        Route::get('/areas', [AreaController::class, 'index']);
-        Route::get('/categorias', [AreaController::class, 'categorias']);
-        Route::get('/grados', [AreaController::class, 'grados']);
-        Route::delete('/areasDelete/{id}', [AreaController::class, 'destroy']);
+Route::get('/areas', [AreaController::class, 'index']);
+Route::get('/categorias', [AreaController::class, 'categorias']);
+Route::get('/grados', [AreaController::class, 'grados']);
+Route::delete('/areasDelete/{id}', [AreaController::class, 'destroy']);
 
-        Route::delete('/gradosDelete/{id}', [AreaCategoriaController::class, 'destroy']);
-        Route::get('/exportar-inscritos/{competencia_id}', [InscripcionController::class, 'exportarInscritosExcel']);
+Route::delete('/gradosDelete/{id}', [AreaCategoriaController::class, 'destroy']);
+Route::get('/exportar-inscritos/{competencia_id}', [InscripcionController::class, 'exportarInscritosExcel']);
 
 Route::get('/users', [UserController::class, 'index']);
 Route::post('/users', [UserController::class, 'store']);

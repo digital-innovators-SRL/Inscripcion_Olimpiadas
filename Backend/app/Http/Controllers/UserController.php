@@ -13,15 +13,16 @@ class UserController extends Controller
      * @return \Illuminate\Http\Response
      */
     
-    public function index()
-    {
-        $users = User::all(); 
+public function index()
+{
+    $users = User::where('id', '!=', 1)->get(); 
 
-        return response()->json([
-            'success' => true,
-            'data' => $users
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'data' => $users
+    ]);
+}
+
 
     public function indexTutores()
     {

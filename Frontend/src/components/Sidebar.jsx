@@ -12,6 +12,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FileUp,
+  FileSpreadsheet, 
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -34,15 +35,15 @@ const Sidebar = ({ isOpen, onToggle }) => {
       icon: <SettingsIcon size={20} />,
       label: "Configuración",
     },
+        {
+      path: "/admin/competencias",
+      icon: <FileSpreadsheet size={20} />,
+      label: "Comprobantes",
+    },
     {
       path: "/users",
       icon: <UsersIcon size={20} />,
       label: "Usuarios",
-    },
-    {
-      path: "/admin/competencias",
-      icon: <BarChartIcon size={20} />,
-      label: "Comprobantes",
     },
   ];
 

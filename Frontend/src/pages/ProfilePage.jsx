@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import { useAuth } from '../contexts/AuthContext'
 import axios from 'axios'
+import toast from 'react-hot-toast';
 import {
   SaveIcon,
   KeyIcon,
@@ -92,10 +94,27 @@ const ProfilePage = () => {
       setIsEditing(false)
       // Actualiza el usuario en el contexto si es necesario
       // setUser(res.data.data)
-      // Notificación de éxito
-      alert('Perfil actualizado correctamente')
+      toast.success('¡Perfil actualizado correctamente!', {
+        style: {
+          background: '#FAF7F2',
+          color: '#5A4A3A',
+          border: '1.5px solid #C8B7A6',
+          fontWeight: 500,
+        },
+        icon: <CheckCircle color="#8B7355" size={22} />,
+        duration: 4000,
+      });
     } catch (err) {
-      alert('Error al actualizar el perfil')
+      toast.error('Hubo un error al actualizar el perfil. Intenta nuevamente.', {
+        style: {
+          background: '#fff0f0',
+          color: '#8B7355',
+          border: '1.5px solid #e57373',
+          fontWeight: 500,
+        },
+        icon: <Lock color="#e57373" size={22} />,
+        duration: 4000,
+      });
     } finally {
       setIsSaving(false)
     }
@@ -105,8 +124,17 @@ const ProfilePage = () => {
   const handlePasswordChange = async (e) => {
     e.preventDefault()
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('Las contraseñas no coinciden')
-      return
+      toast.error('Las contraseñas no coinciden', {
+        style: {
+          background: '#fff0f0',
+          color: '#8B7355',
+          border: '1.5px solid #e57373',
+          fontWeight: 500,
+        },
+        icon: <Lock color="#e57373" size={22} />,
+        duration: 4000,
+      });
+      return;
     }
     try {
       await axios.put(
@@ -118,11 +146,29 @@ const ProfilePage = () => {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
-      alert('Contraseña actualizada correctamente')
+      toast.success('¡Contraseña actualizada correctamente!', {
+        style: {
+          background: '#FAF7F2',
+          color: '#5A4A3A',
+          border: '1.5px solid #C8B7A6',
+          fontWeight: 500,
+        },
+        icon: <CheckCircle color="#8B7355" size={22} />,
+        duration: 4000,
+      });
       setShowPasswordModal(false)
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (error) {
-      alert('Error al actualizar la contraseña')
+      toast.error('Hubo un error al actualizar la contraseña. Intenta nuevamente.', {
+        style: {
+          background: '#fff0f0',
+          color: '#8B7355',
+          border: '1.5px solid #e57373',
+          fontWeight: 500,
+        },
+        icon: <Lock color="#e57373" size={22} />,
+        duration: 4000,
+      });
     }
   }
 

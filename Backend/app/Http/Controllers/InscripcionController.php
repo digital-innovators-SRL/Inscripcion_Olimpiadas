@@ -492,14 +492,18 @@ class InscripcionController extends Controller
     /**
      * Descargar todos los comprobantes de pago de una competencia en un ZIP (solo comprobantes, usando Barryvdh DomPDF)
      */
-    public function descargarComprobantesPorCompetencia($competencia_id)
+    public function descargarComprobantesPorCompetencia(Request $request, $competencia_id)
     {
-        $inscripciones = Inscripcion::with(['estudiante', 'competencia.areaCategoria.area', 'competencia.areaCategoria.categoria'])
-            ->where('competencia_id', $competencia_id)
-            ->get();
+        $tutor_id = $request->query('tutor_id');
+        $query = Inscripcion::with(['estudiante', 'competencia.areaCategoria.area', 'competencia.areaCategoria.categoria'])
+            ->where('competencia_id', $competencia_id);
+        if ($tutor_id) {
+            $query->where('tutor_id', $tutor_id);
+        }
+        $inscripciones = $query->get();
 
         if ($inscripciones->isEmpty()) {
-            return response()->json(['message' => 'No hay inscripciones para esta competencia.'], 404);
+            return response()->json(['message' => 'No hay inscripciones con este tutor.'], 404);
         }
         $nombreCompetencia = Competencia::find($competencia_id)->nombre;
         $tmpDir = storage_path("app/public/tmp/comprobantes_$nombreCompetencia");
